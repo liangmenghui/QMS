@@ -1,0 +1,66 @@
+<template>
+    <div class="ivu-extend">
+        <Row :gutter="16">
+            <i-col :span="12">
+                <Button type="primary" size="small">查看</Button>
+            </i-col>
+            <i-col :span="12">
+                <extend-button text="更多">
+                    <Row :gutter="16" class="extend-row">
+                        <i-col span="7">
+                            <Button size="small" type="info">发布</Button>
+                        </i-col>
+                        <i-col span="10">
+                            <Button size="small" type="info">重新发布</Button>
+                        </i-col>
+                        <i-col span="7">
+                            <Button size="small" type="info">审批</Button>
+                        </i-col>
+                    </Row>
+                    <Row :gutter="16">
+                        <i-col span="7">
+                            <Button size="small" type="info" @click="handleDownload">下载</Button>
+                        </i-col>
+                        <i-col span="10">
+                            <Button size="small" type="info" @click="handleOriginDownload">源文件下载</Button>
+                        </i-col>
+                        <i-col span="7">
+
+                        </i-col>
+                    </Row>
+                </extend-button>
+            </i-col>
+        </Row>
+    </div>
+</template>
+<script>
+import ExtendButton from "./extend-button";
+export default {
+  name: "iFsDocExtend",
+  props: {
+    row: {
+      type: Object,
+      required: true
+    }
+  },
+  data() {
+    return {};
+  },
+  components: {
+    ExtendButton
+  },
+  methods: {
+    handleDownload() {
+      this.api.fs.document.release.download(this.row.bsDocId);
+    },
+    handleOriginDownload() {
+      this.api.fs.document.release.downloadOrigin(this.row.bsDocId);
+    }
+  }
+};
+</script>
+<style>
+.extend-row {
+  margin-bottom: 12px;
+}
+</style>

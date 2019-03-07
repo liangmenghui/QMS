@@ -1,0 +1,25 @@
+import httpservice from '@/libs/service'
+import customer from './lmp.customer'
+import proxy from './lmp.provider'
+
+export default {
+    customers: function (data) {
+        return customer.all(data);
+    },
+    proxies: function (data) {
+        return proxy.selectProvider(data);
+    },
+    suppliers: function (data) {
+
+    },
+    list: function (data) {
+        return httpservice.get('/lmp/booking/forecast/list', data);
+    }, remove: function (data) {
+        return httpservice.get('/lmp/booking/forecast/remove', data);
+    }, detail: function (data) {
+        return httpservice.get('/lmp/booking/forecast/detail', data);
+    },
+    save:function(data){
+        return httpservice.postdata('/lmp/booking/forecast/save',data);
+    }
+}

@@ -1,0 +1,113 @@
+<template>
+    <div class="left-menu">
+        <Menu accordion style="width:100%">
+            <div v-for="item of data">
+                <Submenu v-if="item.children!=undefined" :key="item.resrceCode" :name="item.resrceId">
+                    <template slot="title">
+                        <Icon type="item-paper"></Icon>
+                        {{item.resrceName}}
+                    </template>
+                    <Menu-item  v-for="child in item.children" :key="child.resrceCode" :name="child.resrceCode" @click.native="to(child)">
+                        <Icon type="document-text"></Icon>
+                        {{$te("left-menu."+child.resrceCode)?$t("left-menu."+child.resrceCode):child.resrceName}}
+                    </Menu-item>
+                </Submenu>
+                <MenuItem v-if="item.children==undefined" name="0" @click.native="to(item)">
+                    <Icon type="home" color="#6ace81" size="22"></Icon>{{$te("left-menu."+item.resrceCode)?$t("left-menu."+item.resrceCode):item.resrceName}}
+                </MenuItem>
+            </div>
+             <!-- <MenuItem name="0" @click.native="toRouter('/qms/dashboard')">
+                <Icon type="home" color="#6ace81" size="22"></Icon>{{$t("left-menu.Dashboard")}}
+             </MenuItem> -->
+           <!--  <Submenu name="1">
+                <template slot="title">
+                    <Icon type="ios-gear"  size="22" color="#f8aa2e"></Icon>{{$t("left-menu.QMSSettings")}}	    
+                </template>
+            </Submenu> 
+
+             <Submenu name="2">
+                <template slot="title" >
+                    <Icon Icon type="trophy" size="20" color="#52b6ff"></Icon></Icon>{{$t("left-menu.supplier")}}
+                </template>
+            </Submenu> 
+
+            <Submenu name="3">
+                <template slot="title">
+                   <Icon type="ios-cog" size="22" color="#6ace81"></Icon>
+                   	产品    
+                </template>
+            </Submenu>
+            
+            <Submenu name="4">
+                <template slot="title">
+                    <Icon type="chatbubble-working" size="20" color="#4ec4ea"></Icon>{{$t("left-menu.feedback")}}
+                </template>
+            </Submenu>
+            
+            <Submenu name="5">
+                <template slot="title">
+                   <Icon type="radio-waves" size="20" color="#f8aa2e"></Icon>{{$t("left-menu.lessons")}}
+                </template>
+            </Submenu> -->
+        </Menu>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            theme3:'light',
+            data: []
+        }
+    },
+    created() {
+        this.getlist();
+    },
+  
+    methods: {
+        clicked() {
+            //Ajax调用示例
+            this.api.test.joke().then((res) => {
+                console.log(res)
+            })
+        },
+        to(obj) {
+            if(obj.bsUrl == null) return;
+            this.$store.commit('updateMenuDataStates',obj);
+            this.$router.push({path: obj.bsUrl});
+        },
+        getlist() {
+            this.api.userresrce.getlist().then((res) => {
+                if(res.result) {
+                    var data = res.data;
+                    this.data = data;
+                    console.log(data);
+                }
+            });
+        },
+    }
+}
+
+</script>
+
+<style lang="less">
+    .ivu-col-span-5 {
+    display: block;
+    width: 18%;
+}
+
+.ivu-menu{font-size:16px;}
+.layout-menu-left{background:#0a435f;border:none;}
+.ivu-menu-vertical .ivu-menu-item, .ivu-menu-vertical .ivu-menu-submenu-title{color:#a2dbf7;}
+ .ivu-menu-submenu-title:hover{ color:#333; background:#2683b2;}
+.ivu-menu-vertical .ivu-menu-item:hover{background:#2683b2;}
+.ivu-menu-light{background:none;}
+.ivu-menu-light.ivu-menu-vertical .ivu-menu-item-active:not(.ivu-menu-submenu) {
+    color: #d8f1fd;
+    background:#2683b2;
+    border-right: 3px solid #fd5822;
+    z-index: 2;
+}
+
+</style>
+

@@ -1,0 +1,221 @@
+﻿<template>
+  <div>
+    <Row>
+      <i-col span="24">
+        <Form :label-width="120" style="min-height:720px;">
+          <div style="padding: 0 0 24px;line-height:32px;font-size:12px;">
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">客户</p>
+              <i-select v-model="selectedCustomer" style="width:200px">
+                <Option v-for="item in customers" :value="item.bsCustomer" :key="item.bsCustomer">{{item.bsCustomerDesc}}</option>
+              </i-select>
+            </div>
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">货代</p>
+              <i-select v-model="selectedAgent" style="width:200px">
+                <Option v-for="item in agents" :value="item.agent" :key="item.agent">{{item.desc}}</option>
+              </i-select>
+            </div>
+            <div style="float:right;">
+              <!-- <Button type="primary" @click="handleDownload" icon="ios-cloud-download" style="float:right;margin-right:20px;">下载模板</Button> -->
+              <Button type="primary" @click="handleLoadTemplate" icon="ios-loop-strong" style="float:right;margin-right:20px;">加载模板</Button>
+            </div>
+          </div>
+          <form-item label="Booking模板">
+            <div style="margin-right:140px;">
+              <i-input disabled v-model="templatePath"></i-input>
+            </div>
+            <Upload action="/admin/lmp/booking/template/upload" :show-upload-list="false" :before-upload="handleUpload" :on-format-error="handleFormatError" :data="{customer:selectedCustomer,agent:selectedAgent}" :on-success="handleUploadSuccess" :on-error="handleUploadError" :format="['xls','xlsx']" style="float:right;margin-right:20px;margin-top:-34px;">
+              <i-button type="primary" :loading="this.uploadState" icon="ios-cloud-upload-outline">{{this.uploadState?"上传中":"上传模板"}}</i-button>
+            </Upload>
+          </form-item>
+          <form-item label="模板详细信息">
+            <component ref="template" :formData="templateItems" :customer="selectedCustomer" :agent="selectedAgent" @on-commit="onCommit" :is="currentTemplateView"></component>
+          </form-item>
+        </Form>
+      </i-col>
+    </Row>
+    <Row>
+      <i-col span="24">
+        <div style="height:86px;padding-top:24px;background-color:#f1f2f3;">
+          <Button type="success" @click="handleSave" size="large" style="float:right;margin-right:60px;">保存</Button>
+        </div>
+      </i-col>
+    </Row>
+  </div>
+</template>
+<script>
+import { mapState } from "vuex";
+import { templateComponents } from "@/view/logistics/booking/plugin";
+
+export default {
+  data() {
+    return {
+      customers: [{ bsCustomer: "", bsCustomerDesc: "请选择客户" }],
+      agents: [{ agent: "", name, url: "", desc: "请选择货代" }],
+      uploadState: false,
+      file: null,
+      templatePath: "",
+      currentTemplateView: "",
+      templateItems: [],
+      selectedAgent: "",
+      selectedCustomer: ""
+    };
+  },
+  mounted() {
+    this.handleLoadCustomer();
+  },
+  components: {
+    ...templateComponents
+  },
+  methods: {
+    save(params) {
+      let response = [];
+      const { selectedCustomer, selectedAgent } = this;
+      Object.keys(params).forEach(item => {
+        response.push({
+          key: item,
+          value: params[item]
+        });
+      });
+      response.push({ key: "customer", value: selectedCustomer });
+      response.push({ key: "agent", value: selectedAgent });
+      //  var a = JSON.stringify(response);
+      this.api.lmp.booking.saveList(response).then(res => {
+        if (res.result) {
+          this.$Message.success("保存成功");
+        }
+      });
+    },
+    handleUpload: function(file) {
+      const { selectedCustomer, selectedAgent, uploadState } = this;
+      if (uploadState) {
+        this.$message.warning("正在处理上传文件，请稍后再试...");
+        return false;
+      }
+      this.file = null;
+      this.templatePath = "";
+
+      if (!selectedCustomer || !selectedAgent) {
+        this.$Message.error("请先选择客户和货代。");
+        return false;
+      }
+      this.file = file;
+      this.templatePath = file.name;
+      this.uploadState = true;
+      return true;
+    }, //handleUpload
+    handleLoadCustomer: function() {
+      this.customers = [{ bsCustomer: "", bsCustomerDesc: "请选择客户" }];
+      this.api.lmp.booking.customers().then(res => {
+        if (res.result) {
+          let list = [{ bsCustomer: "", bsCustomerDesc: "请选择客户" }];
+          res.data.forEach(element => {
+            list.push({
+              bsCustomer: element.bsCode,
+              bsCustomerDesc: element.bsName
+            });
+          });
+          this.customers = list;
+        }
+      });
+    },
+    handleLoadTemplate: function() {
+      const { selectedCustomer, selectedAgent, uploadState } = this;
+      if (!selectedCustomer || !selectedAgent) {
+        this.$Message.error("请先选择客户和货代。");
+        return false;
+      }
+
+      this.api.lmp.booking
+        .getTemplate({ customer: selectedCustomer, agent: selectedAgent })
+        .then(res => {
+          if (res.result) {
+            let formData = {};
+            let json = res.data;
+            json.forEach(item => {
+              formData[item.bsName] = item.bsValue;
+            });
+            this.templateItems = formData;
+            this.templatePath = formData["template"];
+          }
+        });
+    }, //handLoadTemplate
+    handleDownload: function() {
+      const { selectedCustomer, selectedAgent, uploadState } = this;
+      if (!selectedCustomer || !selectedAgent) {
+        this.$Message.error("请先选择客户和货代。");
+        return false;
+      }
+      this.api.lmp.booking.download({
+        customer: selectedCustomer,
+        agent: selectedAgent
+      });
+    },
+    handleUploadSuccess: function(response, file) {
+      if (response.result == true) {
+        let formData = {};
+        if (response.data) {
+          response.data.forEach(item => {
+            formData[item.bsName] = item.bsValue;
+          });
+        }
+        this.$Message.info("文件" + file.name + "上传成功.");
+      } else {
+        this.$message.error(response.msg);
+      }
+      this.uploadState = false;
+    }, //handleUploadSuccess
+    handleUploadError: function(response, file) {
+      this.$message.error("文件" + file.name + "上传失败。");
+      this.uploadState = false;
+    }, //handleUploadError
+    handleFormatError: function(file) {
+      this.$Message.error("模板格式错误,请上传正确的Booking文档模板。");
+    }, //handleFormatError
+    handleSave() {
+      let getData = this.$refs.template.getData;
+      if (getData) {
+        getData();
+      }
+    },
+    onCommit(formData) {
+      this.save(formData);
+    }
+  }, //methods
+  watch: {
+    selectedCustomer: function() {
+      this.agents = [{ agent: "", name: "", desc: "请选择货代" }];
+      const { selectedCustomer } = this;
+      this.selectedAgent = "";
+      this.currentTemplateView = "";
+      
+      this.api.lmp.booking.agents({ customer: selectedCustomer }).then(res => {
+        if (res.result) {
+          let list = [{ agent: "", name: "", desc: "请选择货代" }];
+          res.data.forEach(element => {
+            list.push({
+              agent: element.bsAgent,
+              desc: element.bsAgent,
+              name: element.bsTemplateComponent
+            });
+          });
+          this.agents = list;
+        }
+      });
+    },
+    selectedAgent: function() {
+      const { selectedCustomer, selectedAgent, agents } = this;
+
+      if (!selectedAgent) {
+        this.currentTemplateView = "";
+        return;
+      }
+
+      this.currentTemplateView = agents.filter(
+        item => item.agent == selectedAgent
+      )[0].name;
+    }
+  } //watch
+};
+</script>

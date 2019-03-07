@@ -1,0 +1,447 @@
+<template>
+   
+    <div>
+        <Row>
+                <i-col>
+                        <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                            <Form-item v-if="menuData.perms.ADD">
+                                <Button type="primary" @click="showAddDialog()" >新增样品</Button>
+                            </Form-item>
+                        </Form>
+                    </i-col>
+        </Row>
+        <Row>
+                <Modal v-model="dialog.modal_dialog4" title="" @on-ok="addSample" @on-cancel="cancel" >
+                        <Form :model="formQuery" :ref="dialog.ruleForm" :rules="dialog.ruleForm" :label-width="80">
+                    
+                                    <Form-item prop="bsQty" label=" 样品数量：" style="width:40%">
+                                           <InputNumber  :min="1" type="text" v-model="formQuery.bsQty" placeholder="样品数量" style="width: 300px" />
+                                    </Form-item>
+                                    <Form-item prop="bsCode" label="样品编码：">
+                                        <Input type="text" v-model="formQuery.bsCode" placeholder="样品编码" style="width: 300px"/>
+                                    </Form-item>
+                    
+                                    <Form-item prop="bsName" label="样品名称：">
+                                        <Input type="text" v-model="formQuery.bsName" placeholder="样品名称" style="width: 300px"/>
+                                    </Form-item>
+                    
+                                    <Form-item prop="bsReportTime" label="获取报告时间：">
+                                        <DatePicker type="datetime" v-model="formQuery.bsReportTime" placeholder="Select date" style="width: 300px" ></DatePicker>
+                                    </Form-item>
+
+                                   <Form-item prop="bsComment" label="检测项目:">  
+                                        <Input v-model="formQuery.bsComment" type="textarea" :autosize="{minRows: 2,maxRows: 7}" placeholder="填写送测内容" style="width: 300px"></Input>
+                                  </Form-item>
+                                  <Form-item prop="bsComment" label="检测项目:">  
+                                        <Upload type="drag"  action="admin/lab/sample/updateFile" :data={bsCode:this.formQuery.bsCode} :before-upload="uploadBefore" :on-success='uploadSuccess' :on-error='uploadError'>
+                                            <div style="padding: 20px 0">
+                                              <Icon type="ios-cloud-upload" size="40" style="color: #3399ff"></Icon>
+                                              <p>请选择文件</p>
+                                            </div>
+                                          </Upload>
+                                  </Form-item>
+                                  </Form>
+                </Modal> 
+            </Row>
+        <Row>
+            <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns"    stripe style="height:auto;"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total"  @on-change="changePage"  @on-page-size-change="chageSize" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination"  show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+  
+
+   
+    </div>
+</template>
+<script>
+import {mapState} from 'vuex'
+export default {
+    created(){
+        this.dialog.formItem.bsSampleStatrtTime=new Date();
+       this.getReload();
+    },
+    computed:{
+        ...mapState({
+            menuData:state=>state.menuData  
+        })
+    },
+    data() {
+        return {
+            sampleUploadState:false,
+            msg:'开始测试',
+            start:0,
+            end:15,
+            tabs:1,
+            dialog: {
+                ruleForm: {
+                        bsCostTime: [
+                        { required: true, message: '用时不能为空', trigger: 'blur' }
+                    ],
+                    bsCode: [
+                        { required: true, message: '请填写编码', trigger: 'blur' }
+                    ],
+                    bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ],
+                    bsQty: [
+                        { required: true, message: '请填写数量', trigger: 'blur' }
+                    ],
+                    bsSampleTime: [
+                        { required: true, message: '请填写登记时间', trigger: 'blur' }
+                    ],
+                    bsReportTime: [
+                        { required: true, message: '请填写要报告时间', trigger: 'blur' }
+                    ]
+                },
+                modal_dialog: false,
+                modal_dialog2:false,
+                modal_dialog4:false,
+                formItem:{
+                    bjsj:'',
+                    id:"",
+                    bsCode:"",
+                    bsName:'',
+                    bsSampleTime:'',
+                    bsReportTime:'',
+                    bsQty:'',
+                    bsStatus:'',
+                    bsComment:'',
+                    bsPath:'',
+                    arry:'',
+                    item:[],
+
+                }
+                },
+            formQuery: {
+                eqName:'',
+                testx:'',
+                bsSampleStatrtTime:'',
+                bsCostTime:'',
+                bsPath:'',
+                bsCode: '',
+                bsName: '',
+                bsReportTime:'',
+                bsSampleTime:'',
+                bsComment:'',
+                bsQty:''
+            },
+            formQ:{
+               bsPartNo:"",
+               bsSampleName:'',
+               flag:'',
+            },
+            Query: {
+                bsName:'',
+                bsCode:'',
+                state:"",
+            },
+            queryData:{
+                id:'',
+                bsStatus:'',
+                bsName:'',
+                bsCode:'',
+            },
+            dict: {
+                bsStatus:[{value: 0, name:'待测试'},{value: 1, name:'测试中'},{value: 2, name:'已完成'},{value: 3, name:'已中止'}]
+            },
+            
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:15,
+                    pkParent:-1
+                },
+                pagination: [15, 50, 100],
+                data: {rows:[],total:0,rows1:[]},
+                columns: [
+                    {
+                        title: '产品编码',
+                        key: 'bsCode'
+                    },
+                    {
+                        title: '样品名称',
+                        key: 'bsName'
+                    },
+                    {
+                        title: '登记时间',
+                        key: 'bsSampleTime'
+                    },
+                    {
+                        title: '要求报告时间',
+                        key: 'bsReportTime'
+                    },
+                    {
+                        title: '样品数量',
+                        key: 'bsQty'
+                    },
+                    {
+                        title: '状态',
+                        key: 'bsStatus',
+                        render: (h, params) => {
+                            return h('span', this.dict.bsStatus[params.row.bsStatus].name);
+                        }
+                    },
+                    {
+                        title: '检测项目',
+                        key: 'bsComment'
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let ary = [];
+                            // params.row.bsStatus!=2 &&params.row.bsStatus!=3&&
+                            if( this.menuData.perms.EDIT) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '10px',
+                                        marginBottom:'10px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            // this.showM(params)
+                                            let query = params;
+                                            this.$router.push({
+                                            name: 'addSample',
+                                            query: query
+                                        });
+
+                                        }
+                                    }
+                                }, params.row.bsStatus==0?"开始测试":"填写数据"));
+                            }
+                            if(params.row.bsStatus!=0 && this.menuData.perms.QUERY) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '10px',
+                                        marginBottom: '10px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            // this.showM(params)
+                                            let query = params;
+                                            this.$router.push({
+                                            name: 'detail',
+                                            query: query
+                                        });
+
+                                        }
+                                    }
+                                }, '详情'));
+                            }
+                            if(params.row.bsStatus==1 && this.menuData.perms.EDIT) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '10px',
+                                        marginBottom: '10px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.testcomp(params)
+                                        }
+                                    }
+                                }, '测试完成'));
+                            }
+                            if(params.row.bsStatus==0 && this.menuData.perms.DELETE) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '10px',
+                                        marginBottom: '10px'
+                    
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.deleteSample(params)
+                                        }
+                                    }
+                                }, '删除'));
+                            }
+                            if(params.row.bsStatus !=0 &&this.menuData.perms.ADD) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '10px',
+                                        marginBottom: '10px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.deleteSample(params)
+                                        }
+                                    }
+                                }, '删除'));
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            },
+        }
+    },
+    methods:{
+        uploadBefore(
+
+        ){},
+        uploadSuccess(response, file, filelist){
+            if (response.result) {
+                this.formQuery.bsPath = response.data;
+                this.sampleUploadState=true;
+                this.$Message.success("上传成功");
+      }
+
+        },
+        uploadError(error, file, filelist){
+          this.$Message.error("上传失败，请重新上传");
+        },
+     //送样人发送邮件
+       sendMail(){
+           this.formQ.bsSampleName=this.formQuery.bsName;
+           this.formQ.bsPartNo=this.formQuery.bsCode;
+           this.formQ.flag="sendSample";
+        this.api.lab.sample.sendMail(this.formQ).then((res) =>{
+                if(res.result){
+                    this.$Message.success("发送邮件成功");
+                }else{
+                    this.$Message.error("自动发送邮件失败，请手动发送");
+                }
+            })
+       },
+
+        addSample(){
+            if(this.sampleUploadState){
+                this.api.lab.sample.checkinSave(this.formQuery).then((res)=>{
+                    this.getReload();
+                    this.sendMail();
+                    this.$Message.success("添加成功");
+                });
+            }else{
+                this.$Message.error("图纸文件不能为空");
+            }
+        },
+        getReload(){
+            this.api.lab.sample.selectSample().then((res) => {
+                if(res.result) {
+                    this.datagrid.data.rows1=this.datagrid.data.rows;
+                    this.datagrid.data.rows = res.data.rows.slice(this.start,this.end);
+                    this.datagrid.data.total=res.data.total;
+                   }else {
+                    this.$Message.error(res.msg);
+                  }
+                });
+        },
+        showAddDialog(){
+            this.sampleUploadState=false;
+            this.dialog.modal_dialog4=true;
+
+        },
+        showM(params){
+            this.dialog.formItem.bsCode=params.row.bsCode;
+            this.dialog.formItem.id=params.row.id;
+            this.dialog.formItem.bsName=params.row.bsName;
+            this.dialog.formItem.bsSampleTime=params.row.bsSampleTime;
+            this.dialog.formItem.bsReportTime=params.row.bsReportTime;
+            this.dialog.formItem.bsQty=params.row.bsQty;
+            this.dialog.formItem.bsStatus=this.dict.bsStatus[params.row.bsStatus].name;
+            this.dialog.formItem.bsComment=params.row.bsComment;
+            this.dialog.modal_dialog = true;
+            this.dialog.formItem.arry='';
+            this.api.lab.equipment.selectTest().then((res) =>{
+                if(this.dialog.formItem.item ==null || this.dialog.formItem.item ==''){
+                for(var i=0;i<res.data.total;i++){
+                    this.dialog.formItem.item.push(res.data.rows[i]);
+                }
+                }
+            });
+
+        },
+        
+        testcomp(params){
+            this.queryData.id=params.row.id;
+            this.queryData.bsName=params.row.bsName;
+            this.queryData.bsCode=params.row.bsCode;
+            this.queryData.bsStatus=2;
+            this.api.lab.sample.updateStatuss(this.queryData).then((res)=>{
+                if(res.result){
+                    this.getReload();
+                    this.sendss(params);
+                }else{
+                    this.$Message.error("完成实验失败，请重试");
+                }
+          
+          });
+        },
+
+        sendss(params){
+            this.formQ.bsSampleName=params.row.bsName;
+           this.formQ.bsPartNo=params.row.bsCode;
+            this.formQ.flag="testPerson";
+            this.api.lab.sample.sendMail(this.formQ).then((res) =>{
+                if(res.result){
+                    this.$Message.success("发送邮件成功");
+                }else{
+                    this.$Message.error("自动发送邮件失败，请手动发送");
+                }
+            })
+        },
+        cancel(){
+
+        },
+        deleteSample(params){
+            //console.log(params);
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.lab.sample.delete(params.row).then((res)=>{
+                        if(res.result) {
+                            this.getReload();
+                            this.$Message.info('删除成功');
+                            this.$Modal.remove();
+                        }else {
+                            this.$Message.error("删除失败");
+                        }
+                    });
+                }
+            });
+               
+        },
+        changePage (pageSize) {
+                    this.start=(pageSize-1)*this.datagrid.queryParams.rows;
+                    this.end=pageSize*this.datagrid.queryParams.rows;
+                    this.getReload();
+                },
+        chageSize(pageSizeOpts){
+                    this.datagrid.queryParams.rows=pageSizeOpts;
+                    this.start=0;
+                    this.end=pageSizeOpts;
+                    this.getReload();
+               }   
+        
+  }
+    
+}
+</script>

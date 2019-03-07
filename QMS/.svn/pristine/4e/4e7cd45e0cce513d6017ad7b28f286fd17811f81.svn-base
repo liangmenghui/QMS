@@ -1,0 +1,155 @@
+<template>
+    <div>
+
+        <Row>
+            <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="height:auto;"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total"  @on-change="changePage"  @on-page-size-change="chageSize" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination"  show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+        
+    </div>
+</template>
+<script>
+import {mapState} from 'vuex'
+export default {
+    data() {
+        return {
+            start:0,
+            end:15,
+            formQuery: {
+                bsCode: '',
+                bsName: ''
+            },
+            dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: {
+                    bsCode: [
+                        { required: true, message: '请填写编码', trigger: 'blur' }
+                    ],
+                    bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ]
+                }
+            },
+            dict: {
+                bsStatus:[{value: 0, name:'待测试'},{value: 1, name:'测试中'},{value: 2, name:'已完成'},{value: 3, name:'已中止'}]
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:15,
+                    pkParent:-1
+                },
+                pagination: [15, 50, 100],
+                data: {rows:[],total:0,rows1:[]},
+                columns: [
+                    {
+                        title: '产品编码',
+                        key: 'bsCode'
+                    },
+                    {
+                        title: '样品名称',
+                        key: 'bsName'
+                    },
+                    {
+                        title: '开始时间',
+                        key: 'bsSampleStatrtTime'
+                    },
+                    {
+                        title: '完成时间',
+                        key: 'bsCompTime'
+                    },
+                    {
+                        title: '状态',
+                        key: 'bsStatus',
+                        render: (h, params) => {
+                            return h('span', this.dict.bsStatus[params.row.bsStatus].name);
+                        }
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let ary = [];
+                            if(this.menuData.perms.EDIT) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.downloadData(params)
+                                        }
+                                    }
+                                }, '下载检测报告'));
+                            }
+                        //     if(this.menuData.perms.DELETE) {
+                        //         ary.push(h('Button', {
+                        //             props: {
+                        //                 type: 'error',
+                        //                 size: 'small'
+                        //             },
+                        //             on: {
+                        //                 click: () => {
+                        //                     this.downloadReport(params)
+                        //                 }
+                        //             }
+                        //         }, '下载检测报告'))
+                        //     }
+                             return h('div', ary);
+                         }
+                    }
+                ]
+            },
+        }
+    },
+    created(){
+       this.getData();
+    },
+    computed:{
+        ...mapState({
+            menuData:state=>state.menuData  
+        })
+    },
+    methods: {
+        downloadReport(params){
+            window.location.href="/admin/lab/sample/downloadReport?bsCode="+params.row.bsCode+"&bsName="+params.row.bsName;
+        },
+        downloadData(params){
+            window.location.href="/admin/lab/sample/downloadData?bsCode="+params.row.bsCode+"&bsName="+params.row.bsName;
+        },
+        getData(){
+            this.api.sample.selectall().then((res) =>{
+                if(res.result) {
+                    this.datagrid.data.rows = res.data.rows.slice(this.start,this.end);
+                    this.datagrid.data.total=res.data.total;
+                   }else {
+                    this.$Message.error(res.msg);
+                  }
+            });
+        },
+        changePage (pageSize) {
+                    this.start=(pageSize-1)*this.datagrid.queryParams.rows;
+                    this.end=pageSize*this.datagrid.queryParams.rows;
+                    this.getData();
+                },
+                chageSize(pageSizeOpts){
+                    this.datagrid.queryParams.rows=pageSizeOpts;
+                    this.start=0;
+                    this.end=pageSizeOpts;
+                    this.getData();
+               }
+    }
+}
+</script>

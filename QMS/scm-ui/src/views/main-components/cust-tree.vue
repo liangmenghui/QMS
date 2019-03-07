@@ -1,0 +1,58 @@
+<template>
+    <table width="100%" style="overflow-y:scroll">
+        <tr v-for="item in data" @click="clickRow(item)" style="background-color:white;line-height:35px;cursor:pointer" >
+            <td style="text-align:center;padding-left:15px;"><Icon type="arrow-right-b"></Icon></td>
+            <td>{{item.title}}</td>
+        </tr>
+    </table>
+</template>
+<style>
+.unselected_tr {background-color:white}
+.selected_tr {background-color:gray}
+</style>
+<script>
+    export default {
+        name: 'cust-tree',
+        props: {
+            data: Array
+        },
+        data() {
+            return {
+                showHeader:false,
+                columns: [{
+                    title: 'Name',
+                    key: 'title',
+                    render: (h, params) => {
+                        return h('div', [
+                            h('Icon', {
+                                props: {    
+                                    type: 'arrow-right-b'
+                                },
+                                style: {
+                                    marginRight: '10px',
+                                    marginLeft:'20px'
+                                }
+                            }),
+                            h('strong', params.row.title)
+                        ]);
+                    }
+                }]
+            }
+        },
+        created() {
+        },
+        computed: {
+        },
+        methods: {
+            clickRow(obj, item) {
+                obj.style.background-color = 'gray';
+                
+            },
+            handleClick(item) {
+                this.$emit("handleNavClick", item);
+            },
+            selectNode(item) {
+            }
+        }
+    };
+</script>

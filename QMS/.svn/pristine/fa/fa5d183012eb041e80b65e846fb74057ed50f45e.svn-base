@@ -1,0 +1,14 @@
+package com.unind.qms.web.supplier.dao;
+
+import com.unind.qms.web.supplier.entity.Promote;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+/**
+ * @author Shen
+ */
+public interface PromoteDao extends CrudRepository<Promote, Long>, JpaSpecificationExecutor<Promote> {
+    public List<Promote> findByBsFlowRecordIdOrderByIdAsc(Long bsFlowRecordId);
+}

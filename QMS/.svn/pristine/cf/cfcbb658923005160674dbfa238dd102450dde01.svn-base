@@ -1,0 +1,478 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：供应商风险管理
+    -->
+	<div v-if="!showRooterView">
+		<div style="height: 50px;">
+			<Col :md="8">
+				<div style="height: 1px;"></div>
+			</Col>
+			<Col :md="8">
+				<Col :md="8">
+					<router-link :to="{path: 'basicInfo'}">
+					<el-button type="primary" style="width: 99%;border-radius: 8px 0px 0px 8px;height:40px;font-size: 14px;padding: 0;">
+						{{$t('supplier.BasicInfo')}}
+					</el-button>
+					</router-link>				
+				</Col>			
+				<Col :md="8">
+					<router-link :to="{path: 'advanceInfo'}">
+					<el-button type="primary" style="width: 99%;height:40px;border-radius: 0px 0px 0px 0px;font-size: 14px;padding: 0;">
+						{{$t('supplier.AdvancelInfo')}}
+					</el-button>
+					</router-link>
+				</Col>
+				<Col :md="8">
+					<div  style="width: 99%;height:40px;border-radius: 0px 8px 8px 0px;background-color:#76C6F3;color:white;padding-top: 10px;font-size: 14px;">
+						<center>{{$t('supplier.RiskManage')}}</center>
+					</div>
+				</Col>
+			</Col>
+			<Col :md="8">
+				<div style="height: 1px;"></div>
+			</Col>
+		</div>
+		
+		<div style="height: 40px;">
+			<div style="float:right"> 
+            	<el-tag color="white" style="font-size: 16px;width: 160px;padding-left: 20px;">
+          		{{$t('product.RiskLevel')}}：{{supplierData.bsRiskLevel+'&nbsp级'}}
+        		</el-tag>         
+      			<el-button type="success" @click="pushToInputInformation('riskManagement/inputInformation')" style="padding: 8px 20px;margin-left: 10px;">
+        			<i class="el-icon-edit-outline"></i>&nbsp;&nbsp;{{$t('product.InputInformation')}}
+      			</el-button>
+      		</div>
+		</div>
+    <!--
+    	作者：offline
+    	时间：2018-04-25
+    	描述：供应商风险评分记录
+    -->  
+    	<Row :style="{marginBottom: '20px'}">
+    		<Card>
+				<p slot="title">
+                    <Icon type="social-buffer" style="color: #ff9900;"></Icon>
+                    &nbsp;供应商风险评分记录
+               	</p>
+               	<div slot="extra" @click="toInstructions('riskManagement/instructions')">
+                    <Tooltip content="点击进入风险管理说明" placement="bottom-end">                   
+					    <Icon type="information-circled" style="font-size: 25px"></Icon>
+                    </Tooltip>	
+     			</div>
+      	
+      		<div style="background-color: white;">
+      			<el-table :data="supplierrisk"  style="width: 100%;">
+      				<el-table-column prop="bsRiskLevel" label="风险等级">
+		    		</el-table-column>
+		    		<el-table-column :label="$t('product.EvaluateTime')">
+		    			<template scope="scope">
+							<span>{{scope.row.bsCreatedTime.substring(0,7)}}</span>
+						</template>
+		    		</el-table-column>
+		    		<el-table-column prop="bsFeedbackType" label="客诉">
+		    		</el-table-column>
+		    		<el-table-column prop="bsPpmType" label="PPM">
+		    		</el-table-column>
+		    		<el-table-column prop="bsDeliveryType" label="交货达成">
+		    		</el-table-column>
+		    		<el-table-column prop="bsInspectValue" label="验货不合格次数">
+		    		</el-table-column>
+		    		<el-table-column prop="bsPaymentType" label="付款期">
+		    		</el-table-column>
+		    		<el-table-column prop="" label="关键工序SPC制程控制能力监控">
+		    		</el-table-column>
+		    		<el-table-column prop="bsDangerProCount" label="高风险产品">
+		    		</el-table-column>
+		    		<el-table-column prop="bsApproveType" label="体系审核">
+		    		</el-table-column>
+		    		<el-table-column prop="bsEhsType" label="EHS不符合性">
+		    		</el-table-column>
+		    		<el-table-column prop="bsBusinessScore" label="商务总评">
+		    		</el-table-column>
+		    		<el-table-column prop="bsRiskScore" label="风险得分">
+		    		</el-table-column>		    		
+   				</el-table>	
+      		</div>
+      		</Card>
+      	</Row>
+    <!--
+    	作者：offline
+    	时间：2018-04-25
+    	描述：PPM,验货不合格次数,CPK
+    -->  	
+      	<Row :gutter="10">
+      		<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+      			<Card>
+				<p slot="title">
+                    <Icon type="podium" style="color: #ff9900;"></Icon>
+                    &nbsp;PPM数据图表
+               	</p>
+				
+				<div style="height: 250px;">
+					<ppmChart :values="ppmValues" :labels="createdTimes"></ppmChart>
+				</div>
+				</Card>
+      		</Col>
+      		<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+      			<Card>
+				<p slot="title">
+                    <Icon type="podium" style="color: #ff9900;"></Icon>
+                    &nbsp;验货不合格次数
+               	</p>
+				
+				<div style="height: 250px;">
+					<inspectValue :values="inspectValues" :labels="createdTimes"></inspectValue>
+				</div>
+				</Card>
+      		</Col> 
+      		<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+      			<Card>
+				<p slot="title">
+                    <Icon type="podium" style="color: #ff9900;"></Icon>
+                    &nbsp;关键工序SPC制程能力监控 CPK
+               	</p>
+				
+				<div style="height: 250px;">
+					<cpkChart :values="cpkValues" :labels="createdTimes"></cpkChart>
+				</div>
+				</Card>
+      		</Col>
+      	</Row>
+    <!--
+    	作者：offline
+    	时间：2018-04-25
+    	描述：高风险产品占比,风险评分
+    -->  	
+      	<Row :gutter="10">     		
+      		<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+      			<Card style="padding-top: 0px;">
+				<p slot="title">
+                    <Icon type="podium" style="color: #ff9900;"></Icon>
+                    &nbsp;高风险产品占比
+               	</p>
+				
+				<div style="height: 250px;">
+					<dangerProduct :values="dangerProducts" :labels="createdTimes"></dangerProduct>
+				</div>
+				</Card>
+      		</Col>
+      		<Col :md="24" :lg="16" :style="{marginBottom: '20px'}">
+      			<Card>
+				<p slot="title">
+                    <Icon type="ios-pulse-strong" style="color: #ff9900;"></Icon>
+                    &nbsp;风险评分
+               	</p>
+    
+				<div style="height:250px;">
+					<riskScore :values="riskScores" :labels="createdTimes"></riskScore>
+				</div>
+				</Card>
+      		</Col>
+      	</Row>
+    <!--
+    	作者：offline
+    	时间：2018-04-25
+    	描述：
+    -->       	
+      	<Row :style="{marginBottom: '20px'}">
+      		<Card>
+				<p slot="title">
+             		<Icon type="star" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.SupplierRisklevelmanagement')}}
+				</p>
+
+          	<!-- <div class="Radios">
+               <span>{{$t('product.RiskLevelManagementMode')}}：</span>
+            	<el-radio-group v-model="supplierData.bsRiskManual">
+            		<el-radio :label="0">系统模式</el-radio>
+            		<el-radio :label="1">手动模式</el-radio>
+          		</el-radio-group>
+          	</div> -->
+ 	    	
+       		<div class="boxs">             
+          		<ul class="Sysmessage">
+            		<li>
+              			<p>风险级别(系统分级)</p>
+              			<p class="RatingSystem">{{supplierData.bsRiskLevelSys+'&nbsp级'}}</p>
+            		</li>
+            		<li>
+                		<p>风险级别(手动分级)</p>
+                		<p class="ManualClassification">{{supplierData.bsRiskManual+'&nbsp级'}}</p>
+            		</li>    
+                <li>
+                    <p>风险等级管理模式</p>
+                    <p class="Pattern">{{$t('supplier.supplierRiskLevel['+supplierData.bsRiskManual+']')}}</p>
+                </li>        
+          		</ul>
+      		</div>
+            <div style="margin:25px 12px;">
+          <div>
+            <el-button type="primary" style="padding: 7px 5px;" @click="showChangeRiskGrade()">风险等级变更申请
+            </el-button>
+            <el-button type="primary" style="padding: 7px 5px;" @click="showApproved()">风险等级申请核准
+            </el-button>
+             <el-button type="primary" style="padding: 7px 5px;" @click="switchingMode()">切换手动 / 自动管理模式</el-button>
+            <el-button type="primary" style="padding: 7px 5px;" @click="showRecordOfChanges()">风险等级变更记录</el-button>
+           
+          </div>
+        </div>
+      		</Card>
+     	</Row>
+  
+    <!--  风险等级变更申请 -->
+    <Modal class="changeRiskGrade" v-model="changeRiskGrade2.modal_dialog" :title="$t('product.ChangeOfRiskLevel')"   :okText="$t('supplier.SubmitApplications')"  @on-ok="submitapplication" @on-cancel="cancel" >                
+           <el-form v-model="changeRiskGrade2.formItem">
+                 <el-input v-model="thesupplierrisk.bsRiskLevel" readonly style="width:38%">
+                 </el-input>
+            <Icon type="shuffle" style="font-size: 20px;padding:10px"></Icon>
+            <el-select v-model="changeRiskGrade2.formItem.bsRiskLevelUser">
+              <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
+              </el-option>
+            </el-select>                
+                                 
+                    <p class="mt10">{{$t('supplier.application')}}</p>
+                    <el-input type="textarea"  :autosize="{ minRows: 4, maxRows: 10}" style="width:80%" v-model="changeRiskGrade2.formItem.bsRiskDescUser">
+          </el-input>          
+                    <p style="Note">* 通过申请后,风险等级将使用手动管理模式</p>
+           </el-form>
+                         
+      </Modal>
+
+  <!--  风险等级变更申请核准  -->            
+        <Modal class="changeRiskGrade" v-model="applicationApproval.modal_dialog" :title="$t('supplier.ApplicationApproval')"   okText='通过' cancelText="拒绝"  @on-ok="ok" @on-cancel="cancel" >                
+           <el-form v-model="applicationApproval.formItem">
+                 <el-input v-model="thesupplierrisk.bsRiskLevel" readonly style="width:38%">
+                 </el-input>
+            <Icon type="shuffle" style="font-size: 20px;padding:10px"></Icon>
+                 <el-input v-model="changeRiskGrade2.formItem.bsRiskLevelUser" readonly style="width:38%">
+                 </el-input>         
+                                
+                    <p class="mt10">{{$t('supplier.application')}}</p>
+                    <el-input type="textarea"  :autosize="{ minRows: 4, maxRows: 10}" style="width:85%" v-model="changeRiskGrade2.formItem.bsRiskDescUser" readonly>
+          </el-input>          
+                    <p style="Note">* 通过申请后,风险等级将使用手动管理模式</p>
+           </el-form>
+                         
+      </Modal>
+<!--      风险等级变更记录 -->          
+            <Modal v-model="recordOfChanges.modal_dialog" :title="$t('supplier.RecordOfChangeOfRiskLevel')" @on-ok="" @on-cancel="cancel" :width="850" class="moderecord">
+                  <el-table :data="gridData">
+              <el-table-column align="center" property="bsOriginalRiskLevel" :label="$t('product.OriginalRiskLevel')" width="120"></el-table-column>
+              <el-table-column  align="center"  property="bsNewRiskLevel" :label="$t('product.NewRiskLevel')" width="120"></el-table-column>
+              <el-table-column  align="center" property="bsAdvice" :label="$t('product.ToApplyForAdvice')" width="120"></el-table-column>
+              <el-table-column align="center"  property="applyBy.bsName" :label="$t('product.proposer')" width="120"></el-table-column>
+              <el-table-column align="center"  property="approvedBy.bsName" :label="$t('product.approver')" width="120"></el-table-column>
+              <el-table-column align="center" property="bsCreatedTime" :label="$t('product.time')"></el-table-column>
+            </el-table>
+            </Modal>  
+<!--  Modal end  -->   
+	</div>	
+	<div v-else-if="showRooterView">
+        <router-view></router-view>
+    </div>
+</template>
+
+<script>
+	import ppmChart from './components/ppmChart.vue';
+	import inspectValue from './components/inspectValue.vue';
+	import cpkChart from './components/cpkChart.vue';
+	import dangerProduct from './components/dangerProduct.vue';
+	import riskScore from './components/riskScore.vue';
+	import {mapState} from 'vuex'
+	export default {
+	components: {          
+        ppmChart,
+        inspectValue,
+        cpkChart,
+        dangerProduct,
+        riskScore,
+    },
+    data() {
+      return {
+      	ppmValues: [],
+      	createdTimes: [],
+      	inspectValues:[],
+      	cpkValues:[],
+      	dangerProducts:[],
+      	riskScores:[],
+      	textarea:'',
+      	showRooterView: false,
+      	changeRiskGrade: false,      	
+      	recordOfChanges: [],
+      	radio:1,
+      	supplierData: {},
+      	supplierrisk:[],
+      	thesupplierrisk:{},
+        changeRiskGrade2: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: {                  
+                   /* bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ],*/                   
+                }
+            },
+        applicationApproval:{
+            modal_dialog: false,
+                formItem: {
+                }
+              
+        },
+        recordOfChanges:{
+            modal_dialog: false,
+                formItem: {
+                }
+              
+        },
+      	gridData:[],
+        options: [{
+          value: 1,
+          label: '一级'
+        }, {
+          value: 2,
+          label: '二级'
+        }, {
+          value: 3,
+          label: '三级'
+        }, {
+          value: 4,
+          label: '四级'
+        }, {
+          value: 5,
+          label: '五级'
+        }],
+      }
+    },
+    created(){
+        this.supplierData = this.$store.getters.getSupplierData;
+        
+		this.showRooterView = this.$route.matched.length>3;
+		this.getData();
+    
+    },
+    watch: {
+        '$route' (to, from) {
+            this.showRooterView = to.matched.length>3;
+        }
+    },
+    methods:{
+        getData(){
+            if(this.$route.query.id != undefined) {
+                this.api.supplierinfo.getlist({id:this.$route.query.id}).then((res)=>{
+                    
+                    this.supplierData = res.data.rows[0];                                       
+                    this.$store.commit("updateSupplierDataStates",res.data.rows[0]);
+                    this.getRiskData();
+                });
+            }
+            else {
+                this.getRiskData();
+            }
+
+        },
+    	getRiskData(){
+    		this.api.supplierrisk.getlist({bsSuppId:this.supplierData.id}).then((res) => {                
+                this.thesupplierrisk = res.data.rows[0];                
+      			     this.supplierrisk = res.data.rows;   
+
+      			for(var i = 0; i < this.supplierrisk.length;i++) {
+      				this.ppmValues.push(this.supplierrisk[i].bsPpmValue);
+      				this.createdTimes.push(this.supplierrisk[i].bsCreatedTime);
+      				this.inspectValues.push(this.supplierrisk[i].bsInspectValue);
+      				this.cpkValues.push(this.supplierrisk[i].bsCpkValue);
+      				this.dangerProducts.push(this.supplierrisk[i].bsDangerProCount);
+      				this.riskScores.push(this.supplierrisk[i].bsRiskScore);
+      			}
+            });
+    	},
+    	pushToInputInformation(url){
+        	this.$router.push({path:url});
+        	this.$store.commit("updateSupplierDataStates",this.supplierData);
+      	},
+      	toInstructions(url){
+        	this.$router.push({path:url});
+      	},
+      	showChangeRiskGrade(){
+    		this.changeRiskGrade2.modal_dialog=true;
+    	},
+    	
+      	submitapplication(){         
+         var parm={
+            id:this.supplierData.id,
+            bsRiskLevelUser:this.changeRiskGrade2.formItem.bsRiskLevelUser
+            
+         }
+      		this.api.supplierinfo.applyRiskLevel(parm).then((res) => {            
+            if(res.result) { 
+                  this.$Message.info('手动调整风险等级申请成功！', 10);
+              }else {
+                  this.$Message.error(res.msg);
+             }
+          });
+      	},
+        showApproved(){
+            this.applicationApproval.modal_dialog=true;
+        },
+
+
+      	cancel(){
+      		
+      	},
+        ok(){
+          var parm={
+            id:this.supplierData.id,
+            bsRiskLevelUser:this.changeRiskGrade2.formItem.bsRiskLevelUser            
+            
+         }
+
+          this.api.supplierinfo.completeRiskLevel(parm).then((res) => {            
+            if(res.result) {
+                  this.thesupplierrisk.bsRiskLevel=this.changeRiskGrade2.formItem.bsRiskLevelUser; 
+                  this.supplierData.bsRiskManual=1;
+                  this.$Message.info('准核通过！', 10);
+              }else {
+                  this.$Message.error(res.msg);
+             }
+          });
+        },
+        switchingMode(){
+          var parm={
+            id:this.supplierData.id,
+            bsRiskManual:this.supplierData.bsRiskManual
+          }                 
+
+            this.api.supplierinfo.autoRiskLevel(parm).then((res) => {
+               if(res.result) {                
+                 this.supplierData.bsRiskManual=this.supplierData.bsRiskManual?0:1;
+              }          
+              
+          })
+        },
+        showRecordOfChanges(){
+          
+             var parm={
+            bsType:12,
+            bsPrSuppId:this.supplierData.id,
+          }                 
+
+            this.api.risklevelrecord.getlist(parm).then((res) => {
+               if(res.result) {             
+                    
+                  this.gridData= res.data.rows; 
+
+              }         
+            
+          })            
+            this.recordOfChanges.modal_dialog = true;
+        },
+    
+    }
+  }
+</script>
+
+<style>
+ @import '../../../../styles/riskManagement.css';
+</style>

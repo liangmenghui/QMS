@@ -1,0 +1,27 @@
+import httpService from '@/libs/service'
+
+export default {
+	add: function (data) {
+        return httpService.post('/supplierInfo/add', data)
+    },
+    delete: function (data) {
+        return httpService.post('/supplierInfo/delete', data)
+    },
+    edit: function (data) {
+        return httpService.post('/supplierInfo/edit', data)
+    },
+    getlist: function (data) {
+        return httpService.get('/supplierInfo/getlist', data)
+    },
+    applyRiskLevel :function(data) {
+        return httpService.post('/supplierInfo/applyRiskLevel', data)
+    },
+    completeRiskLevel :function(data) {
+        return httpService.post('/supplierInfo/completeRiskLevel ', data)
+    },
+    autoRiskLevel :function(data) {
+        return httpService.post('/supplierInfo/autoRiskLevel ', data)
+    }
+
+}
+

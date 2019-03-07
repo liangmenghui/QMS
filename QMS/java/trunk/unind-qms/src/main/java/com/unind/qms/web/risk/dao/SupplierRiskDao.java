@@ -1,0 +1,19 @@
+package com.unind.qms.web.risk.dao;
+
+import com.unind.qms.web.risk.entity.SupplierRisk;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+/**
+ * @author Shen
+ */
+public interface SupplierRiskDao extends CrudRepository<SupplierRisk, Long>, JpaSpecificationExecutor<SupplierRisk> {
+
+    public List<SupplierRisk> findByBsIsDel(Integer bsIsDel);
+
+    public List<SupplierRisk> findByBsIsDelAndBsSuppIdOrderByBsCreatedTimeDesc(Integer bsIsDel, Long bsSuppId);
+
+    public int countByBsSuppId(Long bsSuppId);
+}

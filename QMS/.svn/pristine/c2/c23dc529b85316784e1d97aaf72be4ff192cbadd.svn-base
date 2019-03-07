@@ -1,0 +1,231 @@
+<template>
+    <div>
+        <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                    <Form-item prop="itemNum">
+                        <Input type="text" v-model="formQuery.itemNum" placeholder="物料编码" />
+                    </Form-item>
+                    <Form-item prop="customerItemNum">
+                        <Input type="text" v-model="formQuery.customerItemNum" placeholder="客户部件" />
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="handleSubmit('formQuery')">查 询</Button>
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="runErpPoPlan()">需求拉取</Button>
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="runCabinetsPlan()">自动拼柜</Button>
+                    </Form-item>
+                </Form>
+            </i-col>
+        </Row>
+        <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe height="700"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" @on-page-size-change="changePageSize" show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+        </i-col>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            formQuery: {
+                itemNum: '',
+                customerItemNum: ''
+            },
+            dialog: {
+                modal_dialog: false,
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:25,
+                },
+                pagination: [25, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title: '物料编码',
+                        key: 'itemNum'
+                    },
+                    {
+                        title: '物料描述',
+                        key: 'itemDesc'
+                    },
+                    {
+                        title: '客户部件',
+                        key: 'customerItemNum'
+                    },
+                    {
+                        title: '客户编码',
+                        key: 'customerNum'
+                    },
+                    {
+                        title: '运输周期',
+                        key: 'pTime'
+                    },
+                    {
+                        title: '需求日期',
+                        key: 'tDate'
+                    },
+                    {
+                        title: '星期',
+                        key: 'week',
+                        render: (h, params) => {
+                            if(params.row.week==0) {
+                                return h('span', '星期日');
+                            }else if(params.row.week==1) {
+                                return h('span', '星期一');
+                            }else if(params.row.week==2) {
+                                return h('span', '星期二');
+                            }else if(params.row.week==3) {
+                                return h('span', '星期三');
+                            }else if(params.row.week==4) {
+                                return h('span', '星期四');
+                            }else if(params.row.week==5) {
+                                return h('span', '星期五');
+                            }else if(params.row.week==6) {
+                                return h('span', '星期六');
+                            }else {
+                                return h('span', 'Unknown');
+                            }
+                        }
+                    },
+                    {
+                        title: '客户需求',
+                        key: 'qtyX'
+                    },
+                    {
+                        title: '发货日期',
+                        key: 'sDate'
+                    },
+                    {
+                        title: '发货柜号',
+                        key: 'packNo'
+                    },
+                    {
+                        title: '待入库',
+                        key: 'qtyY'
+                    },
+                    {
+                        title: '预计库存',
+                        key: 'qtyM'
+                    },
+                    {
+                        title: 'PO发放数',
+                        key: 'qtyMrp'
+                    },
+                    {
+                        title: 'PR建议数',
+                        key: 'qtyPr'
+                    }
+                ]
+            },
+        }
+    },
+    created(){
+        this.getData();
+    },
+    methods: {
+        handleSubmit(name) {
+            this.getData();
+        },
+        getData() {
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+            // console.log("after===>");
+            // console.log(this.formQuery);
+            this.api.pmp.getlist(this.formQuery).then((res) => {
+                // console.log("get list===>");
+                // console.log(res.data);
+                if(res.result) {
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        reloadData() {
+            this.datagrid.data = this.getData();
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.datagrid.data = this.getData();
+        },
+        changePageSize (pageSize){
+            this.datagrid.queryParams.rows = pageSize;
+            this.datagrid.data = this.getData();
+        },
+        runCabinetsPlan(){
+            this.$Spin.show({
+                render: (h) => {
+                    return h('div', [
+                        h('Icon', {
+                            'class': 'demo-spin-icon-load',
+                            props: {
+                                type: 'load-c',
+                                size: 18
+                            }
+                        }),
+                        h('div', 'Loading')
+                    ])
+                }
+            });
+            this.api.pmp.runCabinetsPlan().then((res) => {
+                if(res.result) {
+                    setTimeout(() => {
+                        this.$Spin.hide();
+                    }, 1000);
+                    this.$Message.success({
+                        content: '自动拼柜成功，可以在拼柜结果中查看!',
+                        duration: 10,
+                        closable: true
+                    });
+                }else {
+                    setTimeout(() => {
+                        this.$Spin.hide();
+                    }, 1000);
+                }
+            });
+        },
+        runErpPoPlan(){
+            this.$Spin.show({
+                render: (h) => {
+                    return h('div', [
+                        h('Icon', {
+                            'class': 'demo-spin-icon-load',
+                            props: {
+                                type: 'load-c',
+                                size: 18
+                            }
+                        }),
+                        h('div', 'Loading')
+                    ])
+                }
+            });
+            this.api.pmp.runErpPoPlan().then((res) =>{
+                if(res.result){
+                    setTimeout(() => {
+                        this.$Spin.hide();
+                    }, 1000);
+                    this.$Message.success({
+                        content: '拉取客户需求成功!',
+                        duration: 10,
+                        closable: true
+                    });
+                    this.datagrid.data = this.getData();
+                }else{
+                    setTimeout(() => {
+                        this.$Spin.hide();
+                    }, 1000);
+                }
+            });
+        }
+    }
+}
+</script>

@@ -1,0 +1,293 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：产品质量审核报告
+    -->
+	<div class="productqualityapproved">
+		<Row :style="{marginBottom: '20px'}">
+			<center><h4 style="font-size: 16px;">产品质量审核报告</h4></center>
+		</Row>
+		<Row :style="{marginBottom: '20px'}">
+			<Card>
+				<p slot="title">
+                    <Icon type="cube" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.ProductInformation')}}
+               	</p>			
+				<el-tag slot="extra" v-if="!perms.edit" color="white" style="font-size: 14px;">
+					{{$t('approved.statusLabel')}}: {{$t('approved.status['+approvedItemRecord.bsStatus+']')}}
+				</el-tag>
+		
+        <div id="top2">
+      		<div class="top2-div">
+				<div class="top2-text">{{$t('product.name')}}：</div>
+				<div class="top2-input"><el-input v-model='productInfo.bsPrName' readonly></el-input></div>
+			</div>
+			<div class="top2-div">
+				<div class="top2-text">{{$t('product.code')}}：</div>
+				<div class="top2-input"><el-input v-model='productInfo.bsPrCode' readonly>{{productInfo.bsPrCode}}</el-input></div>
+			</div>
+			<div class="top2-div">
+				<div class="top2-text">{{$t('approved.SamplingDate')}}：</div>
+				<div class="top2-input"><el-input v-model="qualityInspectData.bsSamplingDate"></el-input></div>
+			</div>
+			<div class="top2-div">
+				<div class="top2-text">{{$t('approved.SamplingLocations')}}：</div>
+				<div class="top2-input"><el-input v-model="qualityInspectData.bsSamplingPlace"></el-input></div>
+			</div>
+			<div class="top2-div">
+				<div class="top2-text">{{$t('approved.DateInProduced')}}：</div>
+				<div class="top2-input"><el-input v-model="qualityInspectData.bsProductDate"></el-input></div>
+			</div>
+      	</div>
+      		</Card>
+      	</Row>
+      	
+      	<Row :style="{marginBottom: '20px'}">
+      		<Card>
+      			<p slot="title">
+                    <Icon type="ios-browsers" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.SampleInformation')}}
+               	</p>
+               	<!--<div slot="extra" style="margin-top: -9px;">
+               		<p style="display: inline-block;">{{$t('sample.Set')}}：</p>										
+
+					<el-form style="display: inline-block;" :ref="sampleInfo" :model="sampleInfo" label-width="80">
+                    	<el-select v-model="sampleInfo" value-key="id" style="width: 100%;">
+                        	<el-option v-for="item in sampleInfoRows" :key="item.id" :label="item.bsName" :value="item"  >
+                        	</el-option>
+                    	</el-select>
+               		</el-form>               
+				
+					<el-button type="primary" @click="addSampleRegularData()" style="display: inline-block;padding: 10px 20px;margin-top: 2px;" v-bind:disabled="sampleInfo.bsName==undefined">
+						<i class="el-icon-plus"></i>&nbsp;&nbsp;{{$t('approved.AddSample')}}
+					</el-button>
+				</div>-->
+		
+        <div id="sampletable" v-if="sampleRegularRows!=undefined">
+            <template>
+                <Row type="flex">
+                    <Col span="2"></Col>
+                    <Col span="22">
+                    	<Col span="2" style="font-size: 14px;text-align: center;" v-for="record in sampleRegularRecordData" :key="record.id">
+                    		样品{{sampleRegularRecordData.indexOf(record)+1}}
+                    	</Col>
+                    </Col>
+                </Row>
+                <Row type = "flex" style="height: 50px;" v-for="item in sampleRegularRows" :key="item.id">
+                    <Col span="2" style="margin-top:25px;font-size: 14px;text-align: center;">{{item.bsName}}</Col>
+                    <Col span="22">
+                    	<Col span="2" v-for="record in sampleRegularRecordData" :key="record.id">
+                    		<input style="width:80%;height:30px;margin-top:20px;text-align:center;margin-left:10%;border: none;border-bottom: 1px solid #DDDDDD;"
+                    		></input>
+                    	</Col>
+                    </Col>
+                </Row>
+            </template>
+        </div>
+        	</Card>
+        </Row>    
+                
+        <approvedResultRecord :approvedData="approvedItemRecord"></approvedResultRecord>
+        <div id="bottom" v-if="perms.edit">
+            <ApprovedAction type="quality" :data="qualityInspectData" :approvedItemRecord="approvedItemRecord"></ApprovedAction>
+        </div>
+
+        
+        <!--<Modal v-model="showSampleRegularInputerModal" :title="sampleInfo.bsName" @on-ok="sampleRegularInputerOK" @on-cancel="sampleRegularInputerCancel" width="500">
+            <el-table :data="sampleRegularRows" style="width: 100%">
+                <el-table-column :label="$t('approved.specification')" prop="bsName" width="80">
+                </el-table-column>
+                <el-table-column :label="$t('approved.tool')" prop="bsTool" width="80">
+                </el-table-column>
+                <el-table-column :label="$t('sample.Unit')" prop="bsUnit" width="60">
+                </el-table-column>
+                <el-table-column :label="$t('approved.MeasuredValue')" prop="bsMeasureResult" width="110">
+                    <template slot-scope="scope">
+                        <el-input v-model="scope.row.bsMeasureResult" style="width: 80px;"></el-input>
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('approved.Result')" prop="bsRemark" width="130">
+                    <template slot-scope="scope">
+                        <el-select v-model="scope.row.bsRemark" style="width: 100px;"></el-input>
+                        	<el-option :label="$t('approved.qualified')" :value="1"></el-option>
+                        	<el-option :label="$t('approved.unqualified')" :value="2"></el-option>
+                        </el-select>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </Modal>-->
+    </div>
+</template>
+
+
+<script>
+import Cookies from 'js-cookie';
+import ApprovedAction from '../../components/approvedAction.vue';
+import approvedResultRecord from '../../components/approvedResultRecord.vue';
+export default {
+    components: {     
+        ApprovedAction,
+        approvedResultRecord
+    },
+    data() {
+        return {
+            showSampleInfoSelectorModal: false,
+            showSampleRegularInputerModal: false,
+            sampleInfoRows:[],
+            sampleRegularRows:[],
+            sampleRegularRecordData:[1,2,3,4,5,6,7,8,9,10],
+
+            qualityInspectData : {}, 
+            productInfo:{},
+            sampleInfo: {},
+            approvedItemRecord :{},
+            perms:{}
+        }
+    },
+      created(){
+//          this.getSampleInfoData();
+//          this.getInspectData();
+            this.productInfo = this.$store.getters.getProductData;
+            this.getSampleRegularData({bsPrId:this.productInfo.id});
+            this.approvedItemRecord = this.$store.getters.getItemRecordData;
+            this.perms.edit = 
+                (this.approvedItemRecord.users.includes(Cookies.get('user'))||
+                    this.$Util.hasPerm('EDIT')) && this.approvedItemRecord.bsStatus == 1;
+      },
+    methods: {
+//    getInspectData(){
+//          var params = {
+//                bsPrId: this.$store.getters.getProductData.id,
+//                bsFlowRecordId: this.$route.query.bsFlowRecordId,
+//          };
+//          this.api.qualityInspect.getlist(params).then((res) => {
+//                if(res.data.rows.length) {
+//                      this.qualityInspectData=res.data.rows[0];
+//                      if(this.qualityInspectData.bsSampleId != undefined) {
+//                            this.getSampleRegularData({bsSampleId:this.qualityInspectData.bsSampleId});
+//                            this.getSampleInfoDataById({id:this.qualityInspectData.bsSampleId});
+//                      }
+//                      this.getSampleRecordsData();
+//                }
+//                else 
+//                      this.addInspect();
+//
+//          });
+//    },
+//    getSampleInfoData(){
+//          this.api.sampleinfo.getlist().then((res) => {
+//                this.sampleInfoRows=res.data.rows;
+//          });
+//    },
+//    getSampleInfoDataById(params){
+//          this.api.sampleinfo.getlist(params).then((res) => {
+//                this.sampleInfo=res.data.rows[0];
+//          });
+//    },
+      getSampleRegularData(params){   
+            this.api.sampleRegular.getlist(params).then((res) => {
+                  this.sampleRegularRows=res.data.rows.map(function(row){
+                        return row;
+                  });
+            });
+      },
+//    getSampleRecordsData(){
+//          this.api.sampleinfo.getrecords({bsQualityId:this.qualityInspectData.id}).then((res) => {
+//                this.sampleRegularRecordData = res.data.rows.reverse().map(function (row) {
+//                      return row.recordSet;
+//                });
+//          });
+//    },
+//      showSampleInfoSelector() {       
+//          this.showSampleInfoSelectorModal = true; 
+//      },
+        addSampleRegularData() {        	
+            this.sampleRegularRows = this.sampleRegularRows.map(function (regular) {
+                  return {
+                        bsMeasureResult: '',
+                        bsRemark: '',
+                        bsName: regular.bsName,
+                        bsTool: regular.bsTool,
+                        bsUnit: regular.bsUnit,
+                        bsSampleRegularId: regular.id,
+                  };
+            });
+            this.showSampleRegularInputerModal = true; 
+        },
+//      sampleInfoSelectorOK () {  
+//          this.getSampleRegularData({bsSampleId:this.sampleInfo.id});  
+//      },
+//      sampleRegularInputerOK () {
+//          var regularRecordData = this.sampleRegularRows.map(function (modalData) {
+//                      var result = {
+//                            bsMeasureResult: modalData.bsMeasureResult,
+//                            bsRemark: modalData.bsRemark,
+//                            bsSampleRegularId: modalData.bsSampleRegularId,
+//                      };
+//                      if(modalData.id) result.id = modalData.id;
+//                      return result;
+//                });
+//          var params = {};
+//          params.bsSampleId = this.sampleInfo.id;
+//          params.bsQualityId = this.qualityInspectData.id;
+//          params.sampleRegularRecordStr = JSON.stringify(regularRecordData);
+//          this.api.sampleRegular.addRecord(params).then((res) => {
+//                this.sampleRegularRecordData.push(res.data);
+//          });
+//      },
+//      sampleRegularInputerCancel () {
+//          
+//      },
+//      addInspect(){
+//          var params = {
+//                bsPrId: this.$store.getters.getProductData.id,
+//                bsFlowRecordId: this.$route.query.bsFlowRecordId,
+//          };
+//          this.api.qualityInspect.add(params).then((res) => {
+//                this.qualityInspectData=res.data;
+//          });
+//      },
+        downloadFile(){  
+            var params = {
+                fsFileId:this.approvedItemRecord.fileSet[0].fsFileId
+            };
+            this.api.fileQms.getfile(params).then((link) => {
+                link.click(); 
+            });
+        } 
+    }
+}
+</script>
+
+<style>
+	.productqualityapproved #top2:after{
+		content:".";
+		visibility:hidden;
+		display:block; 
+		clear:both;
+	}
+	.productqualityapproved .top2-div{
+		float: left;height: 50px;
+	}
+	.productqualityapproved .top2-text{
+		float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;
+	}
+	.productqualityapproved .top2-input{
+		float: left;
+	}
+	.productqualityapproved .top2-input .el-input{
+		width: 300px;
+	}
+	.productqualityapproved #sampletable{
+		background-color: white;padding-top: 20px;padding-bottom: 20px;
+		padding-left: 5%;padding-right: 5%;
+	}
+	.productqualityapproved hr{
+		width:100%;border: none;height: 1px;background-color: #BBD7E7;margin-top: 20px;margin-bottom: 20px;
+	}
+	.productqualityapproved #bottom{
+		height:150px;margin-top: 20px;margin-bottom: 20px;background-color: white;
+		padding-top: 50px;padding-left: 5%;
+	}
+</style>

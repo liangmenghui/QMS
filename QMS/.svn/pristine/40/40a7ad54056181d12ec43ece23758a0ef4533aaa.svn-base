@@ -1,0 +1,195 @@
+<template>
+	<div class="upcbox">
+    <el-row :gutter="24">
+        <el-col :span="8">
+            <el-card class="box-card">
+       <div slot="header" class="clearfix">
+        <span class="title"><i class="el-icon-message"></i>{{$t('Dashboard.SystemInformation')}}</span>  
+              
+      </div>
+      <div>
+          <ul class="Sysmessage">
+            <li>
+              <p>{{$t('upcoming.SuppliersN')}}</p>
+              <p class="supplier_data">{{supplier_data}}</p>
+            </li>
+            <li>
+                <p class="">{{$t('approved.ProductQuantity')}}：</p>
+                <p class="product_data">{{product_data}}</p>
+            </li>            
+          </ul>
+
+      </div>
+    </el-card>
+        </el-col>
+         <el-col :span="8">
+            <el-card class="box-card">
+       <div slot="header" class="clearfix">
+        <span class="title"><i class="el-icon-message"></i>{{$t('Dashboard.SystemInformation')}}</span>  
+              
+      </div>
+      <div>
+          <ul class="Sysmessage">
+            <li>
+              <p>{{$t('upcoming.SuppliersN')}}</p>
+              <p class="supplier_data">{{supplier_data}}</p>
+            </li>
+            <li>
+                <p class="">{{$t('approved.ProductQuantity')}}：</p>
+                <p class="product_data">{{product_data}}</p>
+            </li>            
+          </ul>
+          
+      </div>
+    </el-card>
+        </el-col>
+         <el-col :span="8">
+            <el-card class="box-card">
+       <div slot="header" class="clearfix">
+        <span class="title"><i class="el-icon-message"></i>{{$t('Dashboard.SystemInformation')}}</span>  
+              
+      </div>
+      <div>
+          <ul class="Sysmessage">
+            <li>
+              <p>{{$t('upcoming.SuppliersN')}}</p>
+              <p class="supplier_data">{{supplier_data}}</p>
+            </li>
+            <li>
+                <p class="">{{$t('approved.ProductQuantity')}}：</p>
+                <p class="product_data">{{product_data}}</p>
+            </li>            
+          </ul>
+          
+      </div>
+    </el-card>
+        </el-col>
+    </el-row>
+		<el-card class="box-card">
+		  <div slot="header" class="clearfix">
+		    <span class="title"><i class="el-icon-bell"></i>{{$t('Dashboard.Todoitems')}}</span>
+		    <el-button style="float: right; padding: 3px 0" type="text">{{$t('Dashboard.SeeMore')}}>></el-button>
+		  </div>
+		  <todoinfo></todoinfo>
+		</el-card>
+
+    <el-card class="box-card">
+      <div slot="header" class="clearfix">
+     <span class="title">  <Icon type="chatbox-working"></Icon>{{$t('left-menu.Feedback')}}</span>
+        <el-button style="float: right; padding: 3px 0" type="text">{{$t('Dashboard.SeeMore')}}>></el-button>
+      </div>
+    <!--   <addH></addH> -->
+     <!--  <feedbackList></feedbackList> -->
+   </el-card>
+   
+
+     
+	</div>
+</template>
+
+<script>
+
+import FeedbackList from '../../components/feedbackList.vue';
+import Todoinfo from '../../components/todoinfo.vue';
+/*import addH from '../../components/addh.vue';*/
+
+	export default {
+    data() {
+      return {
+        supplier_data: 200,
+        product_data: 300,
+        showRooterView: false,
+        todoList:[]
+      }
+    },
+
+    methods: {
+    },
+    components: {          
+        FeedbackList,
+        Todoinfo
+         /* addH*/
+           // Dshcp
+        }
+}
+</script>
+
+<style lang='less'>
+div{margin:0; padding:0;}
+.upcbox{
+	.title{font-size:14px;color:#35464e;font-size:16px;font-family:"Microsoft YaHei";}
+	.text {
+    font-size: 14px;
+    font-family:"Microsoft YaHei";
+    cursor:pointer;
+
+  }
+  .item {
+    margin-bottom: 18px;
+    border-bottom:1px solid #ddd;
+   padding:5px 15px 15px;
+   position:relative;
+
+  }
+  .item:last-child{border-bottom:none;padding-bottom:0px;}
+  .clearfix:before,
+  .clearfix:after {
+    display: table;
+    content: "";
+  }
+  .clearfix:after {
+    clear: both
+  }
+  .mark{
+  	display: inline-block;
+    width: 12px;
+    height: 12px;
+    -webkit-border-radius: 50%;
+    border-radius: 50%;
+    border: 1px solid #FFC063;
+    background-color: #ffe6c1;
+    margin-right:10px;
+  }
+  .markOK{
+  	position:absolute;
+  	right:10px;
+  	top:0;
+  }
+  .upctime{margin:10px 20px 5px; color:14px; color:#777;  }
+
+.el-icon-bell,.el-icon-star-on,.ivu-icon-ios-people,.el-icon-message{color:#fd5822;font-size:24px;
+margin-right:10px;}
+
+.el-icon-star-on{color:#67c23a;font-size:20px;}
+.el-icon-message{font-size:20px;color:#ff7345;}
+.ivu-icon-chatbox-working,.ivu-icon-person-stalker,.ivu-icon-cube{
+  color:#fd5822;font-size:22px;margin-right:10px;
+}
+.ivu-icon-cube:before{color:green;}
+.ivu-icon-chatbox-working:before{color:5eb411;}
+.el-button.is-round {
+    border-radius: 20px;
+    padding: 5px 19px;
+}
+
+.Sysmessage{
+  width:100%;
+  height:60px;
+}
+.Sysmessage li{float:left;width:50%; text-align:center;}
+.Sysmessage li:nth-child(1){border-left:none;}
+.Sysmessage li p{line-height:35px;font-size:14px; color:#555;font-family:"Microsoft YaHei";margin-bottom:10px; position:relative;}
+
+.Sysmessage li p.supplier_data{font-size:25px; color:red;font-family:"Arial"}
+.Sysmessage li p.supplier_data:after{content:'';height:30px;display:inline-block;border-left:1px solid #ccc; position:absolute;right:0;top:-20px;}
+.Sysmessage li p.product_data{font-size:25px;color:#359ee8;font-family:"Arial"}
+
+.el-card{margin:10px 15px; }
+.plugins-tips{background: #eef1f6;padding:10px 20px; font-size:14px;}
+.mt15{margin-top:20px;}
+.el-card__header{padding:9px 20px;}
+
+
+}
+
+</style>

@@ -1,0 +1,24 @@
+ #documentbody .fl{width: 20%;float: left;margin-bottom: 12px;}
+#documentbody .fr{width: 50%;float: left;margin-bottom: 12px;}
+
+  .fileBtn{position: relative;margin-bottom: 10px;}
+    .el-upload-list__item {
+    margin-top: 10px;
+
+    padding: 10px;
+    border: 1px dashed #ccc;
+}
+.packinfo{font-size: 14px;font-family: "Microsoft YaHei";}
+.clearfix:after {
+   content:""; 
+   display: block; 
+   clear:both; 
+}
+.files {
+    margin-left:60px;
+    margin-top:10px;
+
+}
+.elinput .el-input{width: 35%;}
+.elinput .el-select{width:35%;margin-left: 15px;}
+.elinput .el-button.is-circle{padding:1px;margin-left:  10px}

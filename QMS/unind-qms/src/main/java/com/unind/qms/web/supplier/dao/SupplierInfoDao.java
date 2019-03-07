@@ -1,0 +1,55 @@
+package com.unind.qms.web.supplier.dao;
+
+import com.unind.qms.web.supplier.entity.SupplierInfo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+/**
+ * 
+ * @author chen
+ *
+ */
+public interface SupplierInfoDao extends CrudRepository<SupplierInfo, Long>, JpaSpecificationExecutor<SupplierInfo> {
+
+	public int countByBsSuppCode(String bsSuppCode);
+
+	public List<SupplierInfo> findByBsSuppCode(String bsSuppCode);
+
+	@Modifying
+	@Query(value = "select t.id from t_supplier_info t where t.bs_supp_chiese_name like '%'||?1||'%'",nativeQuery = true)
+	public List findByBsSuppChieseNameLike(String bsSuppChieseName);
+
+	@Modifying
+	@Query("update SupplierInfo t set t.bsSuppRecordId=?1,t.bsIsApprove='1' where t.id=?2")
+	public void updateBsSuppRecordIdById(Long bsSuppRecordId,Long id);
+
+	@Modifying
+	@Query("update SupplierInfo t set t.bsIsApprove='0' where t.id=?1")
+	public void updatebsIsApproveById(Long id);
+
+	@Modifying
+	@Query("update SupplierInfo t set t.bsSuppStatus=?2 where t.id=?1")
+	public void updatebsStatusById(Long id,String bsSuppStatus);
+
+	@Modifying
+	@Query("update SupplierInfo t set t.bsSuppGrade=?2 where t.bsLoginName=?1")
+	public void updateBsGradeByLoginName(String bsLoginName,String bsSuppGrade);
+
+	@Modifying
+	@Query("update SupplierInfo t set t.bsSuppStatus=?2,t.bsSuppGrade=?3 where t.bsLoginName=?1")
+	public void updateBsStatusAndBsGradeByLoginName(String bsLoginName,String bsSuppStatus, String bsSuppGrade);
+
+//	@Query(value = "SELECT a.* FROM t_supplier_info a LEFT JOIN t_approved_items_record b ON b.bs_supp_id = a.id " +
+//			"LEFT JOIN t_approved_items c ON c.id = b.bs_items_id " +
+//			"WHERE c.bs_type = '22' and b.bs_priority = '1' and b.bs_status = '1'",
+//			countQuery = "SELECT COUNT(*) FROM t_supplier_info a LEFT JOIN t_approved_items_record b ON b.bs_supp_id = a.id " +
+//					"LEFT JOIN t_approved_items c ON c.id = b.bs_items_id " +
+//					"WHERE c.bs_type = '22' and b.bs_priority = '1' and b.bs_status = '1'", nativeQuery = true)
+//	public Page<SupplierInfo> getSrmReview1(Pageable pageable);
+}

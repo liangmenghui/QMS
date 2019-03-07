@@ -1,0 +1,242 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：供应商基本信息
+    -->
+	<div class="supplierbasicinfo">
+		<!--
+        	作者：offline
+        	时间：2018-03-28
+        	描述：top
+        -->
+		<div style="height: 50px;">
+			<Col :md="8">
+				<div style="height: 1px;"></div>
+			</Col>
+			<Col :md="8">
+				<Col :md="8">
+					<div  style="width: 99%;height:40px;border-radius: 8px 0px 0px 8px;background-color:#76C6F3;color:white;padding-top: 10px;font-size: 14px;">
+						<center>{{$t('supplier.BasicInfo')}}</center>
+					</div>
+				</Col>
+				<Col :md="8">
+					<router-link :to="{path: 'advanceInfo'}">
+					<el-button type="primary" style="width: 99%;border-radius: 0px 0px 0px 0px;height:40px;font-size: 14px;padding: 0;">
+						{{$t('supplier.AdvancelInfo')}}
+					</el-button>
+					</router-link>
+				</Col>
+				<Col :md="8">
+					<router-link :to="{path: 'riskManagement'}">
+					<el-button type="primary" style="width: 99%;height:40px;border-radius: 0px 8px 8px 0px;font-size: 14px;padding: 0;">
+						{{$t('supplier.RiskManage')}}
+					</el-button>
+					</router-link>
+				</Col>
+			</Col>
+			<Col :md="8">
+				<div style="height: 1px;"></div>
+			</Col>
+		</div>
+		
+		<!--
+        	作者：offline
+        	时间：2018-03-28
+        	描述：供应商基本信息
+        -->
+        <Row :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="ios-folder" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.Supplier-BasicInfo')}}
+               	</p>
+               	<div slot="extra" style="margin-top: -5px;">			
+				<el-tag color="white" style="font-size: 14px;">
+					{{$t('supplier.SuppApprovedStatus')}}：{{$t('supplier.appvrodStatus['+suppInfo.bsIsApprove+']')}}
+				</el-tag>
+				</div>		
+		
+		<div id="basicinfo-body">
+			<div class="basicinfo-body-div">
+				<div class="basicinfo-body-text">{{$t('supplier.code')}}：</div>
+				<div class="basicinfo-body-input">
+					<el-input readonly v-model="suppInfo.bsSuppCode"></el-input>
+				</div>
+			</div>
+			<div class="basicinfo-body-div fl">
+				<div class="basicinfo-body-text">{{$t('supplier.ChieseName')}}：</div>
+				<div class="basicinfo-body-input">
+					<el-input readonly v-model="suppInfo.bsSuppChieseName"></el-input>
+				</div>
+			</div>
+			<div class="basicinfo-body-div">
+				<div class="basicinfo-body-text">{{$t('supplier.AliaName')}}：</div>
+				<div class="basicinfo-body-input">
+					<el-input readonly v-model="suppInfo.bsSuppAliaName"></el-input>
+				</div>
+			</div>
+			<div class="basicinfo-body-div fl">
+				<div class="basicinfo-body-text">{{$t('supplier.Address')}}：</div>
+				<div class="basicinfo-body-input">
+					<el-input readonly v-model="suppInfo.bsSuppAddress"></el-input>
+				</div>
+			</div>
+			<div class="basicinfo-body-div">
+				<div class="basicinfo-body-text">{{$t('supplier.SuppGrade')}}：</div>
+				<div class="basicinfo-body-input">
+					<el-input readonly v-model="suppInfo.bsSuppGrade"></el-input>
+				</div>
+			</div>
+			<div class="basicinfo-body-div fl">
+				<div class="basicinfo-body-text">{{$t('supplier.Type')}}：</div>
+				<div class="basicinfo-body-input">
+					<el-input readonly v-model="suppInfo.bsSuppType"></el-input>
+				</div>
+			</div>
+			<div class="basicinfo-body-div">
+				<div class="basicinfo-body-text">{{$t('supplier.RiskLevel')}}：</div>
+				<div class="basicinfo-body-input">
+					<el-input readonly v-model="suppInfo.bsRiskLevel"></el-input>
+				</div>
+			</div>
+		</div>
+			</Card>
+		</Row>
+		
+		<Row :gutter="10">
+			<!--
+            	作者：offline
+            	时间：2018-03-28
+            	描述：主要联系人
+           -->           
+			<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+				<Card>
+				<p slot="title">
+                    <Icon type="person" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.PrimaryContact')}}
+               	</p>
+				
+				<div class="Contact-body">
+					<div class="Contact-body-div">		
+						<div class="Contact-body-text">{{$t('supplier.ContactName')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppContactName}}</span>						
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Mobile')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppMobile}}</span>
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Position')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppPosition}}</span>
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Sex')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppSex}}</span>
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Email')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppEmail}}</span>
+					</div>
+				</div>
+				</Card>
+			</Col>
+			<!--
+            	作者：offline
+            	时间：2018-03-28
+            	描述：备用联系人
+            -->
+			<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+				<Card>
+				<p slot="title">
+                    <Icon type="person" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.SpareContact')}}
+               	</p>
+				
+				<div class="Contact-body">
+					<div class="Contact-body-div">		
+						<div class="Contact-body-text">{{$t('supplier.ContactName')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppContactName1}}</span>						
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Mobile')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppMobile1}}</span>
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Position')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppPosition1}}</span>
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Sex')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppSex1}}</span>
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Email')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppEmail1}}</span>
+					</div>
+				</div>
+				</Card>
+			</Col>
+			<!--
+            	作者：offline
+            	时间：2018-03-28
+            	描述：备用联系人2
+            -->
+			<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+				<Card>
+				<p slot="title">
+                    <Icon type="person" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.SpareContact2')}}
+               	</p>
+				
+				<div class="Contact-body">
+					<div class="Contact-body-div">		
+						<div class="Contact-body-text">{{$t('supplier.ContactName')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppContactName2}}</span>						
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Mobile')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppMobile2}}</span>
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Position')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppPosition2}}</span>
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Sex')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppSex2}}</span>
+					</div>
+					<div class="Contact-body-div">
+						<div class="Contact-body-text">{{$t('supplier.Email')}}：</div>
+						<span class="Contact-body-span">{{suppInfo.bsSuppEmail2}}</span>
+					</div>
+				</div>
+				</Card>
+			</Col>
+		</Row>
+		
+		
+	</div>
+</template>
+
+<script>
+	import {mapState} from 'vuex'
+	export default {
+    data() {
+      return {
+      	suppInfo: {},
+
+      }
+    },
+    created(){
+        this.suppInfo = this.$store.getters.getSupplierData;
+    },
+    methods:{
+    
+    }
+}
+</script>
+
+<style >  
+	  @import '~@/styles/supplier.css';
+</style>  

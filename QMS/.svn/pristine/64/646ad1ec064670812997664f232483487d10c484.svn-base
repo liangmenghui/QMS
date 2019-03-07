@@ -1,0 +1,145 @@
+<template>
+    <div class="wrap" style="background-image:url(../static/img/login1.jpg);background-repeat:no-repeat; background-size:cover; box-shadow: 10px 10px 5px #fff;" >
+        
+    
+    <div class="login-container">
+        <Form ref="form_login" :model="form_login" :rules="form_login_rule">
+            <h3 class="titles">金合联QMS平台系统登录</h3>
+            <Row>
+                <Col span="12">
+                    <Form-item prop="username">
+                        <Input v-model="form_login.username" placeholder="请输入用户名" size="large" style="width:280px">
+                        <Icon type="ios-person-outline" slot="prepend"></Icon>
+                        </Input>
+                    </Form-item>
+                </Col>
+            </Row>
+            <br/>
+            <Row>
+                <Col span="12">
+                    <Form-item prop="password">
+                        <Input type="password" v-model="form_login.password" placeholder="请输入密码" size="large" style="width:280px">
+                        <Icon type="ios-locked-outline" slot="prepend"></Icon>
+                        </Input>
+                    </Form-item>
+                </Col>
+            </Row>
+            <Row>
+                <Col span="12">
+                    <Checkbox v-model="form_login.rememberme" label="false" size="large"><span>&nbsp;&nbsp;记住密码</span></Checkbox>
+                </Col>
+            </Row>
+            <br/>
+            <Row>
+                <Col span="12">
+                    <Button type="primary" :loading="loading" @click="handleLogin('form_login')" style="width:280px;">
+                        <span v-if="!loading">登&nbsp;录</span>
+                        <span v-else>Loading...</span>
+                    </Button>
+                </Col>
+            </Row>
+        </Form>
+
+    </div>
+ </div>
+</template>
+
+<script>
+import Cookies from 'js-cookie';
+    export default {
+        data() {
+            return {
+                loading: false,
+                isShowAdduser:false,
+                form_login: {
+                    username:'administrator',
+                    password:'123456',
+                    rememberme: false
+                },
+                form_login_rule: {
+                    username: [
+                        { required: true, message: '请填写用户名', trigger: 'blur' },
+                        { type: 'string', min: 1, message: '用户名不能为空', trigger: 'blur' }
+                    ],
+                    password: [
+                        { required: true, message: '请填写密码', trigger: 'blur' },
+                        { type: 'string', min: 4, message: '密码长度不能小于4位', trigger: 'blur' }
+                    ]
+                }
+            }
+        },
+        methods: {
+            handleLogin(name) {
+                this.loading = true;
+                this.$refs[name].validate((valid) => {
+                    this.loading = false;
+                    if (valid) {
+                        var t = this.form_login;
+                        Cookies.set('user', this.form_login.username);
+                        Cookies.set('password', this.form_login.password);
+                        this.api.login.logon(this.form_login).then((res) => {
+                            sessionStorage.setItem("user", JSON.stringify(res.data));
+                            Cookies.set('access', 0);
+                            this.$Message.success("登录成功，正在跳转...");
+                            //跳转
+                            this.$router.push({path: "/qms/dashboard"});
+                        })
+                    } else {
+                        this.$Message.error('请输入正确的用户名或密码!');
+                    }
+                })
+            },
+        }
+    }
+</script>
+<style lang="less">
+    .login-container {
+        
+        border-radius: 5px;
+        -moz-border-radius: 5px;
+        background-clip: padding-box;
+        margin: 180px auto;
+        width: 380px;
+        padding: 35px 35px 15px 49px;
+        background: rgb(255,255,255); opacity: 0.9; filter:alpha(opacity=50);
+
+       
+       
+    }
+     .titles {
+        margin: 0px auto 40px auto;
+        text-align: center;
+        color: #505458;
+        font-family:"Microsoft YaHei"
+        }
+        .remember {
+        margin: 0px 0px 35px 0px;
+        }
+
+    .wrap{
+        height: 100%;
+         position: fixed;
+         width: 100%;
+    }
+
+
+    .ivu-input-group-large .ivu-input, .ivu-input-group-large>.ivu-input-group-append, .ivu-input-group-large>.ivu-input-group-prepend {
+    font-size: 16px;
+    padding: 6px 7px;
+    height: 40px;
+    margin-bottom:-10px;
+}
+
+.ivu-input-group-prepend {
+    padding: 4px 8px;
+    font-size: inherit;
+    font-weight: 400;
+    line-height: 1;
+    color: #495060;
+    text-align: center;
+    background-color: #eee;
+    border: 1px solid #dddee1;
+    border-radius: 6px;
+}
+
+</style>

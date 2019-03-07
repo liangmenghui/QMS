@@ -1,0 +1,17 @@
+package com.unind.qms.web.product.dao;
+
+import com.unind.qms.web.product.entity.ProductExtra;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+/**
+ * @author Shen
+ */
+public interface ProductExtraDao extends CrudRepository<ProductExtra, Long>, JpaSpecificationExecutor<ProductExtra> {
+
+    public int countByBsPrIdAndAndBsIsDel(Long bsPrId, Integer bsIsDel);
+
+    public List<ProductExtra> findAllByBsIsDelAndBsPrId(Integer bsIsDel, Long bsPrId);
+}

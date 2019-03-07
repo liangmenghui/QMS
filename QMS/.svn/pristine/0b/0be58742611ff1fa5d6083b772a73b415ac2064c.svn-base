@@ -1,0 +1,291 @@
+﻿import Main from '@/views/Main.vue';
+import { list } from 'postcss';
+
+// 不作为Main组件的子页面展示的页面单独写，如下
+export const loginRouter = {
+    path: '/login',
+    name: 'login',
+    meta: {
+        title: 'Login - 登录'
+    },
+    component: resolve => require(['@/views/login.vue'], resolve),
+};
+
+export const page404 = {
+    path: '/*',
+    name: 'error-404',
+    meta: {
+        title: '404-页面不存在'
+    },
+    component: () => import('@/views/error-page/404')
+};
+
+export const page403 = {
+    path: '/403',
+    meta: {
+        title: '403-权限不足'
+    },
+    name: 'error-403',
+    component: () => import('@/views/error-page/403')
+};
+
+export const page500 = {
+    path: '/500',
+    meta: {
+        title: '500-服务端错误'
+    },
+    name: 'error-500',
+    component: () => import('@/views/error-page/500')
+};
+
+export const preview = {
+    path: '/preview',
+    name: 'preview',
+    component: () => import('@/views/form/article-publish/preview')
+};
+
+export const locking = {
+    path: '/locking',
+    name: 'locking',
+    component: () => import('@/views/main-components/lockscreen/components/locking-page')
+};
+
+// 作为Main组件的子页面展示但是不在左侧菜单显示的路由写在otherRouter里
+export const otherRouter = {
+    path: '/',
+    name: 'otherRouter',
+    redirect: '/home',
+    component: Main,
+    children: [
+        { path: 'home', title: { i18n: 'home' }, name: 'home_index', component: () => import('@/views/home/home.vue') },
+        { path: 'order/:order_id', title: '订单详情', name: 'order-info', component: () => import('@/views/advanced-router/component/order-info.vue') }, // 用于展示动态路由
+        { path: 'shopping', title: '购物详情', name: 'shopping', component: () => import('@/views/advanced-router/component/shopping-info.vue') }, // 用于展示带参路由
+        { path: 'message', title: '消息中心', name: 'message_index', component: () => import('@/views/message/message.vue') },
+        { path: 'addSample', title: '开始测试', name: 'addSample', component: () => import('@/view/member/lab/sample/checkin') },
+        { path: 'detail', title: '查看详情', name: 'detail', component: () => import('@/view/member/lab/sample/sampletest') },
+        { path: 'test', title: '测试页面', name: 'test', component: () => import('@/views/home/home') }
+    ]
+};
+
+// 作为Main组件的子页面展示并且在左侧菜单显示的路由写在appRouter里
+export const appRouter = [
+    {
+        path: '/scm',
+        icon: 'social-buffer',
+        name: 'component',
+        title: '系统管理',
+        component: Main,
+        children: [
+            { path: 'ownspace', title: '个人中心', name: 'ownspace_index', component: () => import('@/views/own-space/own-space.vue') },
+            //{ path: 'main', component: resolve => require(['@/view/member/index'], resolve), name: 'main', title: '主页', hidden: true },
+            //平台基础数据
+            { path: 'group', component: resolve => require(['@/view/member/group/index'], resolve), name: 'YHGL_JTGL', title: '集团管理' },
+            { path: 'org', component: resolve => require(['@/view/member/org/orglist'], resolve), name: 'YHGL_ZZGL', title: '组织管理' },
+            { path: 'resrce', component: resolve => require(['@/view/member/resrce/index'], resolve), name: 'XTGL_ZYGL', title: '资源管理' },
+            { path: 'user', component: resolve => require(['@/view/member/user/index'], resolve), name: 'YHGL_YHGL', title: '用户管理' },
+            { path: 'userrole', component: resolve => require(['@/view/member/userrole/index'], resolve), name: 'YHGL_YHJS', title: '用户角色分配' },
+            { path: 'rolegroup', component: resolve => require(['@/view/member/rolegroup/index'], resolve), name: 'YHGL_JSZGL', title: '角色组管理' },
+            { path: 'role', component: resolve => require(['@/view/member/role/index'], resolve), name: 'YHGL_JSGL', title: '角色管理' },
+            { path: 'perm', component: resolve => require(['@/view/member/perm/index'], resolve), name: 'YHGL_CZQX', title: '操作权限管理' },
+
+            //文件管理系统
+            { path: 'fs/catalog', component: resolve => require(['@/view/member/fs/catalog/index'], resolve), name: 'FS_MLGL', title: '目录管理' },
+            { path: 'fs/file', component: resolve => require(['@/view/member/fs/file/index'], resolve), name: 'FS_FJGL', title: '文件管理' },
+            { path: 'fs/doc', component: resolve => require(['@/view/member/fs/doc/index'], resolve), name: 'FS_WKGL', title: '文控管理' },
+            { path: 'fs/release', component: resolve => require(['@/view/member/fs/release/index'], resolve), name: 'FS_WDFB', title: '文档发布' },
+            //编码规则维护
+            { path: 'ext/serialno', component: resolve => require(['@/view/member/ext/serialno/index'], resolve), name: 'SYS_BMGZ', title: '编码规则管理' },
+
+            //全局应用配置
+
+            { path: 'globalconfig', component: resolve => require(['@/view/member/globalconfig/index'], resolve), name: 'SYS_QJCF', title: '全局应用配置' },
+
+            //erp api
+            { path: 'erp/config', component: resolve => require(['@/view/erp/config/index'], resolve), name: 'SYS_JKPZ', title: 'ERP接口配置' },
+            { path: 'erp/item', component: resolve => require(['@/view/erp/item/index'], resolve), name: 'ERP_ITEM', title: '物料信息' },
+            { path: 'erp/customer', component: resolve => require(['@/view/erp/customer/index'], resolve), name: 'ERP_CUSTOMER', title: '客户信息' },
+            { path: 'erp/supplier', component: resolve => require(['@/view/erp/supplier/index'], resolve), name: 'ERP_SUPPLIER', title: '供应商信息' },
+            { path: 'erp/itemcustomer', component: resolve => require(['@/view/erp/itemcustomer/index'], resolve), name: 'ERP_ITEMCUSTOMER', title: '物料-客户关系' },
+            { path: 'erp/productinfo', component: resolve => require(['@/view/erp/productinfo/index'], resolve), name: 'ERP_PRODUCT_INFO', title: '产品信息' },
+
+            //mw api
+            { path: 'mw/config', component: resolve => require(['@/view/mw/config/index'], resolve), name: 'MW_DC', title: 'DC接口配置' },
+
+            //客制化配置
+            { path: 'ext/custom', component: resolve => require(['@/view/member/ext/custom/index'], resolve), name: 'XTGL_KZHML', title: '客制化目录' },
+            { path: 'ext/customfield', component: resolve => require(['@/view/member/ext/customfield/index'], resolve), name: 'XTGL_KZHSX', title: '客制化属性' },
+            { path: 'ext/customfieldvalue', component: resolve => require(['@/view/member/ext/customfieldvalue/index'], resolve), name: 'XTGL_KZHSXZ', title: '客制化属性值' },
+    
+            //流程
+            { path: 'workflow/todolist', component: resolve => require(['@/view/member/workflow/todo/index'], resolve), name: 'TODO_LIST', title: '待办列表' },
+            { path: 'workflow/completionlist', component: resolve => require(['@/view/member/workflow/done/index'], resolve), name: 'COMPLETION_LIST', title: '已办列表' },
+
+            //日志
+            { path: 'log/online', component: resolve => require(['@/view/member/online/index'], resolve), name: 'YHGL_ONLINE', title: '在线用户管理' },
+
+            //商务平台
+            { path: 'pmp/config', component: resolve => require(['@/view/member/pmp/config/index'], resolve), name: 'PMP_SHIPMENT_CONFIG', title: '物料-客户扩展属性' },
+            { path: 'pmp/forecast', component: resolve => require(['@/view/member/pmp/forecast/index'], resolve), name: 'PMP_KHXQ', title: '客户需求管理' },
+            { path: 'pmp/mrp', component: resolve => require(['@/view/member/pmp/mrp/index'], resolve), name: 'PMP_XQJH', title: '需求计划' },
+            { path: 'pmp/tsr', component: resolve => require(['@/view/member/pmp/tsr/index'], resolve), name: 'PMP_YSLX', title: '运输路线' },
+            { path: 'pmp/shipment', component: resolve => require(['@/view/member/pmp/mrp/shipment'], resolve), name: 'PMP_CGJH', title: '出柜计划' },
+            { path: 'pmp/pallet', component: resolve => require(['@/view/member/pmp/mrp/pallet'], resolve), name: 'PMP_BZGG', title: '包装规格' },
+            { path: 'pmp/container', component: resolve => require(['@/view/member/pmp/mrp/container'], resolve), name: 'PMP_GZXX', title: '柜子信息' },
+            { path: 'pmp/shipmentEdit', component: resolve => require(['@/view/member/pmp/mrp/shipmentEdit'], resolve), name: 'PMP_CGWT', title: '出柜微调' },
+
+            //实验室管理系统
+            { path: 'lab/equipment', component: resolve => require(['@/view/member/lab/equipment/equipment'], resolve), name: 'LAB_SBGL', title: '设备管理' },
+            //{ path: 'lab/equipmentTime', component: resolve => require(['@/view/member/lab/equipment/equipmentTime'], resolve), name:'LAB_SJSD', title: '设备时间设定' },
+            { path: 'lab/samplelist', component: resolve => require(['@/view/member/lab/sample/samplelist'], resolve), name: 'LAB_YPLB', title: '样品列表' },
+            { path: 'lab/samplereport', component: resolve => require(['@/view/member/lab/sample/samplereport'], resolve), name: 'LAB_YPBG', title: '样品报告' },
+            { path: 'lab/mail', component: resolve => require(['@/view/member/lab/mail/mailInfo'], resolve), name: 'LAB_LJPZ', title: '邮件配置' }
+        ]
+    },
+    {
+        path: '/lmp',
+        component: Main,
+        name: 'lmp',
+        title: '物流管理',
+        iconCls: 'el-icon-message',
+        children: [
+            //booking forecast
+            { path: 'forecast/list', component: resolve => require(['@/view/logistics/booking/forecast/list'], resolve), name: 'forecast', title: 'BookingForecast' },
+
+            // booking 
+            { path: 'booking/template', component: resolve => require(['@/view/logistics/booking/template'], resolve), name: 'BookingConfiguration', title: '模板配置' },
+            { path: 'booking/list', component: resolve => require(['@/view/logistics/booking/list'], resolve), name: 'Booking', title: 'Booking' },
+            //配置
+            { path: 'booking/configuration/plugin', component: resolve => require(['@/view/logistics/booking/config/plugin'], resolve), name: 'CJPZ', title: '插件配置' },
+
+            //infrastruct
+            { path: 'infrastruct/forecast/provider', component: resolve => require(['@/view/logistics/infrastruct/agent/index'], resolve), name: 'IMPDLS', title: "货代信息" },
+            { path: 'infrastruct/forecast/supplier', component: resolve => require(['@/view/logistics/infrastruct/supplier'], resolve), name: "LMPGYS", title: '供应商信息' },
+            { path: 'infrastruct/forecast/cargo', component: resolve => require(['@/view/logistics/infrastruct/cargo'], resolve), name: "CARGO", title: '客户物料' },
+            { path: 'infrastruct/forecast/preplan', component: resolve => require(['@/view/logistics/infrastruct/preplan'], resolve), name: "CHJH", title: '出货计划' },
+            { path: 'infrastruct/forecast/item', component: resolve => require(['@/view/logistics/infrastruct/item'], resolve), name: "WLXX", title: '物料信息' },
+            { path: 'infrastruct/forecast/hscode', component: resolve => require(['@/view/logistics/infrastruct/hscode'], resolve), name: "SPLH", title: '商品料号' },
+            { path: 'infrastruct/booking/demco', component: resolve => require(['@/view/logistics/booking/plugin/whirlpool_demco'], resolve), name: "Damco", title: '客户模板' },
+
+            { path: 'hs', component: resolve => require(['@/view/logistics/hs'], resolve), name: 'LMP_HS', title: '商品编码管理' },
+        ]
+
+    },
+    {
+        path: '/qms',
+        component: Main,
+        name: 'home',
+        title: 'QMS',
+        iconCls: 'el-icon-message',//图标样式class
+        children: [
+            {
+                path: 'approvedFlowManagement',
+                title: '审核流程管理',
+                name: 'approvedFlowManagement',
+                component: resolve => require(['@/views/qms/view/settings/ApprovedFlowManagement'], resolve),
+                children: [
+                    { path: 'flowSettings', name: 'flowSettings', title: '流程设置', component: resolve => require(['@/views/qms/view/settings/ApprovedFlowSettings'], resolve) },
+                ]
+            },
+            { path: 'approvedTermsManagement', name: 'approvedTermsManagement', title: '审核条款管理', component: resolve => require(['@/views/qms/view/settings/ApprovedTermsManagement'], resolve) },
+            { path: 'todoItems', name: 'todoItems', title: '待办事项', component: resolve => require(['@/views/qms/view/settings/TodoItems'], resolve) },
+
+
+            {
+                path: 'supplier',
+                name: 'supplier',
+                title: '供应商',
+                component: resolve => require(['@/views/qms/view/supplier/SupplierList'], resolve),
+                children: [
+                    { path: 'basicInfo', name: 'supplierbasicInfo', title: '基本信息', component: resolve => require(['@/views/qms/view/supplier/SupplierBasicInfo'], resolve) },
+                    { path: 'advanceInfo', name: 'supplieradvanceInfo', title: '补充信息', component: resolve => require(['@/views/qms/view/supplier/SupplierAdvanceInfo'], resolve) },
+                    {
+                        path: 'riskManagement', name: 'supplierriskManagement', title: '风险管理', component: resolve => require(['@/views/qms/view/supplier/SupplierRiskManage'], resolve),
+                        children: [
+                            { path: 'inputInformation', name: 'supplierinputInformation', title: '信息录入', component: resolve => require(['@/views/qms/view/supplier/InputInformation'], resolve) },
+                            { path: 'instructions', name: 'supplierInstructions', title: '风险管理系统说明', component: resolve => require(['@/views/qms/view/supplier/Instructions'], resolve) },
+                        ]
+                    },
+
+                    { path: 'createApprovedRecord', name: 'supplierCreateApprovedRecord', title: '新建审核', component: resolve => require(['@/views/qms/view/approved/ApprovedRecordCreator'], resolve) },
+                    { path: 'approvedRecordsList', name: 'supplierApprovedRecordsList', title: '审核记录', component: resolve => require(['@/views/qms/view/approved/ApprovedRecordsList'], resolve) },
+                    {
+                        path: 'approved',
+                        name: 'supplierapproved',
+                        title: '供应商审核',
+                        component: resolve => require(['@/views/qms/view/approved/ApprovedFlowRecordDetails'], resolve),
+                        children: [
+                            { path: 'itemsRecordDetails', name: 'supplieritemsRecordDetails', title: '条款审核', component: resolve => require(['@/views/qms/view/approved/ApprovedItemRecordDetails'], resolve) },
+                            { path: 'tutorial', name: 'suppliertutorial', title: '辅导资料', component: resolve => require(['@/views/qms/view/approved/ApprovedExtraReports'], resolve) },
+                            { path: 'otherReports', name: 'supplierotherReports', title: '资料审核', component: resolve => require(['@/views/qms/view/approved/ApprovedExtraReports'], resolve) },
+                            { path: 'report', name: 'supplierpreApproved', title: '审核报告', component: resolve => require(['@/views/qms/view/approved/ApprovedReport'], resolve) },
+                            { path: 'preApproved', name: 'supplierpreApproved', title: '初期评审', component: resolve => require(['@/views/qms/view/approved/ApprovedReport'], resolve) },
+                        ]
+                    },
+                ]
+            },
+
+            {
+                path: 'product',
+                name: 'product',
+                title: '产品',
+                component: resolve => require(['@/views/qms/view/product/ProductList'], resolve),
+                children: [
+                    { path: 'details', name: 'productdetails', title: '产品详情', component: resolve => require(['@/views/qms/view/product/ProductDetails'], resolve) },
+                    {
+                        path: 'riskManagement', name: 'productriskManagement', title: '风险管理', component: resolve => require(['@/views/qms/view/product/ProductRiskManagement'], resolve),
+                        children: [
+                            { path: 'inputInformation', name: 'productinputInformation', title: '信息录入', component: resolve => require(['@/views/qms/view/product/InputInformation'], resolve) },
+                            { path: 'instructions', name: 'productInstructions', title: '风险管理系统说明', component: resolve => require(['@/views/qms/view/product/Instructions'], resolve) },
+                        ]
+                    },
+                    { path: 'dataMonitor', name: 'productdataMonitor', title: '数据监控', component: resolve => require(['@/views/qms/view/product/ProductDataMonitor'], resolve) },
+                    {
+                        path: 'approved',
+                        name: 'productapproved',
+                        title: '产品审核',
+                        component: resolve => require(['@/views/qms/view/approved/ApprovedFlowRecordDetails'], resolve),
+                        children: [
+                            { path: 'itemsRecordDetails', name: 'productitemsRecordDetails', title: '条款审核', component: resolve => require(['@/views/qms/view/approved/ApprovedItemRecordDetails'], resolve) },
+                            { path: 'inspectReport', name: 'productinspectReport', title: '出货检验报告', component: resolve => require(['@/views/qms/view/approved/ProductInspectApporved'], resolve) },
+                            { path: 'inspectReportCheck', name: 'productinspectReportCheck', title: '出货检验报告核查', component: resolve => require(['@/views/qms/view/approved/ProductInspectConfirmApproved'], resolve) },
+                            { path: 'otherReports', name: 'productotherReports', title: '文件审核', component: resolve => require(['@/views/qms/view/approved/ApprovedExtraReports'], resolve) },
+                            { path: 'report', name: 'supplierpreApproved', title: '审核报告', component: resolve => require(['@/views/qms/view/approved/ApprovedReport'], resolve) }
+                        ]
+                    },
+                    { path: 'createApprovedRecord', name: 'productcreateApprovedRecord', title: '新建审核', component: resolve => require(['@/views/qms/view/approved/ApprovedRecordCreator'], resolve) },
+                    { path: 'approvedRecordsList', name: 'productapprovedRecordsList', title: '审核记录', component: resolve => require(['@/views/qms/view/approved/ApprovedRecordsList'], resolve) },
+                    { path: 'regularManagement', name: 'productregularManagement', title: '规格设置', component: resolve => require(['@/views/qms/view/product/SampleRegularManagement'], resolve) }
+                ]
+            },
+
+            {
+                path: 'feedback',
+                name: 'feedback',
+                title: '客诉列表',
+                component: resolve => require(['@/views/qms/view/feedback/FeedbackList'], resolve),
+                children: [
+                    { path: 'details', name: 'feedbackdetails', title: '客诉详情', component: resolve => require(['@/views/qms/view/feedback/FeedbackDetails'], resolve) },
+                    { path: 'handle', name: 'feedbackhandle', title: '客诉处理', component: resolve => require(['@/views/qms/view/feedback/FeedbackHandle'], resolve) },
+                ]
+            },
+            { path: 'feedbackReport', name: 'feedbackReport', title: '提交客诉', component: resolve => require(['@/views/qms/view/feedback/FeedbackReport'], resolve) },
+            { path: 'returnGoods', name: 'returnGoods', title: '退货处理', component: resolve => require(['@/views/qms/view/feedback/ReturnGoods'], resolve) },
+
+            { path: 'uploadVideo', name: 'uploadVideo', title: '上传视频', component: resolve => require(['@/views/qms/view/lessons/VideoUpload'], resolve) },
+            { path: 'lessons', name: 'lessons', title: '视频列表', component: resolve => require(['@/views/qms/view/lessons/LessonsList'], resolve) },
+            { path: 'riskLevelManagement', name: 'riskLevelManagement', title: '风险等级管理', component: resolve => require(['@/views/qms/view/settings/RiskLevelManagement'], resolve) },
+        ]
+    },
+];
+
+// 所有上面定义的路由都要写在下面的routers里
+export const routers = [
+    loginRouter,
+    otherRouter,
+    preview,
+    locking,
+    ...appRouter,
+    page500,
+    page403,
+    page404
+];

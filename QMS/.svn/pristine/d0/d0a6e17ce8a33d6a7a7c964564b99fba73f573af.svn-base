@@ -1,0 +1,165 @@
+<template>
+    <div class="layout" :class="{'layout-hide-text': spanLeft < 5}">
+        <div class="layout-top">
+            <top-menu></top-menu>
+        </div>
+        <Row type="flex" style="min-height:100%">
+            <i-col :span="spanLeft" class="layout-menu-left">
+                <left-menu></left-menu>
+            </i-col>
+            <i-col :span="spanRight">
+            <!-- s -->  
+
+                <el-col :span="24" class="breadcrumb-container">
+                        <strong class="title"><i class="el-icon-menu"></i>{{$route.name}}</strong>
+                        <el-breadcrumb separator="/" class="breadcrumb-inner">
+                            <el-breadcrumb-item v-for="item in $route.matched" :key="item.path">
+                                <router-link :to="item.path">{{ item.name }}</router-link>
+                            </el-breadcrumb-item>
+                        </el-breadcrumb>
+                    </el-col>
+
+                <Content :style="{padding: '0 16px 16px'}">
+                <div class="grid-content bg-purple-light">
+                    
+                    <el-col :span="24" class="content-wrapper">
+                        <transition name="fade" mode="out-in">
+                            <router-view></router-view>
+                        </transition>
+                    </el-col>
+                </div>
+           </Content>
+               
+            </i-col>
+        </Row>
+   <!--      <div class="layout-copy">
+            深圳金合联供应链技术有限公司 Copyright © 2017~2020
+        </div> -->
+    </div>
+</template>
+
+
+<script>
+import TopMenu from '../../components/top-menu.vue'
+import LeftMenu from '../../components/left-menu.vue'
+export default {
+    data() {
+        return {
+            grid:{
+            },
+            spanLeft: 5,
+            spanRight: 19
+        }
+    },
+    computed: {
+        iconSize () {
+            return this.spanLeft === 5 ? 14 : 24;
+        }
+    },
+    methods: {
+        toggleClick () {
+            if (this.spanLeft === 5) {
+                this.spanLeft = 2;
+                this.spanRight = 22;
+            } else {
+                this.spanLeft = 5;
+                this.spanRight = 19;
+            }
+        },
+        clicked() {
+            //Ajax调用示例
+            this.api.test.joke().then((res) => {
+                console.log(res)
+            })
+        }
+    },
+    components: {
+        TopMenu, LeftMenu
+    }
+}
+</script>
+
+<style lang="less">
+
+    @import '~iview/dist/styles/iview.css';
+    @import '../../assets/style/global.less';
+    @import 'https://cdn.bootcss.com/animate.css/3.5.2/animate.css';
+    .layout{
+        background: #f5f7f9;
+        position: relative;        
+        height: auto;
+    }
+  
+    .layout-logo{
+        height: 60px;
+        text-align: center;
+        background-color: white;
+        line-height: 60px;
+    }
+
+   .layout-hide-text .layout-text{
+        display: none;
+    }
+
+.breadcrumb-container{
+    background:#fff;
+    padding:20px 40px;
+    display:block;
+  
+
+}
+.layout-header{position:absolute;margin-right:60px;}
+
+ .breadcrumb-container {
+                    //margin-bottom: 15px;
+                    .title {
+                        width: 40%;
+                        float: left;
+                        color: #475669;
+                        font-size:14px;
+
+                    }
+                    .breadcrumb-inner {
+                        float: right;
+                        font-size:14px;
+                        line-height:25px;                        
+                    }
+
+                    .el-breadcrumb__item:last-child .el-breadcrumb__inner, .el-breadcrumb__item:last-child .el-breadcrumb__inner a, .el-breadcrumb__item:last-child .el-breadcrumb__inner a:hover, .el-breadcrumb__item:last-child .el-breadcrumb__inner:hover{
+                        color: #97a8be;
+                         cursor: text;
+                    }
+                }
+
+.content-container {
+                 background: none repeat scroll 0 0 #fff;
+                position: absolute;
+                left: 0px;
+                right: 0;
+                top: 50px;
+                bottom:0;
+                width: auto;
+                padding:20px 30px;
+                box-sizing: border-box;
+                overflow: scroll;
+               
+               
+                .content-wrapper {
+                    background-color: #fff;
+                    box-sizing: border-box;
+                }
+            }
+.ivu-col-span-19 {
+    display: block;
+    width: 82%;
+    background: #eff3f9;
+}
+
+.layout-copy{background:rgba(0,0,0,0.5)}
+.layout-top .logo {
+    padding-top: 0; 
+    padding-left: 0;
+}
+
+
+</style>

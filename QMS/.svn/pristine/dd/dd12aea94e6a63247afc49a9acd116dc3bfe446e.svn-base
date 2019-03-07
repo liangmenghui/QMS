@@ -1,0 +1,25 @@
+import httpService from '@/libs/service'
+
+export default {
+    getlist: function (data) {
+        return httpService.get('/pmp/getlist', data)
+    },
+    runCabinetsPlan: function (data) {
+        return httpService.get('../openapi/v1.0/pmp/runCabinetsPlan', data)
+    },
+    getShipmentPlan:function(data){
+        return httpService.get('/pmp/getShipmentPlan', data)
+    },
+    getShipmentPlanDetail:function(data){
+        return httpService.get('/pmp/getShipmentPlanDetail', data)
+    },
+    runErpPoPlan:function(data){
+        return httpService.get('../openapi/v1.0/pmp/runErpPoPlan', data)
+    },
+    getPallet:function(data){
+        return httpService.get('/pmp/getPallet', data)
+    },
+    editPallet:function(data){
+        return httpService.get('/pmp/editPallet', data)
+    }
+}

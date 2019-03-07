@@ -1,0 +1,543 @@
+<template>
+    <!--
+        作者：offline
+        时间：2018-03-27
+        描述：客诉处理
+    -->
+    <div class="feedbackhandle">
+        <div style="height: 50px;">
+            <Col :md="9">
+            <div style="width: 36%;height: 1px;"></div>
+            </Col>
+            <Col :md="3">
+            <router-link :to="{path: 'details'}">
+                <el-button type="primary" style="width: 99%;height:40px;border-radius: 8px 0px 0px 8px;font-size: 14px;">
+                    {{$t('feedback.DetailsOfFeedback')}}
+                </el-button>
+            </router-link>
+            </Col>
+            <Col :md="3">
+            <div style="width: 99%;height:40px;border-radius: 0px 8px 8px 0px;background-color:#76C6F3;color:white;padding-top: 10px;font-size: 14px;">
+                <center>{{$t('feedback.CustomerComplaintHandling')}}</center>
+            </div>
+            </Col>
+            <Col :md="9">
+            <div style="width: 36%;height: 1px;"></div>
+            </Col>
+        </div>
+        <!--
+    作者：offline
+    时间：2018-03-23
+    描述：产品信息
+-->
+        <Collapse accordion v-model="expandedCollapses[0]">
+            <Panel name="1">
+                <div class="title1">
+                    <Icon type="ios-medical" style="font-size: 16px;color: #ff9900;"></Icon>
+                </div>
+                <div class="title2">{{$t('feedback.ProductInformation')}}</div>
+                <div id="product-body" slot="content">
+                    <div class="product-body-div">{{$t('feedback.ProductName')}}：<span>{{form.bsPrName}}</span></div>
+                    <div class="product-body-div">{{$t('feedback.ProductNumber')}}：<span>{{form.bsPrCode}}</span></div>
+                    <div class="product-body-div">{{$t('feedback.NumberOfQuestions')}}：<span>{{form.id}}</span></div>
+                    <div class="product-body-div">{{$t('feedback.handleState')}}：<span>{{$t("feedback.statusDesc["+form.bsStatus+']')}}</span></div>
+                </div>
+            </Panel>
+        </Collapse>
+        <!--
+    作者：offline
+    时间：2018-03-23
+    描述：处理团队
+-->
+        <Collapse accordion v-model="expandedCollapses[1]" style="margin-top: 10px;">
+            <Panel name="1">
+                <div class="title1">
+                    <Icon type="ios-medical" style="font-size: 16px;color: #ff9900;"></Icon>
+                </div>
+                <div class="title2">{{$t('feedback.HandlingPerson')}}</div>
+                <div id="handler-body" slot="content">
+                    <div>
+                        <el-table :data="handlers[1]" style="width: 100%;">
+                            <el-table-column prop="handlerBy.bsName" :label="$t('feedback.principal')">
+                            </el-table-column>
+                            <el-table-column prop="handlerBy.bsMobile" :label="$t('feedback.phone')">
+                            </el-table-column>
+                            <el-table-column prop="handlerBy.bsEmail" :label="$t('feedback.email')">
+                            </el-table-column>
+                            <el-table-column :label="$t('Button.operating')">
+                                <template slot-scope="scope">
+                                    <el-button size="mini" v-if="perms.alloc" @click="removeHandler(scope.row)">{{$t('Button.Delete')}}</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                    <div class="submit-div">
+                        <el-button type="primary" icon="el-icon-plus" v-if="perms.alloc" @click="addAction(1)">
+                            {{$t('feedback.AddHandler')}}
+                        </el-button>
+                    </div>
+                </div>
+            </Panel>
+        </Collapse>
+        <!--
+    作者：offline
+    时间：2018-03-23
+    描述：问题描述
+-->
+        <Collapse accordion v-model="expandedCollapses[2]" style="margin-top: 10px;">
+            <Panel name="1">
+                <div class="title1">
+                    <Icon type="ios-medical" style="font-size: 16px;color: #ff9900;"></Icon>
+                </div>
+                <div class="title2">{{$t('feedback.ProblemDescription')}}</div>
+                <div id="problem-body" slot="content">
+                    <div>
+                        <p>{{$t('feedback.DescribingTheContent')}}</p>
+                        <el-input type="textarea" :autosize="{ minRows: 4}" style="width: 50%;" v-model="analysis.bsDesc" :readonly="!(analysis.canVerify||perms.edit)">
+                        </el-input>
+                    </div>
+                    <div class="principal-div">
+                        <div class="principal-div1">{{$t('feedback.lastEditor')}}: {{analysis.handlerBy.bsName}}</div>
+                    </div>
+                    <div class="submit-div">
+                        <el-button type="primary" @click="submitAnalysis" v-if="analysis.canVerify||perms.edit">{{$t('feedback.submit')}}</el-button>
+                    </div>
+                </div>
+            </Panel>
+        </Collapse>
+        <!--
+    作者：offline
+    时间：2018-03-23
+    描述：临时措施
+-->
+        <div v-for="(table,index) in handlers">
+            <Collapse accordion v-model="expandedCollapses[index]" style="margin-top: 10px;" v-if="index>2">
+                <Panel name="1">
+                    <div class="title1">
+                        <Icon type="ios-medical" style="font-size: 16px;color: #ff9900;"></Icon>
+                    </div>
+                    <div class="title2">{{stepTitles[index]}}</div>
+                    <div id="measures-body" slot="content">
+                        <el-table :data="handlers[index]" style="width: 100%;">
+                            <el-table-column prop="bsDesc" :label="$t('feedback.project')">
+                            </el-table-column>
+                            <el-table-column prop="bsStatus" :label="$t('feedback.state')" :formatter="formatter">
+                            </el-table-column>
+                            <el-table-column prop="handlerBy.bsName" :label="$t('feedback.principal')">
+                            </el-table-column>
+                            <el-table-column prop="bsModifiedTime" :label="$t('feedback.time')">
+                            </el-table-column>
+                            <el-table-column :label="$t('Button.operating')">
+                                <template slot-scope="scope">
+                                    <el-button size="mini" @click="markActionFinished(scope.row,index)" v-if="scope.row.canVerify&&form.bsStep==index">{{$t('feedback.markActionFinished')}}</el-button>
+                                    <el-button size="mini" @click="editAction(scope.row)" v-if="perms.edit&&scope.row.bsStatus==0">{{$t('Button.Edit')}}</el-button>
+                                    <el-button size="mini" @click="removeHandler(scope.row)" v-if="perms.alloc&&scope.row.bsStatus==0">{{$t('Button.Delete')}}</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <div class="submit-div">
+                            <el-button type="primary" v-if="form.bsStep==index&&perms.alloc" @click="startActions(index)">{{$t('feedback.sendTodoNotice')}}</el-button>
+                            <el-button type="primary" @click="addAction(index)" v-if="form.bsStep<=index&&perms.alloc">{{$t('feedback.addAction')}}</el-button>
+                        </div>
+                    </div>
+                </Panel>
+            </Collapse>
+        </div>
+        <!--
+    作者：offline
+    时间：2018-03-23
+    描述：
+-->
+        <div id="bottom">
+            <center>
+                <el-button type="success" v-if="perms.verify" @click="closeFeedback" style="padding: 7px 20px;">
+                    <i class="el-icon-circle-close-outline"></i>&nbsp;&nbsp;{{$t('feedback.CloseTheCustomerComplaint')}}
+                </el-button>
+            </center>
+        </div>
+        <Modal v-model="modal_dialog" :title="modal_form.title" @on-ok="saveHandler">
+            <div class="modeform">
+                <el-form label-width="120px">
+                    <el-form-item :label="$t('feedback.project')" v-if="modal_form.bsType>1">
+                        <el-input v-model="modal_form.bsDesc" :placeholder="$t('input')"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="$t('approved.principal')">
+                        <el-select style="width:300px;" v-model="selectedUser" value-key="id" :placeholder="$t('choose')">
+                            <el-option v-if="modal_form.bsType>1" v-for="user in userSelections" :key="user.id" :label="user.bsName" :value="user"></el-option>
+                            <el-option v-if="modal_form.bsType==1" v-for="user in users" :key="user.id" :label="user.bsName" :value="user"></el-option>
+                        </el-select>
+                    </el-form-item>
+                </el-form>
+            </div>
+        </Modal>
+    </div>
+</template>
+<script>
+import Cookies from 'js-cookie';
+export default {
+    data() {
+        return {
+            MANAGER: 2407, //默认客诉处理人
+            expandedCollapses: ['1', '0', '0', '0', '0', '0', '0', '0'],
+            modal_dialog: false,
+            modal_form: {},
+            form: {bsStatus:0},
+            analysis: { handlerBy: {} },
+            handlers: [],
+            users: [],
+            userSelections: [],
+            selectedUser: {},
+            perms: {
+                verify: false,
+                edit: false,
+                alloc: false
+            },
+            stepTitles: ["",
+                this.$t('feedback.HandlingPerson'),
+                this.$t('feedback.ProblemDescription'),
+                this.$t('feedback.TemporaryMeasures'),
+                this.$t('feedback.TheRootCause'),
+                this.$t('feedback.SelectPermanentCorrectiveAction'),
+                this.$t('feedback.APermanentCorrectiveActionTaken'),
+                this.$t('feedback.PreventiveAction')
+            ]
+        }
+    },
+    created() {
+        this.form.id = this.$route.query.feedbackId;
+        this.getData();
+        this.gethandlers();
+    },
+    methods: {
+        getData() {
+            this.api.feedback.getlist({ id: this.form.id }).then((res) => {
+                if (res.data.rows.length) this.form = res.data.rows[0];
+                this.expandedCollapses[this.form.bsStep] = "1";
+                this.perms.edit = this.$Util.hasPerm('EDIT') && this.form.bsStatus < 3;
+                this.perms.verify = this.$Util.hasPerm('VERIFY') && this.form.bsStatus < 3;
+                this.perms.alloc = this.$Util.hasPerm('ALLOC') && this.form.bsStatus < 3;
+            });
+            this.api.user.getlist().then((res) => {
+                this.users = res.data.rows;
+            });
+        },
+        gethandlers(callback) {
+            this.api.feedback.gethandlers({ bsFeedbackId: this.form.id }).then((res) => {
+                this.handlers = [[],[],[],[],[],[],[],[]];
+                //是否可以编辑原因分析
+                var canEditAnalysis = false;
+                for (var i = res.data.rows.length - 1; i >= 0; i--) {
+                    var row = res.data.rows[i];
+                    if (row.bsStatus == undefined) row.bsStatus = 0;
+                    row.canVerify = (row.handlerBy.bsCode == Cookies.get('user') && row.bsStatus == 0 && this.form.bsStatus < 3);
+                    if (row.bsType == 1 && !canEditAnalysis && row.handlerBy.bsCode == Cookies.get('user')) {
+                        canEditAnalysis = true;
+                    }
+                    this.handlers[row.bsType].push(row);
+                }
+                if (this.handlers[2].length > 0) {
+                    this.analysis = this.handlers[2][0];
+                    this.analysis.canVerify = canEditAnalysis;
+                }
+                this.userSelections = this.handlers[1].map(function(row) {
+                    return row.handlerBy;
+                });
+                if (callback != undefined) callback();
+            });
+        },
+        removeHandler(row) {
+            var _this = this;
+            this.api.feedback.deletehandler({ id: row.id }).then((res) => {
+                _this.$Message.info(_this.$t('feedback.deleted'));
+                _this.gethandlers();
+            });
+        },
+        addAction(type) {
+            this.selectedUser = {};
+            this.modal_form = {};
+            this.modal_form.bsFeedbackId = this.form.id;
+            this.modal_form.bsType = type;
+            this.modal_form.title = this.stepTitles[type];
+            this.modal_dialog = true;
+        },
+        editAction(row) {
+            this.selectedUser = row.handlerBy;
+            this.modal_form = {
+                id: row.id,
+                bsFeedbackId: this.form.id,
+                bsType: row.bsType,
+                title: this.stepTitles[row.bsType],
+                bsStatus: row.bsStatus,
+                bsDesc: row.bsDesc
+            };
+            this.modal_dialog = true;
+        },
+        startActions(type) {
+            if (this.handlers[type].length == 0) return this.$Message.error(this.$t('feedback.noactions'));
+            var _this = this;
+            this.markTodoFinished(this.MANAGER, function(data) {
+                _this.excuteActions(type);
+            });
+        },
+        excuteActions(type) {
+            if (type >= this.handlers.length) {
+                this.createTodo(this.MANAGER, this.$t('feedback.askForClose'));
+                return this.$Message.info(this.$t('feedback.askForClose'));
+            }
+            var _this = this;
+            var actions = this.handlers[type];
+            //若无安排执行项目,发送待办给第一负责人,让其进行人员安排
+            if (actions.length == 0) {
+                this.createTodo(this.MANAGER, this.$Message.info(this.$t('feedback.doneAllActions')));
+            } else {
+                //直到找到有未完成的项目,若全部完成则执行下一步骤
+                for (var i = actions.length - 1; i >= 0; i--) {
+                    var action = actions[i];
+                    if (action.bsStatus == 1) continue;
+                    this.createTodo(action.handlerBy.id, this.stepTitles[type]+':'+action.bsDesc, function(data) {
+                        _this.$Message.info(_this.$t('feedback.sendTodoToUser') + action.handlerBy.bsName);
+                    });
+                    return;
+                }
+            }
+
+            //进行下一步骤
+            this.form.bsStep = type + 1;
+            this.saveFeedback(function() {
+                _this.excuteActions(type + 1);
+            });
+        },
+        markActionFinished(row, type) {
+            row.bsStatus = 1;
+            this.selectedUser = row.handlerBy;
+            this.modal_form = {
+                id: row.id,
+                bsFeedbackId: this.form.id,
+                bsType: row.bsType,
+                title: this.stepTitles[row.bsType],
+                bsStatus: 1,
+                bsDesc: row.bsDesc
+            };
+            var _this = this;
+            this.saveHandler(function() {
+                _this.markTodoFinished(row.handlerBy.id, function(data) {
+                    _this.excuteActions(type);
+                    _this.$Message.info(_this.$t('feedback.success'));
+                });
+            });
+        },
+        submitAnalysis() {
+            this.selectedUser = JSON.parse(Cookies.get("userInfo"));
+            this.modal_form = {
+                bsFeedbackId: this.form.id,
+                bsType: 2,
+                bsStatus: 1,
+                bsDesc: this.analysis.bsDesc
+            };
+            this.modal_form.id = this.analysis.id;
+            var _this = this;
+            this.saveHandler(function() {
+                _this.$Message.info(_this.$t('feedback.success'));
+                if (_this.form.bsStep < 3) {
+                    _this.form.bsStep = 3;
+                    _this.saveFeedback(function() {});
+                }
+            });
+        },
+        closeFeedback() {
+            this.form.bsStatus = 3;
+            var _this = this;
+            this.saveFeedback(function(data) {
+                _this.$Message.info(_this.$t('feedback.closed'));
+            });
+        },
+        saveFeedback(callback) {
+            if (this.form.bsStatus == 1) this.form.bsStatus = 2;
+            var params = Object.assign({}, this.form);
+            params = this.$Util.formattedParams(params);
+            delete params.feedbackerBy;
+            this.api.feedback.edit(params).then((res) => {
+                if (callback != undefined) callback(res.data);
+            });
+        },
+        createTodo(userId, title, callback) {
+            var params = {
+                bsUserId: userId,
+                bsRouter: "/qms/feedback/handle",
+                bsTitle: "[客诉-" + this.form.bsPrName + "]" + title,
+                bsType: 31,
+                bsReferId: this.form.id
+            };
+            this.api.todo.add(params).then((res) => {
+                if (callback != undefined) callback(res.data);
+            });
+        },
+        markTodoFinished(userId, callback) {
+            var params = {
+                bsUserId: userId,
+                bsType: 31,
+                bsReferId: this.form.id
+            };
+            this.api.todo.close(params).then((res) => {
+                if (callback != undefined) callback(res.data);
+            });
+        },
+        saveHandler(callback) {
+            if (this.selectedUser.id == undefined) {
+                return this.$Message.error(this.$t('feedback.nullPrincipal'));
+            }
+            this.modal_form.bsHandlerId = this.selectedUser.id;
+            //添加处理人员时，判断是否重复
+            if (this.modal_form.bsType == 1) {
+                for (var i = this.handlers[1].length - 1; i >= 0; i--) {
+                    var row = this.handlers[1][i];
+                    if (row.handlerBy.id == this.modal_form.bsHandlerId){
+                        this.$Message.error(this.$t('feedback.dumplicatePrincipal'));
+                        return;
+                    }
+                }
+            }
+            if (this.modal_form.id == undefined) {
+                this.api.feedback.addhandler(this.modal_form).then((res) => {
+                    this.gethandlers(function() {
+                        if (callback != undefined) callback();
+                    });
+                });
+            } else {
+                this.api.feedback.edithandler(this.modal_form).then((res) => {
+                    this.gethandlers(function() {
+                        if (callback != undefined) callback();
+                    });
+                });
+            }
+        },
+        formatter(row, column) {
+            return this.$t('feedback.projectStatus[' + row.bsStatus + ']');
+        }
+    }
+};
+</script>
+<style>
+body {
+    font-size: 14px;
+    font-family: "Microsoft YaHei"
+}
+
+.feedbackhandle .title1 {
+    float: left;
+}
+
+.feedbackhandle .title2 {
+    float: left;
+    display: inline-block;
+    line-height: 20px;
+    font-size: 14px;
+    color: #1c2438;
+    font-weight: 700;
+    margin-left: 1%;
+    margin-right: 1%;
+    margin-top: 8px;
+}
+
+.feedbackhandle #product-body {
+    height: 170px;
+    padding-top: 10px;
+    padding-left: 5%;
+}
+
+.feedbackhandle .product-body-div {
+    height: 40px;
+    font-size: 14px;
+}
+
+.feedbackhandle .product-body-div span {
+    color: #8499a3;
+}
+
+.feedbackhandle #handler-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #problem-body {
+    padding-top: 10px;
+    padding-left: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle .principal-div {
+    height: 50px;
+    margin-top: 30px;
+}
+
+.feedbackhandle .principal-div1 {
+    float: left;
+    margin-top: 10px;
+    width: 60px;
+    font-size: 14px;
+}
+
+.feedbackhandle .principal-div2 {
+    float: left;
+}
+
+.feedbackhandle .time-div {
+    height: 50px;
+    margin-top: 20px;
+}
+
+.feedbackhandle .time-div1 {
+    float: left;
+    margin-top: 10px;
+    width: 60px;
+    font-size: 14px;
+}
+
+.feedbackhandle .submit-div {
+    height: 40px;
+    margin-top: 20px;
+    padding-top: 10px;
+}
+
+.feedbackhandle #measures-body {
+    padding-left: 2%;
+    padding-right: 2%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #why-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #select-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #perform-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #prevent-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #bottom {
+    margin-bottom: 20px;
+    padding-top: 50px;
+    padding-bottom: 50px;
+}
+
+.feedbackhandle .submit-div .el-button {
+    width: 10%;
+    padding: 7px 20px;
+}
+</style>

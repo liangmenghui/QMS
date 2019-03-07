@@ -1,0 +1,11 @@
+﻿import httpservices from '@/libs/service'
+
+import item from './erp/erp.item' //物料
+import customer from './erp/erp.customer' //客户
+import supplier from './erp/erp.supplier' //供应商
+
+export default{
+    item,
+    customer,
+    supplier
+}

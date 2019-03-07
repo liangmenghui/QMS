@@ -1,0 +1,409 @@
+<template>
+    <div class="ApprovedTermsManagement">
+        <el-Row style="margin-bottom: 10px;">
+          	<el-input size="medium" style="width: 200px;display: inline-block;" v-model="formQuery.keyWord" :placeholder="$t('Button.Keyword-search')"></el-input>
+          	<el-button style="padding: 10px 10px;" type="primary" icon="el-icon-search" @click="handleSubmit('formQuery')">
+          		{{$t('Button.Inquire')}}
+          	</el-button>       
+          	<el-button style="padding: 10px 10px;" type="primary" icon="el-icon-plus" v-perm-add @click="showAddDialog()">
+          		{{$t('Button.Addedterms')}}
+          	</el-button>
+        </el-Row>
+        <el-Row>
+            <el-col :span="24">
+                <i-table class="Teamtable" border  :data="datagrid.data.rows" :columns="datagrid.columns" stripe :row-class-name="mydefineRow" style="table-layout:fixed;">  
+                </i-table>
+                <div style="margin: 10px;">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </el-col>
+        </el-Row>
+    <Modal v-model="dialog.modal_dialog"  :title="$t('New-audit.New-terms')" @on-ok="ok" @on-cancel="cancel" >
+            <p>
+                <el-form ref="dialog.formItem"   :model="dialog.formItem" :rules="dialog.ruleForm" label-width="100px"  class="addform">
+                   <el-form-item :label="$t('New-audit.Article-number')" prop="bsNo">
+                        <el-input v-model="dialog.formItem.bsNo"  placeholder="请输入" v-bind:readonly="isReadOnly"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="$t('New-audit.Terms-name')" prop="bsName">
+                        <el-input v-model="dialog.formItem.bsName" placeholder="请输入" v-bind:readonly="isReadOnly"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="$t('New-audit.Terms-conditions')" prop="bsContent">
+                        <el-input v-model="dialog.formItem.bsContent" type="textarea" placeholder="请输入..." v-bind:readonly="isReadOnly"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="$t('New-audit.Terms-conditions-E')" prop="bsContentEn">
+                        <el-input v-model="dialog.formItem.bsContentEn" type="textarea" placeholder="请输入..." v-bind:readonly="isReadOnly"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="$t('New-audit.Grading')" prop='bsStandard'>
+                        <el-input :autosize="{ minRows: 5}" v-model="dialog.formItem.bsStandard" type="textarea" placeholder="请输入..." v-bind:readonly="isReadOnly"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="$t('New-audit.Grading-E')" prop='bsStandardEn'>
+                        <el-input :autosize="{ minRows: 5}" v-model="dialog.formItem.bsStandardEn" type="textarea" placeholder="请输入..." v-bind:readonly="isReadOnly"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="$t('New-audit.Remarks')" prop='bsRemark'>
+                        <el-input v-model="dialog.formItem.bsRemark" type="textarea" placeholder="请输入..."v-bind:readonly="isReadOnly"></el-input>
+                    </el-form-item>
+                </el-form>
+            </p>
+        </Modal>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            readonly: true,
+            formQuery: {
+                bsNo: '',
+            },
+            isReadOnly:true,
+            isdisabled:true,
+
+            dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: {
+                    bsNo: [
+                        { required: true, message: '请填写编码', trigger: 'blur' }
+                    ],
+                    bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ],
+                    bsContent:[
+                        { required: true, message: '请填写条款内容', trigger: 'blur'}
+                    ],
+                    bsStandard:[
+                      {required: true, message: '请填写评分标准', trigger: 'blur'}
+                    ]
+                }
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:25,
+                    pkParent:-1
+                },
+                pagination: [25, 50, 100],
+                data: {
+                    rows:[],total:0
+                },
+                columns: [
+                    {
+                        title:this.$t('New-audit.Numbering'),
+                        key: 'bsNo',
+                        width: 80,
+                        align:"center",
+                        className:"Artnumber"
+                    },
+                    {
+                        title: this.$t('New-audit.Terms-name'),
+                        key: 'bsName',                        
+                        width: 130,
+                    },
+                    {
+                        title:this.$t('New-audit.Terms-conditions'),
+                        key: 'bsContent',
+                        width: 300,
+                       /*className:"bscont"     */ 
+                       render: (h,param) => {
+                            if(this.$i18n.locale=='zh-CN'){
+                                let content = param.row.bsContent;
+                                if(content.length>200) {
+                                    content = content.substring(0,200);
+                                    content+= '....';
+                                }
+                                return h('span',content);
+                            }else if(this.$i18n.locale=='en-US'){
+                                let contentEn = param.row.bsContentEn;
+                                if(contentEn.length>200) {
+                                    contentEn = contentEn.substring(0,200);
+                                    contentEn+= '....';
+                                }
+                                return h('span',contentEn);
+                            }
+                        }                  
+                    },
+                    {
+                        title:this.$t('New-audit.Grading'),
+                        key:'bsStandard',
+                        width: 260,                        
+                        /*className:"bscont2",*/
+                        render: (h,param) => {
+                            if(this.$i18n.locale=='zh-CN'){
+                                let content = param.row.bsStandard;
+                                if(content.length>200) {
+                                    content = content.substring(0,200);
+                                    content+= '....';
+                                }
+                                return h('span',content);
+                            }else if(this.$i18n.locale=='en-US'){
+                                let contentEn = param.row.bsStandardEn;
+                                if(contentEn.length>200) {
+                                    contentEn = contentEn.substring(0,200);
+                                    contentEn+= '....';
+                                }
+                                return h('span',contentEn);
+                            }
+                        }
+                    },
+                    {
+                        title:this.$t('New-audit.Remarks'),
+                        key:'bsRemark',
+                        width: 100
+                    },
+                    {
+                        title:this.$t('New-audit.Operating') ,
+                        key: 'action',
+                         align:"center",
+                        render: (h, params) => {
+                            let ary = [];
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('EDIT')
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditDialog(params);
+                                        }
+                                    }
+                                }, this.$t('Button.Edit')));
+                            }
+
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('QUERY')
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.show(params)
+                                        }
+                                    }
+                                }, this.$t('Button.View')));
+                            }
+
+                            
+
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('DELETE')
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.delete(params)
+                                        }
+                                    }
+                                }, this.$t('Button.Delete')));
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    created(){
+        this.getData();
+    },
+    methods: {
+        handleSubmit(name) { 
+            this.getData();
+        },
+        getData() {
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+            this.api.ApprovedEHSItems.getlist(this.formQuery).then((res) => {
+                this.datagrid.data = res.data;
+            });
+        },
+        reloadData() {
+            this.datagrid.data = this.getData();
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.getData();
+        },
+        delete(params) {
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                onOk: () => {
+
+                    this.api.ApprovedEHSItems.delete({id:params.row.id}).then((res)=>{
+                        console.log(res);
+                        debugger;
+                        if(res.result) {
+                            //refresh
+                            this.reloadData();
+                            this.$Modal.remove();
+                            this.$Message.info('删除成功');
+                        }else {
+                            this.$Message.error(res.msg);   
+                        }
+                    });
+                }
+            });
+        },
+        showAddDialog() {   
+            this.isReadOnly = false;    
+            this.dialog.modal_dialog = true;
+             this.isdisabled=false;
+            this.dialog.formItem = {};
+        },
+        showEditDialog(params) {
+              this.isReadOnly = false;
+              this.isdisabled=false;
+            this.dialog.modal_dialog = true;
+            let r = params.row;
+            this.dialog.formItem = {
+
+                id:r.id,
+                bsNo:r.bsNo, 
+                bsName:r.bsName, 
+                bsContent:r.bsContent,
+                bsContentEn:r.bsContentEn,
+                bsStandard:r.bsStandard,
+                bsStandardEn:r.bsStandardEn,
+                bsScoreLine:r.bsScoreLine,
+                bsRemark:r.bsRemark,
+            };
+        },
+       show (params) {
+            let r = params.row;
+            this.dialog.formItem = r;
+            this.isReadOnly = true;
+            this.isdisabled =true;
+            this.dialog.modal_dialog = true;
+            this.dialog.formItem = {
+
+                id:r.id,
+                bsNo:r.bsNo, 
+                bsName:r.bsName, 
+                bsContent:r.bsContent,
+                bsContentEn:r.bsContentEn,
+                bsStandard:r.bsStandard,
+                bsStandardEn:r.bsStandardEn,
+                bsScoreLine:r.bsScoreLine,
+                bsRemark:r.bsRemark,
+            };
+            // debugger
+            // //console.log(r)
+            //     this.$Modal.info({
+            //     title: '新增审核条款信息',
+            //     content:{
+            //         姓名:this.dialog.modal_dialog.bsNo
+            //     }
+
+
+                
+            //     })
+            },
+        ok () {
+          
+            this.$refs["dialog.formItem"].validate((valid) => {
+                if (valid) {
+                    if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                        this.api.ApprovedEHSItems.edit(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                this.getData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                    }else {
+                        this.api.ApprovedEHSItems.add(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                this.getData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                    }
+                }
+                else {
+                    this.$Message.info('信息填写不完整');
+                }
+            });
+            
+        },
+        cancel () {
+            
+        },
+        mydefineRow () {
+                return 'bscont';
+        }
+    }
+}
+</script>
+<style lang="less">
+	@import "../public.less";
+  .el-input{
+    width:69%;
+  }
+  .el-textarea__inner{
+    width: 85%;
+  }
+
+  .el-form-item {
+    margin-bottom: 14px;
+}
+
+.ivu-input {
+    margin-top: 12px;
+    display: inline-block;    
+    height: 40px;
+    padding: 11px 10px;
+    font-size: 12px;
+    border: 1px solid #dddee1;    
+    color: #495060;
+    background-color: #fff;
+    background-image: none;
+    position: relative;
+    cursor: text;
+    /*margin-top:16px;*/
+    transition: border .2s ease-in-out,background .2s ease-in-out,box-shadow .2s ease-in-out;}
+    .addform{
+        width: 480px;
+    }
+    .addform .el-input{width: 300px}
+    .addform .el-textarea{width: 350px}
+
+     .ivu-table td.bscont{
+        overflow : hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+       -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        height: 100px;
+        
+    }
+   
+
+.ivu-table .bscont td{      
+        font-size:  12px;
+        font-family: "Microsoft YaHei";
+        line-height:24px;
+      
+        
+     }
+.ivu-table td.Artnumber{font-size:  16px;  font-family: "Arial"; text-align: center;}
+.searchbtn .el-button{border-radius: 0px;padding: 11px 14px;}
+.Teamtable .ivu-table-cell{white-space: pre-wrap!important;text-indent:-20px;}
+
+/*.el-form-item__content{display: inline-block;}*/
+</style>

@@ -1,0 +1,62 @@
+.productinspectapporved #topbody:after{
+  content:".";
+    visibility:hidden;
+    display:block; 
+    clear:both; 
+  }
+  .productinspectapporved .topbody-div{
+  float: left;height: 50px; 
+  }
+  .productinspectapporved .topbody-text{
+  float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;  
+  }
+  .productinspectapporved .topbody-input{
+    float: left;
+  }
+  .productinspectapporved .topbody-input .el-input{
+  width: 300px; 
+  }
+  .productinspectapporved #documentbody{
+  padding-left: 5%;padding-top: 10px;padding-bottom: 30px; overflow: hidden;  
+  }
+   #documentbody .el-row:after, .el-row:before{display: none!important}
+  .productinspectapporved #documentbody p{
+  font-size: 14px;color: #20A0FF; margin-bottom: 15px;
+
+    }
+
+  .productinspectapporved #documentbody hr{
+  width:98%;border: none;height: 1px;color: #DDDDDD;margin-top: 30px;margin-bottom: 30px; 
+    display: block;
+  }
+  .productinspectapporved #tablebody{
+  padding-top: 10px;padding-bottom: 30px;padding-left: 5%;padding-right: 5%;  
+  }
+  .productinspectapporved #packbody{
+	padding-left: 5%;padding-top: 10px;padding-bottom: 30px; overflow: hidden;
+  }
+  #packbody .el-row:after, .el-row:before{display: none!important}
+  .productinspectapporved #packbody p{
+  font-size: 14px;color: #20A0FF; margin-bottom: 15px;
+  }
+  .productinspectapporved #packbody hr{
+  width:98%;border: none;height: 1px;color: #DDDDDD;margin-top: 30px;margin-bottom: 30px;   
+  }
+  .productinspectapporved #otherbody{
+  padding-top: 10px;padding-bottom: 10px;padding-left: 3%;  
+  }
+  .productinspectapporved #testbody{
+  padding-top: 10px;padding-bottom: 10px;padding-left: 5%;  
+  }
+  .productinspectapporved #testbody p{
+  font-size: 14px;  
+  }
+  .productinspectapporved #testbody textarea{
+  width: 50%;border-color: #DDDDDD;border-radius: 5px;  
+  } 
+  .productinspectapporved #bottom{
+  height:150px;margin-top: 20px;margin-bottom: 20px;background-color: white;
+  padding-top: 50px;padding-left: 5%; 
+  }
+
+/*分隔线*/

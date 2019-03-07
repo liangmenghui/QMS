@@ -1,0 +1,8 @@
+package com.unind.qms.web.samplePlan.dao;
+
+import com.unind.qms.web.samplePlan.entity.SampleVerificationLevel;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.CrudRepository;
+
+public interface SampleVerificationLevelDao extends CrudRepository<SampleVerificationLevel, Long>, JpaSpecificationExecutor<SampleVerificationLevel> {
+}

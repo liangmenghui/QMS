@@ -1,0 +1,22 @@
+import httpservices from '@/libs/service'
+
+export default {
+    selectlist:function(data){
+        return  httpservices.get("/lmp/infrastruct/customer/paging",data);
+    },
+    all:function(data){
+        return httpservices.get("/lmp/infrastruct/customer/list",data);
+    },
+    insertCustomer:function(data){
+        return  httpservices.get("/lmp/infrastruct/customer/insertCustomer",data);
+    },
+    deleteCustomer:function(data){
+        return  httpservices.get("/lmp/infrastruct/customer/deleteCustomer",data);
+    },
+    updateCustomer:function(data){
+        return  httpservices.get("/lmp/infrastruct/customer/updateCustomer",data);
+    },
+    selectByCustomer:function(data){
+        return  httpservices.get("/lmp/infrastruct/customer/selectByCustomer",data);
+    },
+}

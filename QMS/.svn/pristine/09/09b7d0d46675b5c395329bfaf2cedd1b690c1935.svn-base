@@ -1,0 +1,11 @@
+import httpService from '@/libs/service'
+
+export default {
+   
+    add: function (data) {
+        return httpService.upload('/approvedItemsRecordFile/add', data)
+    },    
+    delete: function (data) {
+        return httpService.post('/approvedItemsRecordFile/delete', data)
+    }
+}

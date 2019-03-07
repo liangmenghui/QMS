@@ -1,0 +1,381 @@
+<template>
+    <div>
+<div>
+    <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                    <Form-item >
+                         <Input v-model="formQuery.bsSegment1" placeholder="请输入客户料号" ></Input>
+                    </Form-item>
+                    <Form-item >
+                        <Input v-model="formQuery.bsCustomerItemNumber" placeholder="请输入客户物料编号" ></Input>
+                   </Form-item>
+                    <Form-item >
+                        <Button type="primary" @click="handleSubmit()">查 询</Button>
+                    </Form-item> 
+                    <!-- <Form-item >
+                        <Button type="primary" @click="showAddDialog()" >添加</Button>
+                    </Form-item>-->
+                </Form> 
+            </i-col>
+        </Row>
+    </div>
+
+    <Modal v-model="dialog.modal_dialog1"  title="" @on-ok="ok1" @on-cancel="cancel" >
+        <p>
+    <div >
+        <Row>
+            <i-col>
+    <Form :model="formItem" :label-width="80" style="text-align:center"  :ref="dialog.ruleForm" :rules="dialog.ruleForm" >
+   <FormItem label="客户料号"  prop='bsPartNumber'>
+    <Row>
+        <Col span="15" >
+         <Input v-model="formItem.bsPartNumber" placeholder="请输入客户料号" ></Input>
+        </Col>
+   </Row>
+   </FormItem>
+<FormItem label="金合联料号" prop='bsItemNumber'>
+        <Row>
+            <Col span="15" >
+             <Input v-model="formItem.bsItemNumber" placeholder="请输入金合联料号"></Input>
+            </Col>
+       </Row>
+</FormItem>
+<FormItem label="商品编码" prop='bsHts'>
+        <Row>
+            <Col span="15" >
+             <Input v-model="formItem.bsHts" placeholder="请输入商品编码"></Input>
+            </Col>
+       </Row>
+</FormItem>
+<FormItem label="料号描述" prop='bsDescription' >
+    <Row>
+        <Col span="15" >
+         <Input type='textarea' v-model="formItem.bsDescription" placeholder="请输入料号描述" ></Input>
+        </Col>
+   </Row>
+</FormItem>
+</Form> 
+</i-col>
+</Row>
+</div>
+</p>
+</Modal>
+
+    <Modal v-model="dialog.modal_dialog"  title="" @on-ok="ok()" @on-cancel="cancel" >
+            <p>
+        <div >
+            <Row>
+                <i-col>
+        <Form :model="formItem" :label-width="80" style="text-align:center"  :ref="dialog.ruleForm" :rules="dialog.ruleForm" >
+            <FormItem label="客户料号"  prop='bsPartNumber'>
+                <Row>
+                    <Col span="15" >
+                     <Input v-model="formItem.bsPartNumber" placeholder="请输入客户料号" ></Input>
+                    </Col>
+               </Row>
+               </FormItem>
+            <FormItem label="金合联料号" prop='bsItemNumber'>
+                    <Row>
+                        <Col span="15" >
+                         <Input v-model="formItem.bsItemNumber" placeholder="请输入金合联料号"></Input>
+                        </Col>
+                   </Row>
+            </FormItem>
+            <FormItem label="商品编码" prop='bsHts'>
+                    <Row>
+                        <Col span="15" >
+                         <Input v-model="formItem.bsHts" placeholder="请输入商品编码"></Input>
+                        </Col>
+                   </Row>
+            </FormItem>
+            <FormItem label="料号描述" prop='bsDescription' >
+                <Row>
+                    <Col span="15" >
+                     <Input v-model="formItem.bsDescription"  type='textarea' placeholder="请输入料号描述" ></Input>
+                    </Col>
+               </Row>
+        </FormItem>
+</Form> 
+ </i-col>
+</Row>
+</div>
+</p>
+</Modal>
+
+
+<Row>
+        <i-col span="24">
+            <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="height:auto;"></Table>
+            <div style="margin: 10px;overflow: hidden">
+                <div style="float: right;">
+                    <Page :total="datagrid.data.total" :current="1" @on-change="changePage"  @on-page-size-change="chageSize" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination"  show-total show-elevator show-sizer ></Page>
+                </div>
+            </div>
+        </i-col>
+    </Row>
+</div>
+
+
+</template>
+<script>
+import {mapState} from 'vuex'
+export default {
+    created(){
+      this.getData();
+    },
+    computed:{
+        ...mapState({
+            menuData:state=>state.menuData  
+        })
+    },
+    data () {
+        return {
+            start:0,
+            end:15,
+             dialog:{ 
+                 modal_dialog:false,
+                 modal_dialog1:false,
+                 ruleForm:{
+                    bsPartNumber: [
+                        { required: true, message: '请填写客户料号', trigger: 'blur' }
+                    ],
+                    bsItemNumber: [
+                        { required: true, message: '请填写金合联料号', trigger: 'blur' }
+                    ],
+                    bsHts:[
+                        {required: true, message: '请填写商品编码', trigger: 'blur'}
+                    ]
+                 },
+             },
+            formItem:{
+                id:'',
+                bsInventoryItemId:'',
+                bsSegment1:"",
+                bsDescription:"",
+                bsCustomerItemNumber:"",
+                bsCustomerItemDesc:'',
+                bsCustAccountId:'',
+                bsAccountNumber:'',
+                bsPartyName:'',
+                bsCategoryId:'',
+                bsCategoryDesc:''
+            },
+            formQuery:{
+                bsSegment1:'',
+                bsCustomerItemNumber:''
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:15,
+                    pkParent:-1
+                },
+                pagination: [15, 50, 100],
+                data: {rows:[],total:0,rows1:[]},
+                columns: [
+                    {
+                        title: '物料ID',
+                        key: 'bsInventoryItemId'
+                    },
+                
+                    {
+                        title: '物料编号',
+                        key: 'bsSegment1'
+                    },
+                    {
+                        title: '物料名称',
+                        key: 'bsDescription'
+                    },
+                    {
+                        title:'客户物料编号',
+                        key: 'bsCustomerItemNumber'
+                    },
+                    {
+                        title:'客户物料名称',
+                        key: 'bsCustomerItemDesc'
+                    },
+                    {
+                        title:'客户ID',
+                        key: 'bsCustAccountId'
+                    },
+                    {
+                        title:'客户编号',
+                        key: 'bsAccountNumber'
+                    },
+                    {
+                        title:'客户名称',
+                        key: 'bsPartyName'
+                    },
+                    {
+                        title:'物料类别ID',
+                        key: 'bsCategoryId'
+                    },
+                    {
+                        title:'物料类别名称',
+                        key: 'bsCategoryDesc'
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let ary = [];
+                            // this.menuData.perms.EDIT
+                            // if(true) {
+                            //     ary.push(h('Button', {
+                            //         props: {
+                            //             type: 'primary',
+                            //             size: 'small'
+                            //         },
+                            //         style: {
+                            //             marginRight: '5px'
+                            //         },
+                            //         on: {
+                            //             click: () => {
+                            //                 this.showEditDialog(params)
+                            //             }
+                            //         }
+                            //     }, '编辑'));
+                            // }
+                            if(true) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.delete(params)
+                                        }
+                                    }
+                                }, '删除'))
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            },
+            }
+    },
+    
+    methods:{
+        getData(){
+            this.api.lmp.cargo.selectlist().then((res) =>{
+                if(res.result) {
+                    this.datagrid.data.rows1=this.datagrid.data.rows;
+                    this.datagrid.data.rows = res.data.rows.slice(this.start,this.end);
+                    this.datagrid.data.total=res.data.total;
+                   }else {
+                    this.$Message.error(res.msg);
+                  }
+            });
+        },
+   
+    showAddDialog(){
+
+
+        this.formItem.id='';
+        this.formItem.bsInventoryItemId='';
+        this.formItem.bsSegment1='';
+        this.formItem.bsDescription='';
+        this.formItem.bsCustomerItemNumber='';
+        this.formItem.bsCustomerItemDesc='';
+        this.formItem.bsCustAccountId='';
+        this.formItem.bsAccountNumber='';
+        this.formItem.bsPartyName='';
+        this.formItem.bsCategoryId='';
+        this.formItem.bsCategoryDesc='';
+        this.dialog.modal_dialog=true;
+    },
+    check(){
+        if(this.formItem.bsPartNumber =='' ||this.formItem.bsPartNumber==null){
+            this.$Message.error('客户料号不能为空')
+            return false;
+        }else if(this.formItem.bsItemNumber ==''||this.formItem.bsItemNumber==null){
+            this.$Message.error('金合联料号不能为空')
+            return false;
+        } else if(this.formItem.bsHts ==''||this.formItem.bsHts==null){
+            this.$Message.error('商品编码不能为空')
+            return false;
+        }else{
+            return true;
+        }
+    },
+    ok(){   
+            if(!this.check()){
+                return false;
+            }
+            this.api.lmp.cargo.insertCargo(this.formItem).then((res) =>{
+                if(res.result){
+                    this.getData();
+                    this.$Message.success('添加成功！');
+                }else{
+                    this.$Message.error('添加失败！');
+                    }
+             });    
+    },
+    ok1(){
+        if(!this.check()){
+                return false;
+            }
+        this.api.lmp.cargo.updateCargo(this.formItem).then((res) =>{
+            if(res.result){
+                this.getData();
+                this.$Message.success('更新成功！');
+                }else{
+                    this.$Message.error('更新失败！');
+            }
+        });
+    },
+    cancel(){
+
+    },
+    delete(params){
+        console.log(params);
+        this.api.lmp.cargo.deleteCargo(params.row).then((res) =>{
+            if(res.result){
+                this.getData();
+                this.$Message.success('删除成功！');
+                }else{
+                    this.$Message.error('删除失败！');
+            }
+        });
+    },
+    showEditDialog(params){
+        this.formItem.id=params.row.id;
+        this.formItem.bsInventoryItemId=params.row.bsInventoryItemId;
+        this.formItem.bsSegment1=params.row.bsSegment1;
+        this.formItem.bsDescription=params.row.bsDescription;
+        this.formItem.bsCustomerItemNumber=params.row.bsCustomerItemNumber;
+        this.formItem.bsCustomerItemDesc=params.row.bsCustomerItemDesc;
+        this.formItem.bsCustAccountId=params.row.bsCustAccountId;
+        this.formItem.bsAccountNumber=params.row.bsAccountNumber;
+        this.formItem.bsPartyName=params.row.bsPartyName;
+        this.formItem.bsCategoryId=params.row.bsCategoryId;
+        this.formItem.bsCategoryDesc=params.row.bsCategoryDesc;
+        this.dialog.modal_dialog1=true;
+    },
+    handleSubmit(){
+        this.api.lmp.cargo.selectByCargo(this.formQuery).then((res) =>{
+            if(res.result) {
+                this.datagrid.data = res.data;
+               }else {
+                this.$Message.error(res.msg);
+              }
+        })
+
+    },
+    changePage (pageSize) {
+        this.start=(pageSize-1)*this.datagrid.queryParams.rows;
+        this.end=pageSize*this.datagrid.queryParams.rows;
+        this.getData();
+        },
+    chageSize(pageSizeOpts){
+        this.datagrid.queryParams.rows=pageSizeOpts;
+        this.start=0;
+        this.end=pageSizeOpts;
+        this.getData();
+    }
+ },
+}
+</script>

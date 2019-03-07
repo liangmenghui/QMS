@@ -1,0 +1,735 @@
+package com.unind.qms.web.basic.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.base.domain.admin.user.SysUser;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.util.Date;
+import java.util.Set;
+
+/**
+ * @author chen
+ */
+@Entity
+@Table(name = FeedbackInfo.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class FeedbackInfo extends BaseEntity {
+    private static final long serialVersionUID = 7151771262953316256L;
+    public static final String TABLE_NAME = "t_feedback_info";
+
+    /**
+     * 用户ID
+     */
+    @ApiModelProperty(name="bsUserId", value="用户ID")
+    @Column
+    protected Long bsUserId;
+
+    @ApiModelProperty(name="todoerBy",hidden=true,value="反馈人--user")
+    @ManyToOne
+    @JoinColumn(name = "bsUserId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser feedbackerBy;
+
+
+    /**
+     * 供应商ID
+     */
+    @ApiModelProperty(name="bsSuppId",required=true,value="供应商ID")
+    @NotNull
+    @Column
+    protected Long bsSuppId;
+
+    /**
+     * 产品ID
+     */
+    @ApiModelProperty(name = "bsPrId", value = "产品ID")
+    @Column
+    protected Long bsPrId;
+
+    /**
+     * 标题
+     */
+    @ApiModelProperty(name="bsTitle",required=true,value="标题")
+    @Column(length = 100)
+    protected String bsTitle;
+
+    /**
+     * 状态
+     */
+    @ApiModelProperty(name="bsStatus",value="状态")
+    @Column
+    protected int bsStatus;
+
+    /**
+     * 步数
+     */
+    @ApiModelProperty(name="bsStep",value="步数")
+    @Column
+    protected int bsStep;
+
+    /**
+     * 类型
+     */
+    @ApiModelProperty(name="bsType",value="类型")
+    @NotNull
+    @Column
+    protected int bsType;
+
+    /**
+     * 问题描述
+     */
+    @ApiModelProperty(name="bsProblemDes",value="问题描述")
+    @Column(length = 1000)
+    protected String bsProblemDes;
+
+    /**
+     * 客户公司名称
+     */
+    @ApiModelProperty(name="bsCusCompanyName",value="客户公司名称")
+    @Column(length = 100)
+    protected String bsCusCompanyName;
+
+    /**
+     * 客户公司编号
+     */
+    @ApiModelProperty(name="bsCusCompanyCode",value="客户公司编号")
+    @Column(length = 80)
+    protected String bsCusCompanyCode;
+
+    /**
+     * 客户公司联系人名称
+     */
+    @ApiModelProperty(name="bsCusCompanyPerson",value="客户公司联系人名称")
+    @Column(length = 80)
+    protected String bsCusCompanyPerson;
+
+    /**
+     * 客户公司联系人邮箱
+     */
+    @ApiModelProperty(name="bsCusCompanyEmail",value="客户公司联系人邮箱")
+    @Column(length = 80)
+    protected String bsCusCompanyEmail;
+
+    /**
+     * 客户公司联系人电话
+     */
+    @ApiModelProperty(name="bsCusCompanyMobile",value="客户公司联系人电话")
+    @Column(length = 50)
+    protected String bsCusCompanyMobile;
+
+    /**
+     * 供应商名称
+     */
+    @ApiModelProperty(name="bsSuppCompanyName",value="供应商名称")
+    @Column(length = 50)
+    protected String bsSuppCompanyName;
+
+    /**
+     * 供应商编号
+     */
+    @ApiModelProperty(name="bsSuppCompanyCode",value="供应商编号")
+    @Column(length = 50)
+    protected String bsSuppCompanyCode;
+
+    /**
+     * 供应商联系人名称
+     */
+    @ApiModelProperty(name="bsSuppCompanyPerson",value="供应商联系人名称")
+    @Column(length = 30)
+    protected String bsSuppCompanyPerson;
+
+    /**
+     * 供应商联系人邮箱
+     */
+    @ApiModelProperty(name="bsSuppCompanyEmail",value="供应商联系人邮箱")
+    @Column(length = 30)
+    protected String bsSuppCompanyEmail;
+
+    /**
+     * 供应商联系人电话
+     */
+    @ApiModelProperty(name="bsSuppCompanyMobile",value="供应商联系人电话")
+    @Column(length = 30)
+    protected String bsSuppCompanyMobile;
+
+    /**
+     * 产品编号
+     */
+    @ApiModelProperty(name="bsPrCode",value="产品编号")
+    @Column(length = 50)
+    protected String bsPrCode;
+
+    /**
+     * 产品名称
+     */
+    @ApiModelProperty(name="bsPrName",value="产品名称")
+    @Column(length = 50)
+    protected String bsPrName;
+
+    /**
+     * 产品数量
+     */
+    @ApiModelProperty(name="bsPrNum",value="产品数量")
+    @Column
+    protected String bsPrNum;
+
+    /**
+     * 投诉地点
+     */
+    @ApiModelProperty(name="bsReportLocation",value="投诉地点")
+    @Column(length = 100)
+    protected String bsReportLocation;
+
+    /**
+     * 生产地点
+     */
+    @ApiModelProperty(name="bsProductLocation",value="生产地点")
+    @Column(length = 100)
+    protected String bsProductLocation;
+
+    /**
+     * 生产日期
+     */
+    @ApiModelProperty(name="bsProductDate",value="生产日期")
+    @Column
+    @Temporal(TemporalType.DATE)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+08:00")
+    protected Date bsProductDate;
+
+    /**
+     * 扣款单号
+     */
+    @ApiModelProperty(name = "bsRefundOrder", value = "扣款单号")
+    @Column(length = 100)
+    protected String bsRefundOrder;
+
+    /**
+     * 扣款日期
+     */
+    @ApiModelProperty(name = "bsRefundDate", value = "扣款日期")
+    @Column
+    @Temporal(TemporalType.DATE)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+08:00")
+    protected Date bsRefundDate;
+
+    /**
+     * 质量事故发生日期
+     */
+    @ApiModelProperty(name = "bsQualityAccidentDate", value = "质量事故发生日期")
+    @Column
+    @Temporal(TemporalType.DATE)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+08:00")
+    protected Date bsQualityAccidentDate;
+
+    //文件集合
+    @OneToMany(mappedBy = "feedbackInfo")
+    protected Set<FeedbackInfoFile> fileSet;
+
+    /**
+     * 创建人
+     */
+    @ApiModelProperty(name="pkCreatedBy",hidden=true,value="创建人")
+    @Column
+    protected Long pkCreatedBy;
+
+    /**
+     * 修改人
+     */
+    @ApiModelProperty(name="pkModifiedBy",hidden=true,value="修改人")
+    @Column
+    protected Long pkModifiedBy;
+
+    @ApiModelProperty(name="createdBy",hidden=true,value="创建人--user")
+    @ManyToOne
+    @JoinColumn(name = "pkCreatedBy", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser createdBy;
+
+    @ApiModelProperty(name="modifiedBy",hidden=true,value="修改人--user")
+    @ManyToOne
+    @JoinColumn(name = "pkModifiedBy", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser modifiedBy;
+
+    /**
+     * 货物紧急替换
+     */
+    @ApiModelProperty(name = "bsEvent1", value = "货物紧急替换")
+    @Column
+    public int bsEvent1;
+
+    /**
+     * 国外仓库分选货物
+     */
+    @ApiModelProperty(name = "bsEvent2", value = "国外仓库分选货物")
+    @Column
+    public int bsEvent2;
+
+    /**
+     * 客户让步接受差异
+     */
+    @ApiModelProperty(name = "bsEvent3", value = "客户让步接受差异")
+    @Column
+    public int bsEvent3;
+
+    /**
+     * 返工
+     */
+    @ApiModelProperty(name = "bsEvent4", value = "返工")
+    @Column
+    public int bsEvent4;
+
+    /**
+     * 货物退回供应商
+     */
+    @ApiModelProperty(name = "bsEvent5", value = "货物退回供应商")
+    @Column
+    public int bsEvent5;
+
+    /**
+     * 客户生产线断货
+     */
+    @ApiModelProperty(name = "bsEvent6", value = "客户生产线断货")
+    @Column
+    public int bsEvent6;
+
+    /**
+     * 客户现场分选货物
+     */
+    @ApiModelProperty(name = "bsEvent7", value = "客户现场分选货物")
+    @Column
+    public int bsEvent7;
+
+    /**
+     * 标签错误
+     */
+    @ApiModelProperty(name = "bsEvent8", value = "标签错误")
+    @Column
+    public int bsEvent8;
+
+    /**
+     * 空运费
+     */
+    @ApiModelProperty(name = "bsEvent9", value = "空运费")
+    @Column
+    public int bsEvent9;
+
+    /**
+     * 客户罚款
+     */
+    @ApiModelProperty(name = "bsEvent10", value = "客户罚款")
+    @Column
+    public int bsEvent10;
+
+    /**
+     * 货物参杂质
+     */
+    @ApiModelProperty(name = "bsEvent11", value = "货物参杂质")
+    @Column
+    public int bsEvent11;
+
+    /**
+     * 箱内货品数量不符
+     */
+    @ApiModelProperty(name = "bsEvent12", value = "箱内货品数量不符")
+    @Column
+    public int bsEvent12;
+
+    /**
+     * 货物拒绝或报废
+     */
+    @ApiModelProperty(name = "bsEvent13", value = "货物拒绝或报废")
+    @Column
+    public int bsEvent13;
+
+    /**
+     * 其他可能的费用（附件）
+     */
+    @ApiModelProperty(name = "bsEvent14", value = "其他可能的费用（附件）")
+    @Column
+    public int bsEvent14;
+
+    public Long getBsUserId() {
+        return bsUserId;
+    }
+
+    public void setBsUserId(Long bsUserId) {
+        this.bsUserId = bsUserId;
+    }
+
+    public SysUser getFeedbackerBy() {
+        return feedbackerBy;
+    }
+
+    public void setFeedbackerBy(SysUser feedbackerBy) {
+        this.feedbackerBy = feedbackerBy;
+    }
+
+    public Long getBsSuppId() {
+        return bsSuppId;
+    }
+
+    public void setBsSuppId(Long bsSuppId) {
+        this.bsSuppId = bsSuppId;
+    }
+
+    public Long getBsPrId() {
+        return bsPrId;
+    }
+
+    public void setBsPrId(Long bsPrId) {
+        this.bsPrId = bsPrId;
+    }
+
+    public String getBsTitle() {
+        return bsTitle;
+    }
+
+    public void setBsTitle(String bsTitle) {
+        this.bsTitle = bsTitle;
+    }
+
+    public int getBsStatus() {
+        return bsStatus;
+    }
+
+    public void setBsStatus(int bsStatus) {
+        this.bsStatus = bsStatus;
+    }
+
+    public int getBsStep() {
+        return bsStep;
+    }
+
+    public void setBsStep(int bsStep) {
+        this.bsStep = bsStep;
+    }
+
+    public int getBsType() {
+        return bsType;
+    }
+
+    public void setBsType(int bsType) {
+        this.bsType = bsType;
+    }
+
+    public String getBsProblemDes() {
+        return bsProblemDes;
+    }
+
+    public void setBsProblemDes(String bsProblemDes) {
+        this.bsProblemDes = bsProblemDes;
+    }
+
+    public String getBsCusCompanyName() {
+        return bsCusCompanyName;
+    }
+
+    public void setBsCusCompanyName(String bsCusCompanyName) {
+        this.bsCusCompanyName = bsCusCompanyName;
+    }
+
+    public String getBsCusCompanyCode() {
+        return bsCusCompanyCode;
+    }
+
+    public void setBsCusCompanyCode(String bsCusCompanyCode) {
+        this.bsCusCompanyCode = bsCusCompanyCode;
+    }
+
+    public String getBsCusCompanyPerson() {
+        return bsCusCompanyPerson;
+    }
+
+    public void setBsCusCompanyPerson(String bsCusCompanyPerson) {
+        this.bsCusCompanyPerson = bsCusCompanyPerson;
+    }
+
+    public String getBsCusCompanyEmail() {
+        return bsCusCompanyEmail;
+    }
+
+    public void setBsCusCompanyEmail(String bsCusCompanyEmail) {
+        this.bsCusCompanyEmail = bsCusCompanyEmail;
+    }
+
+    public String getBsCusCompanyMobile() {
+        return bsCusCompanyMobile;
+    }
+
+    public void setBsCusCompanyMobile(String bsCusCompanyMobile) {
+        this.bsCusCompanyMobile = bsCusCompanyMobile;
+    }
+
+    public String getBsSuppCompanyName() {
+        return bsSuppCompanyName;
+    }
+
+    public void setBsSuppCompanyName(String bsSuppCompanyName) {
+        this.bsSuppCompanyName = bsSuppCompanyName;
+    }
+
+    public String getBsSuppCompanyCode() {
+        return bsSuppCompanyCode;
+    }
+
+    public void setBsSuppCompanyCode(String bsSuppCompanyCode) {
+        this.bsSuppCompanyCode = bsSuppCompanyCode;
+    }
+
+    public String getBsSuppCompanyPerson() {
+        return bsSuppCompanyPerson;
+    }
+
+    public void setBsSuppCompanyPerson(String bsSuppCompanyPerson) {
+        this.bsSuppCompanyPerson = bsSuppCompanyPerson;
+    }
+
+    public String getBsSuppCompanyEmail() {
+        return bsSuppCompanyEmail;
+    }
+
+    public void setBsSuppCompanyEmail(String bsSuppCompanyEmail) {
+        this.bsSuppCompanyEmail = bsSuppCompanyEmail;
+    }
+
+    public String getBsSuppCompanyMobile() {
+        return bsSuppCompanyMobile;
+    }
+
+    public void setBsSuppCompanyMobile(String bsSuppCompanyMobile) {
+        this.bsSuppCompanyMobile = bsSuppCompanyMobile;
+    }
+
+    public String getBsPrCode() {
+        return bsPrCode;
+    }
+
+    public void setBsPrCode(String bsPrCode) {
+        this.bsPrCode = bsPrCode;
+    }
+
+    public String getBsPrName() {
+        return bsPrName;
+    }
+
+    public void setBsPrName(String bsPrName) {
+        this.bsPrName = bsPrName;
+    }
+
+    public String getBsPrNum() {
+        return bsPrNum;
+    }
+
+    public void setBsPrNum(String bsPrNum) {
+        this.bsPrNum = bsPrNum;
+    }
+
+    public String getBsReportLocation() {
+        return bsReportLocation;
+    }
+
+    public void setBsReportLocation(String bsReportLocation) {
+        this.bsReportLocation = bsReportLocation;
+    }
+
+    public String getBsProductLocation() {
+        return bsProductLocation;
+    }
+
+    public void setBsProductLocation(String bsProductLocation) {
+        this.bsProductLocation = bsProductLocation;
+    }
+
+    public Date getBsProductDate() {
+        return bsProductDate;
+    }
+
+    public void setBsProductDate(Date bsProductDate) {
+        this.bsProductDate = bsProductDate;
+    }
+
+    public String getBsRefundOrder() {
+        return bsRefundOrder;
+    }
+
+    public void setBsRefundOrder(String bsRefundOrder) {
+        this.bsRefundOrder = bsRefundOrder;
+    }
+
+    public Date getBsRefundDate() {
+        return bsRefundDate;
+    }
+
+    public void setBsRefundDate(Date bsRefundDate) {
+        this.bsRefundDate = bsRefundDate;
+    }
+
+    public Date getBsQualityAccidentDate() {
+        return bsQualityAccidentDate;
+    }
+
+    public void setBsQualityAccidentDate(Date bsQualityAccidentDate) {
+        this.bsQualityAccidentDate = bsQualityAccidentDate;
+    }
+
+    public Set<FeedbackInfoFile> getFileSet() {
+        return fileSet;
+    }
+
+    public void setFileSet(Set<FeedbackInfoFile> fileSet) {
+        this.fileSet = fileSet;
+    }
+
+    public Long getPkCreatedBy() {
+        return pkCreatedBy;
+    }
+
+    public void setPkCreatedBy(Long pkCreatedBy) {
+        this.pkCreatedBy = pkCreatedBy;
+    }
+
+    public Long getPkModifiedBy() {
+        return pkModifiedBy;
+    }
+
+    public void setPkModifiedBy(Long pkModifiedBy) {
+        this.pkModifiedBy = pkModifiedBy;
+    }
+
+    public SysUser getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(SysUser createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public SysUser getModifiedBy() {
+        return modifiedBy;
+    }
+
+    public void setModifiedBy(SysUser modifiedBy) {
+        this.modifiedBy = modifiedBy;
+    }
+
+    public int getBsEvent1() {
+        return bsEvent1;
+    }
+
+    public void setBsEvent1(int bsEvent1) {
+        this.bsEvent1 = bsEvent1;
+    }
+
+    public int getBsEvent2() {
+        return bsEvent2;
+    }
+
+    public void setBsEvent2(int bsEvent2) {
+        this.bsEvent2 = bsEvent2;
+    }
+
+    public int getBsEvent3() {
+        return bsEvent3;
+    }
+
+    public void setBsEvent3(int bsEvent3) {
+        this.bsEvent3 = bsEvent3;
+    }
+
+    public int getBsEvent4() {
+        return bsEvent4;
+    }
+
+    public void setBsEvent4(int bsEvent4) {
+        this.bsEvent4 = bsEvent4;
+    }
+
+    public int getBsEvent5() {
+        return bsEvent5;
+    }
+
+    public void setBsEvent5(int bsEvent5) {
+        this.bsEvent5 = bsEvent5;
+    }
+
+    public int getBsEvent6() {
+        return bsEvent6;
+    }
+
+    public void setBsEvent6(int bsEvent6) {
+        this.bsEvent6 = bsEvent6;
+    }
+
+    public int getBsEvent7() {
+        return bsEvent7;
+    }
+
+    public void setBsEvent7(int bsEvent7) {
+        this.bsEvent7 = bsEvent7;
+    }
+
+    public int getBsEvent8() {
+        return bsEvent8;
+    }
+
+    public void setBsEvent8(int bsEvent8) {
+        this.bsEvent8 = bsEvent8;
+    }
+
+    public int getBsEvent9() {
+        return bsEvent9;
+    }
+
+    public void setBsEvent9(int bsEvent9) {
+        this.bsEvent9 = bsEvent9;
+    }
+
+    public int getBsEvent10() {
+        return bsEvent10;
+    }
+
+    public void setBsEvent10(int bsEvent10) {
+        this.bsEvent10 = bsEvent10;
+    }
+
+    public int getBsEvent11() {
+        return bsEvent11;
+    }
+
+    public void setBsEvent11(int bsEvent11) {
+        this.bsEvent11 = bsEvent11;
+    }
+
+    public int getBsEvent12() {
+        return bsEvent12;
+    }
+
+    public void setBsEvent12(int bsEvent12) {
+        this.bsEvent12 = bsEvent12;
+    }
+
+    public int getBsEvent13() {
+        return bsEvent13;
+    }
+
+    public void setBsEvent13(int bsEvent13) {
+        this.bsEvent13 = bsEvent13;
+    }
+
+    public int getBsEvent14() {
+        return bsEvent14;
+    }
+
+    public void setBsEvent14(int bsEvent14) {
+        this.bsEvent14 = bsEvent14;
+    }
+}

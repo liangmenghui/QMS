@@ -1,0 +1,41 @@
+package com.unind.qms.web.supplier.service;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.provider.BusinessException;
+import com.unind.qms.web.supplier.entity.SupplierInfo;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.nio.charset.Charset;
+
+/**
+ * 审批条款
+ * @author chen
+ *
+ */
+public interface SupplierInfoService {
+	public static final String HASH_ALGORITHM = "SHA-1";
+	public static final int HASH_INTERATIONS = 1024;
+	public static final int SALT_SIZE = 8;
+	public static final Charset CHARSET = Charset.forName("UTF-8");
+
+	public ApiResponseResult add(SupplierInfo supplierInfo) throws BusinessException;
+
+	public ApiResponseResult edit(SupplierInfo supplierInfo) throws BusinessException;
+
+	public ApiResponseResult delete(Long id,String bsSuppCode) throws BusinessException;
+
+	public ApiResponseResult getlist(String keyWord, Long id, String bsSuppCode, Integer bsIsApprove, String bsSuppStatus, Integer bsRiskLevel, PageRequest pageRequest) throws BusinessException;
+
+	public ApiResponseResult applyRiskLevel(Long id, Integer bsRiskLevelUser, String bsRiskDescUser) throws BusinessException;
+
+	public ApiResponseResult completeRiskLevel(Long id, Integer bsRiskLevelUser) throws BusinessException;
+
+	public ApiResponseResult autoRiskLevel(Long id, Integer bsRiskManual) throws BusinessException;
+
+	public ApiResponseResult getSrmApprovedSupp(String schInfo, String approvedLevel, Pageable pageRequest) throws BusinessException;
+
+	public ApiResponseResult getSrmApprovedFile(String suppcode) throws BusinessException;
+
+	public ApiResponseResult changeSuppGradeAndStatus(Long bsSuppId, int bsResult, int bsGrade) throws BusinessException;
+}

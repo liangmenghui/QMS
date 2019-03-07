@@ -1,0 +1,27 @@
+package com.unind.qms.web.samplePlan.service;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.provider.BusinessException;
+import com.unind.qms.web.samplePlan.entity.SampleVerificationLevel;
+import javassist.tools.rmi.Sample;
+import org.springframework.data.domain.PageRequest;
+
+import java.nio.charset.Charset;
+
+/**
+ * 检验水平
+ */
+public interface SampleVerificationLevelService {
+    public static final String HASH_ALGORITHM = "SHA-1";
+    public static final int HASH_INTERATIONS = 1024;
+    public static final int SALT_SIZE = 8;
+    public static final Charset CHARSET = Charset.forName("UTF-8");
+
+    public ApiResponseResult add(SampleVerificationLevel sampleVerificationLevel) throws BusinessException;
+
+    public ApiResponseResult edit(SampleVerificationLevel sampleVerificationLevel) throws BusinessException;
+
+    public ApiResponseResult delete(Long id) throws BusinessException;
+
+    public ApiResponseResult getlist(String bsLevelName, PageRequest pageRequest) throws BusinessException;
+}

@@ -1,0 +1,750 @@
+package com.unind.qms.web.risk.service.internal;
+
+import com.unind.base.components.mail.MailSenderService;
+import com.unind.base.dao.admin.SysUserDao;
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.domain.admin.user.SysUser;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.qms.enumeration.BasicEnumConstants;
+import com.unind.qms.enumeration.BasicStateEnum;
+import com.unind.qms.web.basic.dao.FeedbackInfoDao;
+import com.unind.qms.web.basic.dao.FeedbackInfoExtraDao;
+import com.unind.qms.web.basic.dao.TodoInfoDao;
+import com.unind.qms.web.basic.entity.FeedbackInfo;
+import com.unind.qms.web.basic.entity.FeedbackInfoExtra;
+import com.unind.qms.web.basic.entity.TodoInfo;
+import com.unind.qms.web.product.dao.ProductInfoDao;
+import com.unind.qms.web.product.entity.ProductInfo;
+import com.unind.qms.web.risk.dao.ProductPpmDao;
+import com.unind.qms.web.risk.dao.ProductRiskDao;
+import com.unind.qms.web.risk.dao.RiskApprovedRecordDao;
+import com.unind.qms.web.risk.entity.ProductPpm;
+import com.unind.qms.web.risk.entity.ProductRisk;
+import com.unind.qms.web.risk.entity.RiskApprovedRecord;
+import com.unind.qms.web.risk.service.ProductRiskService;
+import com.unind.qms.web.shipment.dao.ShipmentInspectDao;
+import com.unind.qms.web.shipment.entity.ShipmentInspect;
+import com.unind.qms.web.shipment.entity.ShipmentInspectRecord;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+/**
+ * 产品风险管理信息
+ */
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class ProductRiskImpl extends BaseOprService implements ProductRiskService {
+    @Autowired
+    private ProductRiskDao productRiskDao;
+    @Autowired
+    private ProductInfoDao productInfoDao;
+    @Autowired
+    private ShipmentInspectDao shipmentInspectDao;
+    @Autowired
+    private FeedbackInfoDao feedbackInfoDao;
+    @Autowired
+    private FeedbackInfoExtraDao feedbackInfoExtraDao;
+    @Autowired
+    private ProductPpmDao productPpmDao;
+    @Autowired
+    private RiskApprovedRecordDao riskApprovedRecordDao;
+    @Autowired
+    private TodoInfoDao todoInfoDao;
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private MailSenderService mailSenderService;
+
+    /**
+     * 添加产品风险管理信息
+     * @param productRisk
+     * @return
+     * @throws BusinessException
+     */
+    @Transactional
+    public ApiResponseResult add(ProductRisk productRisk) throws BusinessException {
+        if (null == productRisk || null == productRisk.getBsPrId()) {
+            return ApiResponseResult.failure("产品ID为必填项");
+        }
+        int count = productRiskDao.countByBsPrId(productRisk.getBsPrId());
+        if(count > 0){
+            return ApiResponseResult.failure("产品已存在");
+        }
+        //1.添加创建时间
+        productRisk.setBsCreatedTime(new Date());
+
+        //2.添加type值
+        //所有得分类型默认为1
+        productRisk.setBsMassProductType((productRisk.getBsMassProductType() == 0) ? 1 : productRisk.getBsMassProductType());
+        productRisk.setBsApprovedType((productRisk.getBsApprovedType() == 0) ? 1 : productRisk.getBsApprovedType());
+        //productRisk.setBsStandardType((productRisk.getBsStandardType() == 0) ? 1 : productRisk.getBsStandardType());
+        productRisk.setBsCpkType((productRisk.getBsCpkType() == 0) ? 1 : productRisk.getBsCpkType());
+        productRisk.setBsGrrType((productRisk.getBsGrrType() == 0) ? 1 : productRisk.getBsGrrType());
+        productRisk.setBsEngineeringType((productRisk.getBsEngineeringType() == 0) ? 1 : productRisk.getBsEngineeringType());
+        productRisk.setBsInspectType((productRisk.getBsInspectType() == 0) ? 1 : productRisk.getBsInspectType());
+        productRisk.setBsFeedbackType((productRisk.getBsFeedbackType() == 0) ? 1 : productRisk.getBsFeedbackType());
+        productRisk.setBsPpmType((productRisk.getBsPpmType() == 0) ? 1 : productRisk.getBsPpmType());
+        productRisk.setBsProjectType((productRisk.getBsProjectType() == 0) ? 1 : productRisk.getBsProjectType());
+        //grr的value值默认为-1
+        productRisk.setBsGrrValue(-1);
+
+        //3.添加value值，并修改对应type值
+        productRisk = updateValueType(productRisk);
+
+        //4.计算各项得分和总得分
+        productRisk.setBsMassProductScore(productRisk.getBsMassProductType() * 3);
+        productRisk.setBsApprovedScore(productRisk.getBsApprovedType() * 2);
+        productRisk.setBsCpkScore(productRisk.getBsCpkType() * 2);
+        productRisk.setBsGrrScore(productRisk.getBsGrrType() * 2);
+        productRisk.setBsEngineeringScore(productRisk.getBsEngineeringType() * 3);
+        productRisk.setBsInspectScore(productRisk.getBsInspectType() *3);
+        productRisk.setBsFeedbackScore(productRisk.getBsFeedbackType() * 3);
+        productRisk.setBsPpmScore(productRisk.getBsPpmType() * 2);
+        productRisk.setBsRiskScore(productRisk.getBsMassProductScore() + productRisk.getBsApprovedScore() + productRisk.getBsCpkScore()
+                        + productRisk.getBsGrrScore() + productRisk.getBsEngineeringScore() + productRisk.getBsInspectScore()
+                        + productRisk.getBsFeedbackScore() + productRisk.getBsPpmScore());
+
+        //5.统计风险等级（1-5级）
+        //判断直升高风险类型是否达到高风险（type为5），满足要求直升高风险
+        int level = 1;
+        if(productRisk.getBsMassProductType() == 5 || productRisk.getBsEngineeringType() == 5 || productRisk.getBsInspectType() == 5
+                || productRisk.getBsFeedbackType() == 5 || productRisk.getBsProjectType() == 1 || productRisk.getBsProjectType() == 3) {
+            //直升高风险
+            level = 5;
+        }else{
+            int totalScore = productRisk.getBsRiskScore();
+            if(totalScore >= 0 && totalScore <= 40){
+            }
+            if(totalScore >= 41 && totalScore <= 55){
+                level = 2;
+            }
+            if(totalScore >= 56 && totalScore <= 70){
+                level = 3;
+            }
+            if(totalScore >= 71 && totalScore <= 85){
+                level = 4;
+            }
+            if(totalScore >= 86 && totalScore <= 100){
+                level = 5;
+            }
+        }
+        productRisk.setBsRiskLevel(level);
+        productRiskDao.save(productRisk);
+
+        //6.更新到产品信息表的系统风险等级
+        ProductInfo productInfo = productInfoDao.findOne(productRisk.getBsPrId());
+        if(productInfo != null){
+            productInfo.setBsRiskLevelSys(level);     //风险等级（系统）
+            productInfo.setBsRiskTimeSys(new Date());
+            productInfo.setBsModifiedTime(new Date());
+            productInfo.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+            productInfo.setBsRiskScore(productRisk.getBsRiskScore());
+            productInfo.setBsRiskLevel(level);
+//            //如果产品风险管理模式为自动，则修改风险等级；如果为手动，则不必修改
+//            if(productInfo.getBsRiskManual() == BooleanStateEnum.FALSE.intValue()){
+//                productInfo.setBsRiskScore(productRisk.getBsRiskScore());
+//                productInfo.setBsRiskLevel(level);
+//            }
+            productInfoDao.save(productInfo);
+        }
+
+        return ApiResponseResult.success("新增成功！").data(productRisk);
+    }
+
+    /**
+     * 修改产品风险管理信息
+     * @param productRisk
+     * @return
+     * @throws BusinessException
+     */
+    @Transactional
+    public ApiResponseResult edit(ProductRisk productRisk) throws BusinessException {
+        if (null == productRisk || null == productRisk.getId()) {
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        if (null == productRisk.getBsPrId()) {
+            return ApiResponseResult.failure("产品ID不能为空");
+        }
+        ProductRisk o = productRiskDao.findOne(productRisk.getId());
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+
+        //原风险等级
+        int originalRiskLevel = o.getBsRiskLevel();
+
+        //1.修改时间
+        o.setBsModifiedTime(new Date());
+        o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+        o.setBsMassProductType(productRisk.getBsMassProductType());
+        o.setBsApprovedType(productRisk.getBsApprovedType());
+        o.setBsCpkType(productRisk.getBsCpkType());
+        o.setBsGrrType(productRisk.getBsGrrType());
+        o.setBsEngineeringType(productRisk.getBsEngineeringType());
+        o.setBsInspectType(productRisk.getBsInspectType());
+        o.setBsFeedbackType(productRisk.getBsFeedbackType());
+        o.setBsPpmType(productRisk.getBsPpmType());
+        o.setBsProjectType(productRisk.getBsProjectType());
+        //修改value
+        o.setBsPpmValue(productRisk.getBsPpmValue());
+        o.setBsInspectValue(productRisk.getBsInspectValue());
+        o.setBsGrrValue(productRisk.getBsGrrValue());
+        o.setBsCpkValue(productRisk.getBsCpkValue());
+        //修改grr改善措施
+        o.setBsGrrImprove(productRisk.getBsGrrImprove());
+
+        //2.修改value值，并修改对应type值
+        o = updateValueType(o);
+
+        //3.计算各项得分和总得分
+        o.setBsMassProductScore(o.getBsMassProductType() * 3);
+        o.setBsApprovedScore(o.getBsApprovedType() * 2);
+        o.setBsCpkScore(o.getBsCpkType() * 2);
+        o.setBsGrrScore(o.getBsGrrType() * 2);
+        o.setBsEngineeringScore(o.getBsEngineeringType() * 3);
+        o.setBsInspectScore(o.getBsInspectType() *3);
+        o.setBsFeedbackScore(o.getBsFeedbackType() * 3);
+        o.setBsPpmScore(o.getBsPpmType() * 2);
+        o.setBsRiskScore(o.getBsMassProductScore() + o.getBsApprovedScore() + o.getBsCpkScore()
+                + o.getBsGrrScore() + o.getBsEngineeringScore() + o.getBsInspectScore()
+                + o.getBsFeedbackScore() + o.getBsPpmScore());
+
+        //4.统计风险等级（1-5级）
+        //判断直升高风险类型是否达到高风险（type为5），满足要求直升高风险
+        int level = 1;
+        if(o.getBsMassProductType() == 5 || o.getBsEngineeringType() == 5 || o.getBsInspectType() == 5
+                || o.getBsFeedbackType() == 5 || o.getBsProjectType() == 1 || o.getBsProjectType() == 3) {
+            //直升高风险
+            level = 5;
+        }else{
+            int totalScore = o.getBsRiskScore();
+            if(totalScore >= 0 && totalScore <= 40){
+            }
+            if(totalScore >= 41 && totalScore <= 55){
+                level = 2;
+            }
+            if(totalScore >= 56 && totalScore <= 70){
+                level = 3;
+            }
+            if(totalScore >= 71 && totalScore <= 85){
+                level = 4;
+            }
+            if(totalScore >= 86 && totalScore <= 100){
+                level = 5;
+            }
+        }
+        o.setBsRiskLevel(level);
+        o.setBsStatus(0);   //状态默认为完成（0.完成 1.进行中），如果需要批准，则在后面状态改为进行中
+
+        //如果原来等级与现在等级不同，则需要批准
+        //此时，需要将风险信息表中的状态改为进行中（0.完成 1.进行中）
+        if(originalRiskLevel != level){
+            //风险信息表中的状态改为进行中（0.完成 1.进行中）
+            o.setBsStatus(1);
+            //5.新增到风险批准记录表
+            Long approverId = (long) 1;
+            RiskApprovedRecord riskApprovedRecord = new RiskApprovedRecord();
+            //5.1如果有正在进行中的批准记录，则修改其新等级即可
+            List<RiskApprovedRecord> riskApprovedRecordList = riskApprovedRecordDao.findByBsPrIdAndBsStatus(o.getBsPrId(), 0);
+            if(riskApprovedRecordList.size() > 0){
+                riskApprovedRecord = riskApprovedRecordList.get(0);
+                riskApprovedRecord.setBsNewRiskLevel(level);
+                riskApprovedRecordDao.save(riskApprovedRecord);
+            }else{
+                //5.2如果没有正在进行中的批准记录，则添加一条新纪录
+                riskApprovedRecord.setBsPrId(o.getBsPrId());
+                riskApprovedRecord.setBsOriginalRiskLevel(originalRiskLevel);
+                riskApprovedRecord.setBsNewRiskLevel(level);
+                //添加批准人
+                Map<String, Object> param = new HashMap<>();
+                param.put("roleCode", "QMS_QUALITY_MANAGER");  //风险-----宁总
+                StringBuffer sqlbf1 = new StringBuffer();
+                sqlbf1.append(" SELECT a.pk_user FROM sys_user_roles_agg a LEFT JOIN sys_role b ON a.pk_role = b.id");
+                sqlbf1.append(" LEFT JOIN sys_user c on c.id = a.pk_user");
+                sqlbf1.append(" WHERE b.bs_code = :roleCode AND c.bs_is_del = '0'");
+                Map<String, Object> recorderMap = super.findOneBySql(sqlbf1.toString(), param);
+                if(recorderMap != null){
+                    BigDecimal userId = (BigDecimal) recorderMap.get("PK_USER");
+                    approverId = userId.longValue();
+                    riskApprovedRecord.setBsApproverId(approverId);
+                }
+                riskApprovedRecord.setBsStatus(0);   //状态为进行中（0:进行中, 1:同意, 2:拒绝）
+                riskApprovedRecord.setBsCreatedTime(new Date());
+                riskApprovedRecordDao.save(riskApprovedRecord);
+            }
+
+            //6.添加待办事项，给宁总
+            TodoInfo todoInfo = new TodoInfo();
+            todoInfo.setBsUserId(approverId);
+            todoInfo.setBsReferId(o.getBsPrId());   //关联ID（存放产品ID）
+            todoInfo.setBsExtend(riskApprovedRecord.getId());   //扩展（存放风险批准记录ID）
+            todoInfo.setBsRouter("/qms/product/riskManagement");
+            ProductInfo productInfo = productInfoDao.findOne(o.getBsPrId());
+            String productName = "";
+            if(productInfo != null){
+                productName = productInfo.getBsPrName();
+            }
+            //设置待办标题
+            String title = "[风险等级变更批准]" + productName + "风险等级由" + originalRiskLevel +"级变更为" + level + "级";
+            todoInfo.setBsTitle(title);
+            todoInfo.setBsStatus(BasicEnumConstants.TODO_NOFINISH);
+            todoInfo.setBsSystemType(BasicStateEnum.TODO_QMSTYPE.intValue());
+            todoInfo.setBsType(BasicEnumConstants.TODO_PR_RISK);
+            todoInfo.setBsCreatedTime(new Date());    //创建时间
+            todoInfo.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+            todoInfo.setBsStartTime(new Date());      //有效开始时间
+            //计算一周后的时间
+            Calendar curr = Calendar.getInstance();
+            curr.setTime(todoInfo.getBsStartTime());
+            curr.add(Calendar.WEEK_OF_YEAR, 1);
+            Date after7Days=curr.getTime();
+            todoInfo.setBsEndTime(after7Days);                  //有效结束时间
+            todoInfoDao.save(todoInfo);
+
+            //发送邮件
+            SysUser sysUser = sysUserDao.findOne(approverId);
+            if(sysUser != null && StringUtils.isNotEmpty(sysUser.getBsEmail())){
+                String nameTo = sysUser.getBsName();    //收件人名
+                String mailTo = sysUser.getBsEmail().trim();   //收件人邮箱
+                String subject = "待办事项提醒";    //主题
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日");
+                String dateStr = simpleDateFormat.format(new Date());
+                StringBuffer text = new StringBuffer();   //邮件内容
+                text.append("<div style='padding: 5px;'>" + nameTo + "，" + "</div>");
+                text.append("<div style='padding: 5px;'>" + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;你好！" + title +"。请及时处理！</div>");
+                text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;请<a href='http://www.unind.net'>点击此处</a>进入QMS系统。</div>");
+                text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;此致</div>");
+                text.append("<div style='padding: 5px;'>敬礼</div>");
+                text.append("<div style='padding: 5px; float: right; margin: 0 50px 0 0;'>QMS系统</div><br>");
+                text.append("<div style='padding: 5px; float: right; margin: 0 20px 0 0;clear: both;'>" + dateStr + "</div><br>");
+                mailSenderService.send(mailTo, subject, text.toString());
+            }
+        }
+        //保存到风险信息表
+        productRiskDao.save(o);
+
+        //7.更新到产品信息表的系统风险等级
+        ProductInfo productInfo = productInfoDao.findOne(o.getBsPrId());
+        if(productInfo != null){
+            productInfo.setBsRiskLevelSys(level);     //风险等级（系统）
+            productInfo.setBsRiskTimeSys(new Date());
+            productInfo.setBsModifiedTime(new Date());
+            productInfo.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+            productInfo.setBsRiskScore(o.getBsRiskScore());
+            productInfo.setBsRiskLevel(level);
+//            //如果产品风险管理模式为自动，则修改风险等级；如果为手动，则不必修改
+//            if(productInfo.getBsRiskManual() == BooleanStateEnum.FALSE.intValue()){
+//                productInfo.setBsRiskScore(o.getBsRiskScore());
+//                productInfo.setBsRiskLevel(level);
+//            }
+            productInfoDao.save(productInfo);
+        }
+
+        return ApiResponseResult.success("修改成功！").data(o);
+    }
+
+    /**
+     * 获取产品风险管理信息
+     * @param bsPrId
+     * @param pageRequest
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public ApiResponseResult getlist(Long bsPrId, PageRequest pageRequest) {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+        if (bsPrId != null) {
+            filters.add(new SearchFilter("bsPrId", SearchFilter.Operator.EQ, bsPrId));
+        }
+        Specifications<ProductRisk> spec = Specifications.where(super.and(filters, ProductRisk.class));
+        Page<ProductRisk> page = productRiskDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+
+    /**
+     * 更新产品风险信息表的value及type
+     * @param productRisk
+     * @return
+     * @throws BusinessException
+     */
+    public ProductRisk updateValueType(ProductRisk productRisk) throws BusinessException{
+        //获取该产品的出货检验报告，按时间顺序排序，取批次号相同的第一个的结果
+        //通过出货检验报告得到产品不合格次数inspectValue、产品的PPM值ppmValue
+        Sort sort = new Sort(Sort.Direction.ASC, "bsCreatedTime");
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        filters.add(new SearchFilter("bsPrId", SearchFilter.Operator.EQ, productRisk.getBsPrId()));
+        Specification<ShipmentInspect> spec = Specifications.where(super.and(filters, ShipmentInspect.class));
+        List<ShipmentInspect> shipmentInspectList = shipmentInspectDao.findAll(spec, sort);
+        if(shipmentInspectList.size() > 0){
+            //根据批次号bsBatchNo去除重复项，保留不同批次号(订单号)最早的那份
+            shipmentInspectList = shipmentInspectList.stream().filter(distinctByKey(s -> s.getBsBatchNo())).collect(Collectors.toList());
+
+            //1.统计出货检验不合格次数inspectValue
+            //定义出货检验不合格次数inspectValue
+            double inspectValue = 0;
+            boolean isTriple = false; //是否连续三次验货不合格
+            for(int i = 0; i < shipmentInspectList.size(); i++){
+                //取当前报告结果
+                List<ShipmentInspectRecord> item = new ArrayList<ShipmentInspectRecord>(shipmentInspectList.get(i).getRecordSet());
+                Collections.sort(item, new Comparator<ShipmentInspectRecord>() {
+                    @Override
+                    public int compare(ShipmentInspectRecord o1, ShipmentInspectRecord o2) {
+                        return o1.getId() < o2.getId() ? -1 :1;
+                    }
+                });
+                if(item.get(item.size()-1).getBsResult() == 2){
+                    inspectValue++;  //不合格次数inspectValue增加1
+                    if(i >= 2){
+                        //取上一次报告结果
+                        List<ShipmentInspectRecord> item2 = new ArrayList<ShipmentInspectRecord>(shipmentInspectList.get(i - 1).getRecordSet());
+                        Collections.sort(item2, new Comparator<ShipmentInspectRecord>() {
+                            @Override
+                            public int compare(ShipmentInspectRecord o1, ShipmentInspectRecord o2) {
+                                return o1.getId() < o2.getId() ? -1 :1;
+                            }
+                        });
+                        //取上上次报告结果
+                        List<ShipmentInspectRecord> item3 = new ArrayList<ShipmentInspectRecord>(shipmentInspectList.get(i - 2).getRecordSet());
+                        Collections.sort(item3, new Comparator<ShipmentInspectRecord>() {
+                            @Override
+                            public int compare(ShipmentInspectRecord o1, ShipmentInspectRecord o2) {
+                                return o1.getId() < o2.getId() ? -1 :1;
+                            }
+                        });
+                        if(item2.get(item.size()-1).getBsResult() == 2 && item3.get(item.size()-1).getBsResult() == 2){
+                            isTriple = true;
+                        }
+                    }
+                }
+            }
+            //验货不合格次数
+            productRisk.setBsInspectValue(inspectValue);
+            if(inspectValue == 0){
+                productRisk.setBsInspectType(1);
+            }
+            if(inspectValue == 1){
+                productRisk.setBsInspectType(2);
+            }
+            if(inspectValue >= 2){
+                productRisk.setBsInspectType(3);
+            }
+            if(inspectValue >= 3){
+                productRisk.setBsInspectType(4);
+            }
+            if(isTriple){
+                //连续发生三次以上
+                productRisk.setBsInspectType(5);
+            }
+
+            //2.取最近12个月的ppmValue总和得到一个产品ppmValue
+            //计算公式：(不良品/检验数) * 10^6
+            productRisk = getPpmValue(productRisk, shipmentInspectList);
+            double ppmValue = productRisk.getBsPpmValue();
+            if(ppmValue <= 50){
+                productRisk.setBsPpmType(1);
+            }
+            if(ppmValue > 50 && ppmValue <= 200){
+                productRisk.setBsPpmType(2);
+            }
+            if(ppmValue > 200 && ppmValue <= 500){
+                productRisk.setBsPpmType(3);
+            }
+            if(ppmValue > 500 && ppmValue <= 1000){
+                productRisk.setBsPpmType(4);
+            }
+            if(ppmValue > 1000){
+                productRisk.setBsPpmType(5);
+            }
+        }
+
+        //3.取最近一次客诉的时间判断type（通过产品ID在客诉附加表找到客诉信息）
+        List<FeedbackInfoExtra> feedbackInfoExtraList = feedbackInfoExtraDao.findByBsIsDelAndBsPrIdOrderByBsCreatedTimeDesc(BooleanStateEnum.FALSE.intValue(), productRisk.getBsPrId());
+        if(feedbackInfoExtraList.size() <= 0){
+            productRisk.setBsFeedbackType(1);
+        }else{
+            FeedbackInfoExtra feedbackInfoExtra = feedbackInfoExtraList.get(0);
+            if(feedbackInfoExtra.getBsFeedbackId() != null && feedbackInfoExtra.getFeedbackInfo() != null){
+                FeedbackInfo feedbackInfo = feedbackInfoExtra.getFeedbackInfo();
+                //状态（1.未处理 2.处理中 3.已关闭）
+                if(feedbackInfo.getBsStatus() == 1 || feedbackInfo.getBsStatus() == 2){
+                    productRisk.setBsFeedbackType(5);
+                }
+                if(feedbackInfo.getBsStatus() == 3){
+                    int feedbackDays = getDays(feedbackInfo.getBsCreatedTime(), new Date());
+                    if(feedbackDays > 180){
+                        productRisk.setBsFeedbackType(2);
+                    }
+                    if(feedbackDays > 90 && feedbackDays <= 180){
+                        productRisk.setBsFeedbackType(3);
+                    }
+                    if(feedbackDays <= 90){
+                        productRisk.setBsFeedbackType(4);
+                    }
+                }
+            }
+        }
+
+        //4.取产品的创建时间来判断type
+        ProductInfo productInfo = productInfoDao.findOne(productRisk.getBsPrId());
+        if(productInfo != null){
+            int subDays = getDays(productInfo.getBsCreatedTime(), new Date());
+            if(subDays <= 90){
+                productRisk.setBsProjectType(1);
+            }
+        }
+
+        //5.根据grr的value值来判断type（value为-1时，type值为5）
+        if(new BigDecimal(productRisk.getBsGrrValue()).compareTo(new BigDecimal((double)0)) >= 0 && new BigDecimal(productRisk.getBsGrrValue()).compareTo(new BigDecimal((double)10)) <= 0){
+            productRisk.setBsGrrType(1);
+        }
+        if(new BigDecimal(productRisk.getBsGrrValue()).compareTo(new BigDecimal((double)10)) > 0 && new BigDecimal(productRisk.getBsGrrValue()).compareTo(new BigDecimal((double)30)) <= 0){
+            productRisk.setBsGrrType(2);
+        }
+        if(new BigDecimal(productRisk.getBsGrrValue()).compareTo(new BigDecimal((double)30)) > 0 && productRisk.getBsGrrImprove() == 1){
+            productRisk.setBsGrrType(3);
+        }
+        if(new BigDecimal(productRisk.getBsGrrValue()).compareTo(new BigDecimal((double)30)) > 0 && productRisk.getBsGrrImprove() == 0){
+            productRisk.setBsGrrType(4);
+        }
+        if(new BigDecimal(productRisk.getBsGrrValue()).compareTo(new BigDecimal((double)-1)) == 0){
+            productRisk.setBsGrrType(5);
+        }
+
+        //6.根据cpk的value值来判断type
+        if (productRisk.getBsCpkValue() < 0.8) {
+            productRisk.setBsCpkType(5);
+        }
+        if (productRisk.getBsCpkValue() >= 0.8 && productRisk.getBsCpkValue() < 1) {
+            productRisk.setBsCpkType(4);
+        }
+        if (productRisk.getBsCpkValue() >= 1 && productRisk.getBsCpkValue() < 1.33) {
+            productRisk.setBsCpkType(3);
+        }
+        if (productRisk.getBsCpkValue() >= 1.33 && productRisk.getBsCpkValue() < 1.67) {
+            productRisk.setBsCpkType(2);
+        }
+        if (productRisk.getBsCpkValue() >= 1.67) {
+            productRisk.setBsCpkType(1);
+        }
+
+        return productRisk;
+    }
+
+    /**
+     * 计算相差天数
+     * @param start
+     * @param end
+     * @return
+     */
+    public int getDays(Date start, Date end) {
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            return (int) ((df.parse(df.format(end)).getTime() - df.parse(df.format(start)).getTime()) / (24 * 60 * 60 * 1000));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    /**
+     * 去重方法
+     * @param keyExtractor
+     * @param <T>
+     * @return
+     */
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
+    }
+
+    /**
+     * 计算最近12个月的PPM值
+     * @param productRisk
+     * @param shipmentInspectList
+     * @return
+     */
+    public ProductRisk getPpmValue(ProductRisk productRisk, List<ShipmentInspect> shipmentInspectList){
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        int month = Calendar.getInstance().get(Calendar.MONTH);
+        int monthBegin = month + 1;  //去年开始月份
+        double ppmValue = 0;   //PPM值，计算公式：(不良品/检验数) * 10^6
+        double sampleResult = 0;  //不良品
+        double sampleNum = 0;     //检验数
+
+        //1.获取今年不良品数（自己和客户的不良数之和）
+        List<ProductPpm> productPpmsList = productPpmDao.findByBsPrIdAndBsYear(productRisk.getBsPrId(), year);
+        if(productPpmsList.size() > 0){
+            for(int i = 1; i < month + 1; i++){
+                if(i == 1){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult1() + productPpmsList.get(0).getBsCusMonthResult1();
+                }
+                if(i == 2){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult2() + productPpmsList.get(0).getBsCusMonthResult2();
+                }
+                if(i == 3){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult3() + productPpmsList.get(0).getBsCusMonthResult3();
+                }
+                if(i == 4){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult4() + productPpmsList.get(0).getBsCusMonthResult4();
+                }
+                if(i == 5){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult5() + productPpmsList.get(0).getBsCusMonthResult5();
+                }
+                if(i == 6){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult6() + productPpmsList.get(0).getBsCusMonthResult6();
+                }
+                if(i == 7){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult7() + productPpmsList.get(0).getBsCusMonthResult7();
+                }
+                if(i == 8){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult8() + productPpmsList.get(0).getBsCusMonthResult8();
+                }
+                if(i == 9){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult9() + productPpmsList.get(0).getBsCusMonthResult9();
+                }
+                if(i == 10){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult10() + productPpmsList.get(0).getBsCusMonthResult10();
+                }
+                if(i == 11){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult11() + productPpmsList.get(0).getBsCusMonthResult11();
+                }
+                if(i == 12){
+                    sampleResult = sampleResult + productPpmsList.get(0).getBsMonthResult12() + productPpmsList.get(0).getBsCusMonthResult12();
+                }
+            }
+        }
+
+        //2.获取去年不良品数（自己和客户的不良数之和）
+        List<ProductPpm> productPpmsList2 = productPpmDao.findByBsPrIdAndBsYear(productRisk.getBsPrId(), year - 1);
+        if(productPpmsList2.size() > 0){
+            for(int i = monthBegin; i < 13; i++){
+                if(i == 1){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult1() + productPpmsList2.get(0).getBsCusMonthResult1();
+                }
+                if(i == 2){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult2() + productPpmsList2.get(0).getBsCusMonthResult2();
+                }
+                if(i == 3){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult3() + productPpmsList2.get(0).getBsCusMonthResult3();
+                }
+                if(i == 4){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult4() + productPpmsList2.get(0).getBsCusMonthResult4();
+                }
+                if(i == 5){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult5() + productPpmsList2.get(0).getBsCusMonthResult5();
+                }
+                if(i == 6){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult6() + productPpmsList2.get(0).getBsCusMonthResult6();
+                }
+                if(i == 7){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult7() + productPpmsList2.get(0).getBsCusMonthResult7();
+                }
+                if(i == 8){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult8() + productPpmsList2.get(0).getBsCusMonthResult8();
+                }
+                if(i == 9){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult9() + productPpmsList2.get(0).getBsCusMonthResult9();
+                }
+                if(i == 10){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult10() + productPpmsList2.get(0).getBsCusMonthResult10();
+                }
+                if(i == 11){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult11() + productPpmsList2.get(0).getBsCusMonthResult11();
+                }
+                if(i == 12){
+                    sampleResult = sampleResult + productPpmsList2.get(0).getBsMonthResult12() + productPpmsList2.get(0).getBsCusMonthResult12();
+                }
+            }
+        }
+
+        //3.获取最近12个月的检验数
+        Calendar c = Calendar.getInstance();
+        c.set(year - 1, monthBegin - 1, 1, 0, 0, 0);
+        Date dateBegin = c.getTime();   //开始日期
+        c.set(year, month, 1, 0, 0, 0);
+        Date dateEnd = c.getTime();     //截止日期
+
+        List<ShipmentInspect> list2 = shipmentInspectList.stream().filter(s -> s.getBsCreatedTime().getTime() >= dateBegin.getTime()
+                && s.getBsCreatedTime().getTime() < dateEnd.getTime()).collect(Collectors.toList());
+
+        for(int i = 0; i < list2.size(); i++){
+            sampleNum = sampleNum + list2.get(i).getBsSamplesNum();
+        }
+
+        //4.计算ppmValue,计算公式：(不良品/检验数) * 10^6
+        if(sampleNum != 0){
+            ppmValue = (sampleResult / sampleNum) * 1000000;
+        }
+
+        productRisk.setBsPpmResult(sampleResult);
+        productRisk.setBsPpmNum(sampleNum);
+        productRisk.setBsPpmValue(ppmValue);
+
+        return productRisk;
+    }
+
+    /**
+     * 更新产品风险信息表ppm的value值和type值
+     * @param productRisk
+     * @return
+     */
+    public ProductRisk updatePpmValueType(ProductRisk productRisk) throws BusinessException {
+        //获取该产品的出货检验报告，按时间顺序排序，取批次号相同的第一个的结果
+        //通过出货检验报告得到产品的PPM值ppmValue
+        Sort sort = new Sort(Sort.Direction.ASC, "bsCreatedTime");
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        filters.add(new SearchFilter("bsPrId", SearchFilter.Operator.EQ, productRisk.getBsPrId()));
+        Specification<ShipmentInspect> spec = Specifications.where(super.and(filters, ShipmentInspect.class));
+        List<ShipmentInspect> shipmentInspectList = shipmentInspectDao.findAll(spec, sort);
+        if(shipmentInspectList.size() > 0){
+            //根据批次号bsBatchNo去除重复项，保留不同批次号(订单号)最早的那份
+            shipmentInspectList = shipmentInspectList.stream().filter(distinctByKey(s -> s.getBsBatchNo())).collect(Collectors.toList());
+
+            //计算最近12个月的PpmValue值
+            productRisk = getPpmValue(productRisk, shipmentInspectList);
+            double ppmValue = productRisk.getBsPpmValue();
+            if(ppmValue <= 50){
+                productRisk.setBsPpmType(1);
+            }
+            if(ppmValue > 50 && ppmValue <= 200){
+                productRisk.setBsPpmType(2);
+            }
+            if(ppmValue > 200 && ppmValue <= 500){
+                productRisk.setBsPpmType(3);
+            }
+            if(ppmValue > 500 && ppmValue <= 1000){
+                productRisk.setBsPpmType(4);
+            }
+            if(ppmValue > 1000){
+                productRisk.setBsPpmType(5);
+            }
+        }
+        return productRisk;
+    }
+
+}

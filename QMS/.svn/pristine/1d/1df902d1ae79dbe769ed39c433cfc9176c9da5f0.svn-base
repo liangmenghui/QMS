@@ -1,0 +1,31 @@
+import httpservice from '@/libs/service'
+
+export default{
+    customers:function(data){
+        return httpservice.get('/lmp/booking/template/customer',data,false);
+    },
+    agents:function(data){
+        return httpservice.get('/lmp/booking/template/agent',data,false);
+    },
+    getOptionsByKey(data){
+        return httpservice.get('/lmp/booking/template/options',data,false);
+    },
+    saveList(data){
+        return httpservice.postdata('/lmp/booking/template/save',data);
+    },
+    getTemplate(data){
+        return httpservice.get('/lmp/booking/template/get',data);
+    },
+    download(data){
+        return httpservice.download('/lmp/booking/template/download',data)
+    },
+    paging:function(data){
+        return httpservice.get('/lmp/booking/paging',data);
+    },
+    getCustomerByPlan(data){
+        return httpservice.get('/lmp/booking/getCustomerByPlan',data);
+    },
+    getAgentByPlan(data){
+        return httpservice.get('/lmp/booking/getAgentByPlan',data);
+    }
+}

@@ -1,0 +1,7 @@
+import httpService from '@/libs/service'
+
+export default {
+    getSampleNumber: function (data) {
+        return httpService.post('/sampleLevelCodeNum/getSampleNumber', data)
+    }
+}

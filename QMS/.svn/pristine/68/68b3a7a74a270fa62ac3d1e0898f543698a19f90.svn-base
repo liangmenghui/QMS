@@ -1,0 +1,29 @@
+import Cookies from 'js-cookie';
+
+var mStorage = window.localStorage;
+
+const permissions = {
+    state: {
+        permission: mStorage.getItem('permission')==undefined?{perms:{}}:JSON.parse(mStorage.getItem('permission')),
+        allPermissions: mStorage.getItem('allPermissions')==undefined?{perms:{}}:JSON.parse(mStorage.getItem('allPermissions')),
+    },
+    mutations: {
+        updateAllPermissions(state,_allPermissions) {
+            if(_allPermissions == null && _allPermissions == undefined)
+                _allPermissions = {};
+            state.allPermissions = _allPermissions;
+            mStorage.setItem('allPermissions', JSON.stringify(state.allPermissions));
+            ////console.log(state.allPermissions);
+        },
+        getPermission(state,router) {
+            if(state.allPermissions != null && state.allPermissions != undefined)
+                state.permission = state.allPermissions[router];
+            if(state.permission != undefined) {
+                mStorage.setItem('permission', JSON.stringify(state.permission));
+            }
+            ////console.log(router+' : '+JSON.stringify(state.permission));
+        }
+    }
+};
+
+export default permissions;

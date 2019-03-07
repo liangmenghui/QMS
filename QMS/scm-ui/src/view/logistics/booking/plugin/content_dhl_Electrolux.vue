@@ -1,0 +1,400 @@
+<template>
+    <form>
+        <table class="formed" align="left" valign="left">
+           <tr style="width:70%">
+               <td colspan="2" style="font-size:30px;height:40px;font-weight:600" >
+                  <p>SHIPPING ORDER/ </p>
+                </td>   
+                <td colspan="4" style="font-size:30px;height:40px;font-weight:600" >
+                  <p>DHL ISC (Hong Kong) Limited</p>
+                <td colspan="2" style="font-size:30px;height:40px;font-weight:600" >
+                   <p> </p>
+                 </td>
+                </td>             
+           </tr>
+           <tr>
+              <td colspan="2" style="font-weight:900">
+                  <p>MATE'S RECEIPT</p>
+              </td>
+              <td colspan="4" align=center >
+                 <nobr>
+                     Tel: <input style="width:60%" v-model='content.bsTel'>
+                 </nobr>
+              </td>
+              <td>
+                 <p></p>
+              </td>          
+           </tr>
+           <tr>
+                <td colspan="3">
+                    <p>(*DHL ISC shall issue Mate Receipt only after "Customs contentalities" are completed.)</p>
+                </td>
+                <td colspan="1">
+                    <p></p>
+                </td>
+                <td colspan="2">
+                    <p></p>
+                </td>
+                <td colspan="2" style="font-weight:600">
+                    <nobr>
+                        ATTN:<input v-model='content.bsAttn'>
+                    </nobr>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="font-weight:600">
+                    <p>Account Code:</p>
+                </td>
+                <td colspan="2">
+                    <textarea rows="2" v-model='content.bsAccountCode'></textarea>
+                </td>
+                <td colspan="2" style="font-weight:600">
+                    <p>Shipping Order Number:</p>
+                </td>
+                <td colspan="2">
+                    <textarea rows="2" v-model='content.bsShipping'></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" style="font-weight:600">
+                    <p>Shipper (Name & Address):</p>
+                </td>
+                <td colspan="4" style="font-weight:600">
+                    <p>
+                            Manufacturer (Name & Address):
+                    </p>
+                </td>
+            </tr>
+           <tr>
+               <td colspan="4">
+                   <textarea v-model='content.bsShipper' rows="3"></textarea>
+               </td>
+               <td colspan="4" style="border-bottom-style:none;font-weight:700;font-style:italic">
+                    <textarea v-model='content.bsManufacturer' rows="3"></textarea>
+                </td>
+           </tr>
+          <tr>
+              <td colspan="2" style="font-weight:600">
+                <nobr>
+                     Email：<input v-model='content.bsShipperEmail' style="width:150px">
+                </nobr>
+              </td>
+               <td colspan="2" style="font-weight:600">
+                <nobr>
+                     Contact:<input style="width:80%" v-model='content.bsShipperContact'>
+                </nobr>
+              </td>
+               <td colspan="2" style="font-weight:600">
+                <nobr >
+                     Email：<input style="width:80%" v-model='content.bsManufacturerMail'>
+                </nobr>
+              </td>
+              <td colspan="2" style="border-bottom-style:none" >
+                 <nobr>
+                     Contact:<input style="width:80%" v-model='content.bsManufacturerContact'>
+                 </nobr>
+              </td>
+          </tr>
+          <tr>
+              <td colspan="4" style="font-weight:600">
+                  <p>Consignee (Name & Address):</p>
+              </td>
+              <td colspan="2" style="font-weight:600">
+                  <p>Country of Origin:</p>
+              </td>
+              <td colspan="2" style="font-weight:600">
+                  <p>P.O. No.:</p>
+              </td>
+          </tr>
+          <tr>
+              <td colspan="4">
+                  <textarea rows="4" v-model='content.bsConsignee'></textarea>
+              </td>
+              <td colspan="2">
+                  <input style="height:35px" v-model='content.bsCountry'>
+                  <br>
+                  <br>
+                  <br>
+              </td>
+              <td colspan="2">
+                 <input style="height:35px" v-model='content.bsPoNo'>
+                  <br>
+                  <br>
+                  <br>
+              </td>
+          </tr>
+          <tr>
+              <td colspan="4" style="font-weight:600">
+                  <p>Notify Party (Name & Address):</p>
+              </td>
+              <td colspan="2">
+                  <p></p>
+              </td>
+              <td colspan="2">
+                  <p></p>
+              </td>
+          </tr>
+          <tr>
+              <td colspan="4">
+                  <textarea rows="4" v-model='content.bsNotifyParty'></textarea>
+              </td>
+              <td colspan="2">
+                 
+              </td>
+              <td colspan="2">
+                
+              </td>
+          </tr>
+          <tr>
+              <td colspan="4" style="font-weight:600">
+                  <nobr>
+                        Vessel/Voyage :<input style="width:85%" v-model='content.bsVessel'>
+                  </nobr>
+              </td>
+              <td colspan="4" style="font-weight:600">
+                  <nobr>
+                        4. Chinese name of the Payer for GUI Invoice :<input v-model="content.bsInvoice">
+                  </nobr>
+              </td>
+          </tr>
+          <tr>
+              <td colspan="1" style="font-weight:600">
+                  <p>Port of Loading :</p>
+              </td>
+              <td colspan="1">
+                <input v-model='content.bsLoading'>
+              </td>
+              <td colspan="1" style="font-weight:600">
+                  <p>Place of Receipt: </p>
+              </td>
+              <td colspan="1">
+                    <input v-model='content.bsReceipt'>
+              </td>
+              <td colspan="4"></td>
+          </tr>
+
+          <tr>
+              <td colspan="2" style="font-weight:600">
+                  <p>Port of Discharge :</p>
+              </td>
+              <td colspan="2">
+                <input  v-model='content.bsDischarge'>
+              </td>
+              <td colspan="2" style="font-weight:600">
+                  <p>Shipping Term:</p>
+              </td>
+              <td colspan="2" style="font-weight:600">
+                  <p>Service Type:</p>
+              </td>
+          </tr>
+          <tr>
+                <td colspan="2" style="font-weight:600">
+                    <p>Place of Delivery: </p>
+                </td>
+                <td colspan="2">
+                  <input v-model='content.bsDelivery'>
+                </td>
+                <td colspan="2">
+                    <input v-model='content.bsShippingTerm'>
+                </td>
+                <td colspan="2">
+                    <input v-model='content.bsShippingType'>
+                </td>
+            </tr>
+         <tr>
+                <td colspan="2" align=center style="font-weight:600">
+                    <p>Marks & Numbers </p>
+                </td>
+                <td colspan="2" align=center style="font-weight:600">
+                  <p>Packages</p>
+                </td>
+                <td colspan="2" align=center style="font-weight:600">
+                   <p>Description of Pkg. & Goods Particulars</p>
+                   <p>Furnished by Shipper</p>
+                </td>
+                <td colspan="1" align=center style="font-weight:600">
+                   <p>Gross Wt.</p>
+                   <p>(KGS)</p>
+                </td>
+                <td colspan="1" align=center>
+                    <P>Measurement</P>
+                    <p>CBM</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input v-model="content.bsMarks">
+                </td>
+                <td colspan="2">
+                   <input  v-model="content.bsPackages">
+                </td>
+                <td colspan="2">
+                    <input v-model="content.bsDescription">
+                </td>
+                <td colspan="1">
+                    <input v-model="content.bsWeight">
+                </td>
+                <td colspan="1">
+                    <input v-model='content.bsMeasurement'>
+                </td>
+            </tr>
+        </table>
+    </form>
+</template>
+
+<script>
+import Vue from "vue";
+export default {
+  props: {
+    customer: {
+      type: String
+    },
+    agent: {
+      type: String
+    },
+    cabinets: {
+      type: Array
+    },
+    contentData: {
+      type: [Array, Object],
+      required: true
+    }
+  }, //props
+  data() {
+    return {
+      receipts: [{ name: "", desc: "请选择" }],
+      deliveries: [{ name: "", desc: "请选择" }],
+      contentData:"",
+      content: {
+        bsPoNo:'',
+        bsShipping:'',
+        bsAttn:'',
+        bsTel:'',
+        bsAccountCode:'',
+        bsCountry:'',
+        bsInvoice:'',
+        bsShipper: "",
+        bsShipperContact:'',
+        bsManufacturer:'',
+        bsManufacturerMail:'',
+        bsManufacturerContact:'',
+        bsShipperEmail:'',
+        bsConsignee:'',
+        bsNotifyParty:'',
+        bsVessel:'',
+        bsLoading:'',
+        bsDischarge:'',
+        bsDelivery:'',
+        bsReceipt:'',
+        bsShippingTerm:'',
+        bsShippingType:'',
+        bsMarks:'',
+        bsPackages:'',
+        bsDescription:'',
+        bsWeight:'',
+        bsMeasurement:''     
+      },
+      summary: {},
+      detail: []
+    };
+  }, //data
+  methods: {
+    getData: function() {
+      let o = {};
+      o.content = this.content;
+      o.summary = this.summary;
+      o.detail = this.detail;
+      this.$emit("on-commit", o);
+    } //getFormData
+  }, //methods
+  watch: {
+    contentData(val) {
+      if (!val || !val.content || !val.detail || !val.summary) return;
+      this.content = val.content;
+      this.detail = val.detail;
+      this.summary = val.summary;
+    }
+  }
+};
+</script>
+
+<style>
+table {
+  padding: 0;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0px;
+  width:90%
+}
+.td2{
+    font-weight:bold
+}
+.formed {
+  margin: 6px 10px;
+  border: 2px solid #000;
+  line-height: 1.6em;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+.formed tr {
+  padding: 0px;
+}
+.formed tr td {
+  border: 0;
+  border-right: 1px solid #c1c1c3;
+  border-bottom: 1px dashed #c1c1c3;
+  padding: 0px;
+  padding: 1px 1px;
+}
+
+.formed > tr:last-child > td {
+  border-bottom: 0;
+}
+.formed .sperator {
+  border-top: 2px solid #000;
+}
+
+.formed p > u {
+  margin: 3px 5px;
+  font-size: 12px;
+  display: inline;
+  line-height: 12px;
+  text-decoration: none;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.formed input,
+select {
+  width: 100%;
+  border: 1px solid #c1c1c3;
+}
+.formed input {
+  background-color: #f8f9fa;
+  width:96%;
+}
+.formed label {
+  margin-left: 30px;
+  position: relative;
+}
+.formed input[type="checkbox"] {
+  margin-left: 2px;
+  position: absolute;
+  left: -20px;
+  bottom: 1px;
+}
+
+.formed textarea {
+  resize: none;
+  width: 100%;
+  border: 1px solid #c1c1c3;
+  background-color: #e1e2e3;
+}
+.f-blue {
+  background-color: #c0d9f1;
+}
+.f-white {
+  background-color: #fff;
+}
+.f-yellow {
+  background-color: #ff0;
+}
+</style>

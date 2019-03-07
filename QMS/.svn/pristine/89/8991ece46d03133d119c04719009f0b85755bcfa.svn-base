@@ -1,0 +1,81 @@
+package com.unind.qms.web.samplePlan.entity;
+
+import com.unind.base.domain.admin.BaseEntity;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+
+/**
+ * 检验水平——批量——样本代字关系
+ */
+@Entity
+@Table(name = SampleLevelTotalCode.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class SampleLevelTotalCode extends BaseEntity {
+    private static final long serialVersionUID = -1120453838604001881L;
+    public static final String TABLE_NAME = "t_sample_level_total_code";
+
+    /**
+     * 检验水平ID
+     */
+    @ApiModelProperty(name = "bsVerificationLevelId", value = "检验水平ID")
+    @Column
+    protected Long bsVerificationLevelId;
+
+    /**
+     * 批量ID
+     */
+    @ApiModelProperty(name = "bsTotalId", value = "批量ID")
+    @Column
+    protected Long bsTotalId;
+
+    /**
+     * 样本代字ID
+     */
+    @ApiModelProperty(name = "bsCodeId", value = "样本代字ID")
+    @Column
+    protected Long bsCodeId;
+
+    @ApiModelProperty(name = "sampleCode", hidden = true, value = "样本代字")
+    @ManyToOne
+    @JoinColumn(name = "bsCodeId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SampleCode sampleCode;
+
+    public Long getBsVerificationLevelId() {
+        return bsVerificationLevelId;
+    }
+
+    public void setBsVerificationLevelId(Long bsVerificationLevelId) {
+        this.bsVerificationLevelId = bsVerificationLevelId;
+    }
+
+    public Long getBsTotalId() {
+        return bsTotalId;
+    }
+
+    public void setBsTotalId(Long bsTotalId) {
+        this.bsTotalId = bsTotalId;
+    }
+
+    public Long getBsCodeId() {
+        return bsCodeId;
+    }
+
+    public void setBsCodeId(Long bsCodeId) {
+        this.bsCodeId = bsCodeId;
+    }
+
+    public SampleCode getSampleCode() {
+        return sampleCode;
+    }
+
+    public void setSampleCode(SampleCode sampleCode) {
+        this.sampleCode = sampleCode;
+    }
+}

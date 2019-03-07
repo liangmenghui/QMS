@@ -1,0 +1,70 @@
+# PROFILES
+## dev | prod | test
+spring.profiles.active=prod
+
+#autostart
+spring.devtools.restart.enabled=false
+
+# APPLICATION
+application.name=\u7edf\u4e00\u53f7\u6e90\u5e73\u53f0
+application.version=0.1.0
+application.description=\u7edf\u4e00\u53f7\u6e90\u5e73\u53f0
+application.startYear=2017
+
+#\u6587\u4ef6\u4e0a\u4f20\u8def\u5f84
+application.upload=data/upload
+
+# \u6587\u4ef6\u4e0a\u4f20 KB|MB
+application.multipart.max-file-size=20MB
+application.multipart.max-request-size=20MB
+
+# EMBEDDED SERVER CONFIGURATION (ServerProperties)
+server.port=8081
+server.session-timeout=1800
+server.context-path=
+server.tomcat.max-threads=0
+server.tomcat.uri-encoding=UTF-8
+
+logging.level.root=INFO
+
+spring.thymeleaf.encoding=UTF-8
+spring.thymeleaf.mode=LEGACYHTML5
+#spring.thymeleaf.enabled = true
+#spring.thymeleaf.prefix=classpath:/templates/
+
+spring.messages.encoding=UTF-8
+spring.messages.basename=/messages/messages
+
+#\u7B2C\u4E8C\u6570\u636E\u6E90\u914D\u7F6E
+spring.datasource.secondary = true
+
+#\u5DE5\u4F5C\u6D41\u5F15\u64CE\u914D\u7F6E\uFF08\u81EA\u52A8\u68C0\u6D4B\u521D\u59CB\u5316\uFF09
+activiti.databaseSchemaUpdate = true
+
+#\u6D4B\u8BD5\u65F6\u5141\u8BB8\u8DE8\u57DF\u8BBF\u95EE
+ajax.access.control.allow=true
+
+#FTP\u4E0A\u4F20\u914D\u7F6E
+#fs.ftp.url = 192.168.21.171
+#fs.ftp.port = 21
+#fs.ftp.username = ftp
+#fs.ftp.password = 123456
+#fs.ftp.rootPath =
+
+fs.ftp.url=192.168.1.119
+fs.ftp.port=21
+fs.ftp.username=plee
+fs.ftp.passwrod=123456
+fs.ftp.rootpath=
+fs.qms.path=/scm/qms
+
+com.unind.fs.serialno.code = FS_SERIAL_NO
+
+#spring.application.name=service-provider
+#eureka.client.serviceUrl.defaultZone=http://localhost:8080/eureka/
+
+spring.application.name=service-provider-openapi
+eureka.port=8761
+eureka.instance.hostname=master
+#\u5728\u6B64\u6307\u5B9A\u670D\u52A1\u6CE8\u518C\u4E2D\u5FC3\u5730\u5740
+eureka.client.serviceUrl.defaultZone=http://${eureka.instance.hostname}:${eureka.port}/eureka/

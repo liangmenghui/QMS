@@ -1,0 +1,308 @@
+package com.unind.qms.web.product.service.internal;
+
+import com.unind.base.dao.admin.SysUserDao;
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.domain.admin.user.SysUser;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.qms.enumeration.BasicEnumConstants;
+import com.unind.qms.enumeration.BasicStateEnum;
+import com.unind.qms.web.basic.dao.TodoInfoDao;
+import com.unind.qms.web.basic.entity.TodoInfo;
+import com.unind.qms.web.product.dao.ProductExtraDao;
+import com.unind.qms.web.product.dao.ProductInfoDao;
+import com.unind.qms.web.product.entity.ProductExtra;
+import com.unind.qms.web.product.entity.ProductInfo;
+import com.unind.qms.web.product.service.ProductInfoService;
+import com.unind.qms.web.risk.dao.RiskLevelRecordDao;
+import com.unind.qms.web.risk.entity.RiskLevelRecord;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.*;
+
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class ProductInfoImpl extends BaseOprService implements ProductInfoService {
+    @Autowired
+    private ProductInfoDao productInfoDao;
+    @Autowired
+    private TodoInfoDao todoInfoDao;
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private RiskLevelRecordDao riskLevelRecordDao;
+    @Autowired
+    private ProductExtraDao productExtraDao;
+
+    @Transactional
+    public ApiResponseResult add(ProductInfo productInfo) throws BusinessException {
+        if (StringUtils.isEmpty(productInfo.getItemNum()) || StringUtils.isEmpty(productInfo.getItemNum().trim())) {
+            return ApiResponseResult.failure("产品编号不能为空");
+        }
+        if (StringUtils.isEmpty(productInfo.getItemDesc()) || StringUtils.isEmpty(productInfo.getItemDesc().trim())) {
+            return ApiResponseResult.failure("产品名称不能为空");
+        }
+        int counts = productInfoDao.countByItemNumAndVendorNumAndOrganizationId(productInfo.getItemNum(), productInfo.getVendorNum(), productInfo.getOrganizationId());
+        if (counts > 0) {
+            return ApiResponseResult.failure("产品已存在");
+        }
+        productInfo.setItemNum(productInfo.getItemNum().trim());
+        productInfo.setItemDesc(productInfo.getItemDesc().trim());
+//        productInfo.setBsSuppCode(productInfo.getBsSuppCode().trim());
+//        productInfo.setBsNo(productInfo.getBsNo().trim());
+//        productInfo.setBsType(productInfo.getBsType());
+//        productInfo.setBsSubtype(productInfo.getBsSubtype());
+//        productInfo.setBsContent(productInfo.getBsContent());
+//        productInfo.setBsStandard(productInfo.getBsStandard());
+//        productInfo.setBsRemark(productInfo.getBsRemark());
+
+        productInfo.setBsCreatedTime(new Date());
+//		productInfo.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+        productInfoDao.save(productInfo);
+        return ApiResponseResult.success("新增成功！");
+    }
+
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        ProductInfo o = productInfoDao.findOne(id);
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除").status("error1");
+        }
+        if (o.getId() <= 0) {
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        o.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+        productInfoDao.save(o);
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponseResult getlist(String keyWord, Long id, String vendorNum, Integer bsIsApprove, Integer bsStatus, Integer bsRiskLevel, PageRequest pageRequest) {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+        if(null != id){
+            filters.add(new SearchFilter("id", SearchFilter.Operator.EQ, id));
+        }
+        if(null != vendorNum){
+            filters.add(new SearchFilter("vendorNum", SearchFilter.Operator.EQ, vendorNum));
+        }
+        if(null != bsIsApprove){
+            filters.add(new SearchFilter("productExtra.bsIsApprove", SearchFilter.Operator.EQ, bsIsApprove));
+        }
+        if(null != bsRiskLevel){
+            filters.add(new SearchFilter("productExtra.bsRiskLevel", SearchFilter.Operator.EQ, bsRiskLevel));
+        }
+        List<SearchFilter> filters1 = new ArrayList<SearchFilter>();
+        if (StringUtils.isNotEmpty(keyWord)) {
+            filters1.add(new SearchFilter("itemNum", SearchFilter.Operator.LIKE, keyWord));
+            filters1.add(new SearchFilter("itemDesc", SearchFilter.Operator.LIKE, keyWord));
+            filters1.add(new SearchFilter("cateDesc", SearchFilter.Operator.LIKE, keyWord));
+            filters1.add(new SearchFilter("vendorName", SearchFilter.Operator.LIKE, keyWord));
+        }
+        Specifications<ProductInfo> spec = Specifications.where(super.and(filters, ProductInfo.class));
+        Specifications<ProductInfo> spec1 = spec.and(super.or(filters1, ProductInfo.class));
+        Page<ProductInfo> page = productInfoDao.findAll(spec1, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+
+//    @Transactional(readOnly = true)
+//    public ApiResponseResult getlist(String keyWord, Long id, String suppCode, Integer bsIsApprove, Integer bsStatus, Integer bsRiskLevel, PageRequest pageRequest) {
+//        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+//        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+//        if(null != id){
+//            filters.add(new SearchFilter("id", SearchFilter.Operator.EQ, id));
+//        }
+//        if(null != suppCode){
+//            filters.add(new SearchFilter("bsSuppCode", SearchFilter.Operator.EQ, suppCode));
+//        }
+//        if (null != bsIsApprove) {
+//            filters.add(new SearchFilter("bsIsApprove", SearchFilter.Operator.EQ, bsIsApprove));
+//        }
+//        if(null != bsStatus){
+//            filters.add(new SearchFilter("bsStatus", SearchFilter.Operator.EQ, bsStatus));
+//        }
+//        if(null != bsRiskLevel){
+//            filters.add(new SearchFilter("bsRiskLevel", SearchFilter.Operator.EQ, bsRiskLevel));
+//        }
+//        List<SearchFilter> filters1 = new ArrayList<SearchFilter>();
+//        if (StringUtils.isNotEmpty(keyWord)) {
+//            filters1.add(new SearchFilter("bsPrCode", SearchFilter.Operator.LIKE, keyWord));
+//            filters1.add(new SearchFilter("bsPrName", SearchFilter.Operator.LIKE, keyWord));
+//            filters1.add(new SearchFilter("bsPrType", SearchFilter.Operator.LIKE, keyWord));
+//            filters1.add(new SearchFilter("bsSuppChieseName", SearchFilter.Operator.LIKE, keyWord));
+//        }
+//        Specifications<ProductInfo> spec = Specifications.where(super.and(filters, ProductInfo.class));
+//        Specifications<ProductInfo> spec1 = spec.and(super.or(filters1, ProductInfo.class));
+//        Page<ProductInfo> page = productInfoDao.findAll(spec1, pageRequest);
+//        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+//    }
+
+    /**
+     * 申请变更风险等级（添加待办事项）
+     * @param id
+     * @param bsRiskLevelUser
+     * @param bsRiskDescUser
+     * @return
+     */
+    @Transactional
+    public ApiResponseResult applyRiskLevel(Long id, Integer bsRiskLevelUser, String bsRiskDescUser) throws BusinessException {
+        //1.修改产品信息详情表的风险等级
+        List<ProductExtra> productExtraList = productExtraDao.findAllByBsIsDelAndBsPrId(BooleanStateEnum.FALSE.intValue(), id);
+        if(productExtraList.size() <= 0){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        ProductExtra o = productExtraList.get(0);
+        if(null == o){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        ProductInfo productInfo = productInfoDao.findOne(id);
+        if(null == productInfo){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        if (productInfo.getId() <= 0) {
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        o.setBsRiskLevelUser(bsRiskLevelUser);
+        o.setBsRiskTimeUser(new Date());
+        o.setBsRiskDescUser(bsRiskDescUser);
+        o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+        productExtraDao.save(o);
+
+        //2.添加待办事项
+        TodoInfo todoInfo = new TodoInfo();
+        todoInfo.setBsUserId(SessionContextUtils.getCurrentUser().getId());
+        todoInfo.setBsReferId(id);
+        todoInfo.setBsRouter("/qms/product/riskManagement");
+        //设置代办事项标题
+        SysUser user = sysUserDao.findOne(SessionContextUtils.getCurrentUser().getId());
+        String userName = user.getBsName();
+        String title = "[风险等级变更申请]" + userName + "申请将" + productInfo.getItemDesc() + "风险等级变更为" + bsRiskLevelUser + "级";
+        todoInfo.setBsTitle(title);
+        todoInfo.setBsStatus(BasicEnumConstants.TODO_NOFINISH);
+        todoInfo.setBsContent(bsRiskDescUser);
+        todoInfo.setBsSystemType(BasicStateEnum.TODO_QMSTYPE.intValue());
+        todoInfo.setBsType(BasicEnumConstants.TODO_PR_RISK);
+        todoInfo.setBsCreatedTime(new Date());    //创建时间
+        todoInfo.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+        todoInfo.setBsStartTime(new Date());      //有效开始时间
+        //计算一周后的时间
+        Calendar curr = Calendar.getInstance();
+        curr.setTime(todoInfo.getBsStartTime());
+        curr.add(Calendar.WEEK_OF_YEAR, 1);
+        Date after7Days=curr.getTime();
+        todoInfo.setBsEndTime(after7Days);                  //有效结束时间
+        todoInfoDao.save(todoInfo);
+        return ApiResponseResult.success("手动调整风险等级申请成功！").data(todoInfo);
+    }
+
+    /**
+     * 完成变更风险等级（关闭待办事项）
+     * @param id
+     * @param bsRiskLevelUser
+     * @return
+     */
+    @Transactional
+    public ApiResponseResult completeRiskLevel(Long id, Integer bsRiskLevelUser) throws BusinessException {
+        List<ProductExtra> productExtraList = productExtraDao.findAllByBsIsDelAndBsPrId(BooleanStateEnum.FALSE.intValue(), id);
+        if(productExtraList.size() <= 0){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        ProductExtra o = productExtraList.get(0);
+        if(null == o){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        ProductInfo productInfo = productInfoDao.findOne(id);
+        if(null == productInfo){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        if (productInfo.getId() <= 0) {
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        //获取待办事项信息
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        filters.add(new SearchFilter("bsStatus", SearchFilter.Operator.EQ, "0"));
+        filters.add(new SearchFilter("bsReferId", SearchFilter.Operator.EQ, id));
+        Specifications<TodoInfo> spec = Specifications.where(super.and(filters, TodoInfo.class));
+        Sort sort = new Sort(Sort.Direction.DESC,"id");
+        List<TodoInfo> todoInfoList = todoInfoDao.findAll(spec, sort);
+        //判断是否存在需要批准的待办事项
+        if(todoInfoList.size() <= 0){
+            return ApiResponseResult.failure("没有需要批准的待办事项");
+        }
+
+        //1.添加风险管理记录
+        RiskLevelRecord riskLevelRecord = new RiskLevelRecord();
+        riskLevelRecord.setBsPrId(id);     //产品ID
+        riskLevelRecord.setBsType(BasicEnumConstants.TODO_PR_RISK);     //类型
+        riskLevelRecord.setBsOriginalRiskLevel(o.getBsRiskLevel());     //原风险等级
+        riskLevelRecord.setBsNewRiskLevel(bsRiskLevelUser);     //新风险等级
+        riskLevelRecord.setBsApproverId(SessionContextUtils.getCurrentUser().getId());   //批准人
+        riskLevelRecord.setBsApplicantId(todoInfoList.get(0).getBsUserId());    //申请人
+        riskLevelRecord.setBsAdvice(todoInfoList.get(0).getBsContent());     //申请意见
+        riskLevelRecord.setBsCreatedTime(new Date());
+        riskLevelRecordDao.save(riskLevelRecord);
+
+        //2.关闭待办事项
+        todoInfoDao.closeByBsReferId(id);
+
+        //3.修改产品信息详情表的风险等级
+        o.setBsRiskLevel(bsRiskLevelUser);
+        o.setBsRiskManual(BooleanStateEnum.TRUE.intValue());
+        productExtraDao.save(o);
+        return ApiResponseResult.success("手动调整风险等级成功！").data(o);
+    }
+
+    /**
+     * 切换风险管理模式
+     * @param id
+     * @param bsRiskManual
+     * @return
+     */
+    @Transactional
+    public ApiResponseResult autoRiskLevel(Long id, Integer bsRiskManual) throws BusinessException {
+        List<ProductExtra> productExtraList = productExtraDao.findAllByBsIsDelAndBsPrId(BooleanStateEnum.FALSE.intValue(), id);
+        if(productExtraList.size() <= 0){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        ProductExtra o = productExtraList.get(0);
+        if(null == o){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        ProductInfo productInfo = productInfoDao.findOne(id);
+        if(null == productInfo){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        if(productInfo.getId() <= 0){
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        //切换风险管理模式
+        //如果是手动，则改为自动
+        if(bsRiskManual == BooleanStateEnum.TRUE.intValue()){
+            o.setBsRiskLevel(o.getBsRiskLevelSys());
+            o.setBsRiskManual(BooleanStateEnum.FALSE.intValue());
+            o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+            o.setBsModifiedTime(new Date());
+        }
+        //如果是自动，改为手动
+        if(bsRiskManual == BooleanStateEnum.FALSE.intValue()){
+            o.setBsRiskManual(BooleanStateEnum.TRUE.intValue());
+            o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+            o.setBsModifiedTime(new Date());
+        }
+        productExtraDao.save(o);
+        return ApiResponseResult.success("切换调整风险等级模式成功！").data(o);
+    }
+}

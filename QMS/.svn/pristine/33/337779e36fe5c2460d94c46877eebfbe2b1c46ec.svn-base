@@ -1,0 +1,66 @@
+<template>
+   <div>
+        <ul class="Todolist" v-model="todolistdata">
+            <li v-for="item in TodolistRow ">
+                <el-row>
+                   <el-col :span="12"><div class="grid-content bg-purple"><Icon type="ionic" class="status"></Icon>{{item.bsTitle}}<a href="" class="search">查看>></a></div></el-col>
+                   <el-col :span="2"><Tag color="yellow">{{item.bsStatus}}</Tag></el-col>
+                 <el-col :span="10"><div class="infodata">{{item.bsStartTime}}</div></el-col>
+
+                </el-row>
+            </li> 
+          <!--   <li>
+                <el-row>
+                   <el-col :span="12"><div class="grid-content bg-purple"><Icon type="ionic" class="status"></Icon>供应商审批: A <a href="" class="search">查看>></a></div> </el-col>
+                <el-col :span="10"><div class="infodata"><span>2018-03-16</span></div></el-col>
+                </el-row>
+            </li>
+            <li>
+                <el-row>
+                   <el-col :span="12"><div class="grid-content bg-purple"><Icon type="ionic" class="status"></Icon>供应商审批: A <a href="" class="search">查看>></a></div> </el-col>
+                <el-col :span="10"><div class="infodata"><span>2018-03-15</span></div></el-col>
+                </el-row>
+            </li> -->
+        </ul>
+    </div>
+
+    </div>
+
+</template>
+
+<script>
+   export default {
+    data() {
+        return {
+            todolistdata:{},
+            Todolist:{},
+            TodolistRow:[],
+
+        }
+    },
+    created(){
+        this.getData();
+       
+
+    },
+    methods: {    
+        getData(){
+            this.api.todo.getlist({bsStatus:0}).then((res) => {          
+
+                this.TodolistRow = res.data.rows;
+               debugger
+            });
+
+        },
+        
+    }
+ } 
+</script>
+
+<style>
+  .Todolist{ font-size: 14px;font-family: "Microsoft YaHei"; color:#657180;}
+  .Todolist li{padding-left: 20px; line-height: 35px; border-bottom: 1px solid #EBEEF5}
+  .Todolist li .infodata{text-align: right;}
+   .status{ font-size: 14px; color:#ff9900;margin-right: 10px;}
+   .search{margin-left: 2%}
+</style>

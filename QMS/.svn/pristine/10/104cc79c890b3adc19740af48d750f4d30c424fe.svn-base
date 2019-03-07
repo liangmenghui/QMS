@@ -1,0 +1,507 @@
+<template>
+  <div>
+    <Row>
+      <i-col>
+        <Form class="query_area" :model="formQuery" :label-width="120" inline>
+          <Form-Item label="代理商">
+            <Select v-model="formQuery.provider" style="width:140px">
+              <Option v-for="item in proxies" :value="item.bsProvider" :key="item.bsProvider">{{item.bsProviderDesc}}</option>
+            </Select>
+          </Form-Item>
+          <Form-Item label="日期">
+            <Row>
+              <i-col span="11">
+                <Form-Item prop="startDay">
+                  <DatePicker v-model="formQuery.startDay" format="yyyy/MM/dd" placeholder="请选择日期"></DatePicker>
+                </Form-Item>
+              </i-col>
+              <i-col span="2">
+                <span style="width:20px;text-align:center;display:inline-block;">-</span>
+              </i-col>
+              <i-col span="11">
+                <Form-Item prop="endDay">
+                  <DatePicker v-model="formQuery.endDay" format="yyyy/MM/dd" placeholder="请选择日期" number="true"></DatePicker>
+                </Form-Item>
+              </i-col>
+            </Row>
+          </Form-Item>
+          <FormItem style="width=200px;">
+            <Row :gutter="24">
+              <i-col span=12>
+                <Button type="primary" @click="handleQuery">查询</Button>
+              </i-col>
+              <i-col span=12>
+                <Button type="primary" @click="handleForm">新增</Button>
+              </i-col>
+            </Row>
+          </FormItem>
+        </Form>
+      </i-col>
+    </Row>
+    <Row>
+      <i-col span="24" style="padding:1px">
+        <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe height="700"></Table>
+        <div style="margin: 10px;overflow: hidden">
+          <div style="float: right;">
+            <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+          </div>
+        </div>
+      </i-col>
+    </Row>
+    <Modal v-model="formAdd.visible" width=1100 ok-text="保  存" cancel-text="关  闭">
+      <h3>新增 BOOKING FORECAST</h3>
+      <Form ref="form" :model="form" :rules="formValidateRule" :label-width=100 inline>
+        <Form-Item label="代理" prop="provider">
+          <Select v-model="form.provider" style="width:140px;">
+            <Option v-for="item in proxies" :value="item.bsProvider" :key="item.bsProvider">{{item.bsProviderDesc}}</option>
+          </Select>
+        </Form-Item>
+        <Form-Item label="客户" prop="customer">
+          <Select v-model="form.customer" style="width:140px;">
+            <Option v-for="item in customers" :value="item.bsCustomer" :key="item.bsCustomer">{{item.bsCustomerDesc}}</option>
+          </Select>
+        </Form-Item>
+        <Form-Item label="供应商" prop="factory">
+          <Select v-model="form.factory" style="width:140px;">
+            <Option v-for="item in suppliers" :value="item.bsFactory" :key="item.bsFactory">{{item.bsFactoryDesc}}</Option>
+          </Select>
+        </Form-Item>
+        <div class="toolbar">
+          <tooltip content="新增一行" placement="top-start">
+            <i-button type="ghost" icon="ios-plus-empty" @click="handleFormToolbarAddLastRow"></i-button>
+          </tooltip>
+          <!-- <tooltip content="删除当前行" placement="top-start">
+            <i-button type="ghost" icon="ios-trash-outline" @click="handleFormToolbarRemoveRow"></i-button>
+          </tooltip> -->
+          <tooltip content="删除最后一行" placement="top-start">
+            <i-button type="ghost" icon="ios-trash" @click="handleFormToolbarRemoveLastRow"></i-button>
+          </tooltip>
+        </div>
+        <div class="box" ref="box">
+          <Row v-for="(item,index) in form.items" :key="index" class-name="code-row-bg">
+            <i-col span="8">
+              <Form-Item label="料号" :prop="'items.'+index+'.bsItemNum'" :rules="{required:true,pattern:'^[0-9a-zA-Z]{0,22}$', message:'请输入正确的物料料号',trigger:'blur'}">
+                <Input ref="input" v-model="item.bsItemNum" placeholder="请输入出货物料料号" />
+              </Form-Item>
+            </i-col>
+            <i-col span="8">
+              <Form-Item label="出货数量" :prop="'items.'+index+'.bsQty'" :rules="{ type:'number',required:true, message:'请输入正确的出货数量',trigger:'blur',transform(value){return Number(value);}}">
+                <Input ref="input" v-model="item.bsQty" placeholder="请输入出货数量" />
+              </Form-Item>
+            </i-col>
+            <i-col span="8">
+              <Form-Item label="出货日期" :prop="'items.'+index+'.bsDay'" :rules="{required:true,pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}',message:'请输入正确的出货日期',trigger:'blur'}">
+                <Input ref="input" v-model="item.bsDay" placeholder="请输入出货日期" type="date" />
+              </Form-Item>
+            </i-col>
+          </Row>
+        </div>
+      </Form>
+      <div slot="footer">
+        <Button type="primary" @click="handleFormOk">保&nbsp;存</Button>
+      </div>
+    </Modal>
+    <Modal v-model="formDetail.visible" width=1100>
+      <h3>BOOKING FORECAST</h3>
+      <Form :model="form" :label-width=100 inline>
+        <Form-Item label="代理">
+          <i-input v-model="form.provider" readonly="true" style="width:140px;"></i-input>
+        </Form-Item>
+        <Form-Item label="客户">
+          <i-input v-model="form.customer" readonly="true" style="width:140px;"></i-input>
+        </Form-Item>
+        <Form-Item label="供应商">
+          <i-input v-model="form.factory" readonly="true" style="width:140px;"></i-input>
+        </Form-Item>
+        <div class="box">
+          <Row v-for="(item,index) in form.items" :key="index" class-name="code-row-bg">
+            <i-col span="8">
+              <Form-Item label="料号">
+                <Input v-model="item.bsItemNum" readonly="true" style="width:140px;" />
+              </Form-Item>
+            </i-col>
+            <i-col span="8">
+              <Form-Item label="出货数量">
+                <Input v-model="item.bsQty" readonly="true" style="width:140px;" />
+              </Form-Item>
+            </i-col>
+            <i-col span="8">
+              <Form-Item label="出货日期">
+                <Input v-model="item.bsDay" readonly="true" style="width:140px;" />
+              </Form-Item>
+            </i-col>
+          </Row>
+        </div>
+      </Form>
+    </Modal>
+  </div>
+</template>
+<script>
+import { mapState } from "vuex";
+export default {
+  data() {
+    return {
+      itemNumList: [], //物料
+      suppliers: [], //供应商
+      proxies: [], //代理商
+      customers: [], //客户
+      formQuery: {
+        provider: "",
+        startDay: "",
+        endDay: ""
+      },
+      formDetail: {
+        visible: false
+      },
+      formAdd:{
+        visible: false
+      },
+      form: {
+        provider: "",
+        customer: "",
+        factory: "",
+        proxyDesc: "",
+        customerDesc: "",
+        supplierDesc: "",
+        items: []
+      },
+      formValidateRule: {
+        provider: [
+          { required: true, message: "请选择代理商", trigger: "change" }
+        ],
+        customer: [
+          { required: true, message: "请选择客户", trigger: "change" }
+        ],
+        factory: [
+          { required: true, message: "请选择供应商", trigger: "change" }
+        ]
+      },
+      datagrid: {
+        queryParams: {
+          page: 1,
+          rows: 25,
+          pkParent: -1
+        },
+        pagination: [25, 50, 100],
+        data: { rows: [], total: 0 },
+        columns: [
+          {
+            key: "bsProvider",
+            title: "代理商代码"
+          },
+          {
+            key: "bsProxyDesc",
+            title: "代理商"
+          },
+          {
+            key: "bsCustomer",
+            title: "客户代码"
+          },
+          {
+            key: "bsCustomerDesc",
+            title: "客户"
+          },
+          {
+            key: "bsFactory",
+            title: "供应商代码"
+          },
+          {
+            key: "bsSupplierDesc",
+            title: "供应商"
+          },
+          {
+            key: "bsCommitState",
+            title: "状态",
+            render: (h, params) => {
+              var txt = "";
+              switch (params.row.bsCommitState) {
+                case 0:
+                  txt = "处理中";
+                  break;
+                case 1:
+                  txt = "客户已确认";
+                  break;
+                case 2:
+                  txt = "货代已确认";
+                  break;
+                case 3:
+                  txt = "供应商已确认";
+                  break;
+              }
+              return h("span", txt);
+            }
+          },
+          {
+            key: "bsStartDay",
+            title: "订仓开始时间"
+          },
+          {
+            key: "bsEndDay",
+            title: "订仓结束时间"
+          },
+          {
+            key: "bsShippingCount",
+            title: "出货次数"
+          },
+          {
+            key: "bsTotalQty",
+            title: "出货数量"
+          },
+          {
+            key: "action",
+            title: "操作",
+            render: (h, params) => {
+              let ary = [];
+              ary.push(
+                h(
+                  "Button",
+                  {
+                    props: {
+                      type: "primary",
+                      size: "small"
+                    },
+                    style: {
+                      marginRight: "5px"
+                    },
+                    on: {
+                      click: () => {
+                        this.handleRowDetail(params);
+                      }
+                    }
+                  },
+                  "详细"
+                )
+              );
+              ary.push(
+                h(
+                  "Button",
+                  {
+                    props: {
+                      type: "primary",
+                      size: "small"
+                    },
+                    style: {
+                      marginRight: "5px"
+                    },
+                    on: {
+                      click: () => {
+                        this.handleRowDelete(params);
+                      }
+                    }
+                  },
+                  "删除"
+                )
+              );
+              return h("div", ary);
+            }
+          }
+        ]
+      }
+    };
+  },
+  mounted() {
+    this.loadCustomer();
+    this.loadProxies();
+    this.loadSuppliers();
+  }, //mounted
+  methods: {
+    //form toolbar
+    handleFormToolbarAddLastRow: function() {
+      this.form.items.push({
+        bsItemNum: "",
+        bsQty: "",
+        bsDay: ""
+      });
+    },
+    handleFormToolbarRemoveRow: function() {},
+    handleFormToolbarRemoveLastRow: function() {
+      if (this.form.items.length > 0) {
+        this.form.items.splice(this.form.items.length - 1, 1);
+      }
+    },
+    //end from toolbar
+    changePage(page) {
+      this.datagrid.queryParams.page = page;
+      this.datagrid.data = this.handleQuery();
+    },
+    handleQuery: function() {
+      this.datagrid.data = { rows: [], total: 0 };
+      this.api.lmp.bookingforecast.list(this.formQuery).then(resp => {
+        if (resp.result) {
+          this.datagrid.data = resp.data;
+        }
+      });
+    },
+    handleForm: function() {
+      var itemList = [];
+      for (var i = 0; i < 2; i++) {
+        itemList.push({
+          bsItemNum: "",
+          bsQty: "",
+          bsDay: ""
+        });
+      }
+      this.form.provider="";
+      this.form.customer="";
+      this.form.factory="";
+      this.form.items = itemList;
+      this.formAdd.visible = true;
+    },
+    handleFormOk: function() {
+      //
+      this.$refs["form"].validate(valid => {
+        if (valid == false) {
+          return;
+        }
+        this.form.proxyDesc = this.proxies.find(
+          item => item.bsProvider == this.form.provider
+        )["bsProviderDesc"];
+        this.form.customerDesc = this.customers.find(
+          item => item.bsCustomer == this.form.customer
+        )["bsCustomerDesc"];
+        this.form.supplierDesc = this.suppliers.find(
+          item => item.bsFactory == this.form.factory
+        )["bsFactoryDesc"];
+        this.api.lmp.bookingforecast.save(this.form).then(res => {
+          if (res.result) {
+            this.$Message.info("保存成功.");
+            this.$Modal.remove();
+          }
+        });
+      });
+    },
+    handleRowDetail(params) {
+      //显示详细信息
+     this.form.provider="";
+      this.form.customer="";
+      this.form.factory="";
+      this.form.items = itemList;
+      this.api.lmp.bookingforecast.detail({id:params.row.id})
+    },
+    handleRowDelete(params) {
+      //删除行
+      if (params.row.bsCommitState > 0) {
+        this.$Modal.confirm({
+          title: "确认删除",
+          content:
+            "<p>当前订仓信息已提交给代理商，<br/>如果刪除需要与代理商沟通取消订仓信息！<br/>请确认是否继续删除?</p>",
+          onOk: () => {
+            this.api.lmp.bookingforecast.remove({id:params.row.id});
+          }
+        });
+      } else {
+        this.$Modal.confirm({
+          title: "确认删除",
+          content: "<p>刪除后將不可恢复，请确认是否继续?</p>",
+          onOk: () => {
+            this.api.lmp.bookingforecast.remove({id:params.row.id});
+          }
+        });
+      }
+    },
+    loadCustomer: function() {
+      this.customers = [
+        { bsCustomerDesc: "请选择客户", bsCustomer: "" },
+        { bsCustomerDesc: "测试1", bsCustomer: "TEST" }
+      ];
+      return;
+      this.api.lmp.bookingforecast.customers().then(res => {
+        if (res.result) {
+          var list = [{ bsCustomerDesc: "请选择客户", bsCustomer: "" }];
+          for (var index = 0; index < res.data.length; index++) {
+            var item = res.data[index];
+            list.push({
+              bsCustomerDesc: item.bsCustomerDesc,
+              bsCustomer: item.bsCustomer
+            });
+          }
+          this.customers = list;
+        }
+      });
+    },
+    loadProxies: function() {
+      this.proxies = [
+        { bsProviderDesc: "请选择", bsProvider: "" },
+        { bsProviderDesc: "测试代理商", bsProvider: "TestProxy" }
+      ];
+      return;
+      this.api.lmp.bookingforecast.proxies().then(res => {
+        if (res.result) {
+        }
+      });
+    },
+    loadSuppliers: function() {
+      //供应商
+      this.suppliers = [
+        { bsFactoryDesc: "请选择", bsFactory: "" },
+        { bsFactoryDesc: "测试供应商", bsFactory: "TestFactory" }
+      ];
+      return;
+    },
+    handleItemNumQuery: function() {}
+  }, //methods
+  directives: {
+    focus: {
+      inserted: function(el, binding) {
+        if (binding.value) {
+          el.focus();
+        } else {
+          el.blur();
+        }
+      },
+      componentUpdated: function(el, binding) {
+        if (binding.modifiers.lazy) {
+          if (Boolean(binding.value) === Boolean(binding.oldValue)) {
+            return;
+          }
+        }
+        if (binding.value) {
+          el.focus();
+        } else {
+          el.blur();
+        }
+      }
+    }
+  }, //directives
+  computed: {
+    formItemLength() {
+      return this.form.items.length;
+    }
+  }, //computed
+  watch: {
+    formItemLength(newVal, oldVal) {
+      this.$nextTick(() => {
+        if (newVal == oldVal) return;
+        this.$refs.box.scrollTop = this.$refs.box.scrollHeight;
+        var index = (this.form.items.length - 1) * 3;
+        this.$refs.input[index].focus();
+      });
+    }
+  }
+};
+</script>
+<style>
+.ivu-modal h3 {
+  line-height: 62px;
+  height: 62px;
+  font-size: 23px;
+  padding-left: 20px;
+  margin-bottom: 20px;
+}
+.ivu-modal .box {
+  font-size: 14px;
+  margin: 0px 10px 10px 10px;
+  padding: 2px 6px;
+  height: 410px;
+  overflow-y: auto;
+  background-color: #f8f8f9;
+}
+.ivu-modal .toolbar {
+  padding: 0px 6px 24px 6px;
+  margin-left: 43px;
+}
+.ivu-modal .code-row-bg {
+  padding: 0px;
+  margin: 2px;
+}
+</style>

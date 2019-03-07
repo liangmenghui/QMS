@@ -1,0 +1,943 @@
+package com.unind.qms.web.supplier.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.base.domain.admin.user.SysUser;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.util.Date;
+
+/**
+ * @author chen
+ */
+@Entity
+@Table(name = SupplierInfo.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class SupplierInfo extends BaseEntity {
+    private static final long serialVersionUID = 7151771262953316256L;
+    public static final String TABLE_NAME = "t_supplier_info";
+
+    /**
+     * 供应商账号srm
+     */
+    @ApiModelProperty(name="bsLoginName",required=true,value="供应商账号srm")
+    @NotNull
+    @Column(length = 50)
+    protected String bsLoginName;
+
+    /**
+     * 供应商编号
+     */
+    @ApiModelProperty(name="bsSuppCode",required=true,value="供应商编号")
+    @NotNull
+    @Column(length = 50)
+    protected String bsSuppCode;
+
+    /**
+     * 公司中文名
+     */
+    @ApiModelProperty(name="bsSuppChieseName",required=true,value="公司中文名")
+    @NotNull
+    @Column(length = 150)
+    protected String bsSuppChieseName;
+
+    /**
+     * 公司英文名
+     */
+    @ApiModelProperty(name="bsSuppEnglishName",value="公司英文名")
+    @Column(length = 150)
+    protected String bsSuppEnglishName;
+
+    /**
+     * 供应商简称
+     */
+    @ApiModelProperty(name="bsSuppAliaName",required=true,value="供应商简称")
+    @NotNull
+    @Column(length = 150)
+    protected String bsSuppAliaName;
+
+    /**
+     * 供应商类别
+     */
+    @ApiModelProperty(name="bsSuppType",value="供应商类别")
+    @Column(length = 50)
+    protected String bsSuppType;
+
+    /**
+     * 注册大类
+     */
+    @ApiModelProperty(name="bsRegistMetal",value="注册大类")
+    @Column(length = 200)
+    protected String bsRegistMetal;
+
+    /**
+     * 注册物料描述
+     */
+    @ApiModelProperty(name="bsMetalDescribe",value="注册物料描述")
+    @Column(length = 1000)
+    protected String bsMetalDescribe;
+
+    /**
+     * 公司地址
+     */
+    @ApiModelProperty(name="bsSuppAddress",value="公司地址")
+    @Column(length = 1000)
+    protected String bsSuppAddress;
+
+    /**
+     * 省份
+     */
+    @ApiModelProperty(name="bsProvince",value="省份")
+    @Column(length = 50)
+    protected String bsProvince;
+
+    /**
+     * 城市
+     */
+    @ApiModelProperty(name="bsCity",value="城市")
+    @Column(length = 50)
+    protected String bsCity;
+
+    /**
+     * 联系人
+     */
+    @ApiModelProperty(name="bsSuppContactName",value="联系人")
+    @Column(length = 150)
+    protected String bsSuppContactName;
+
+    /**
+     * 联系电话
+     */
+    @ApiModelProperty(name="bsSuppMobile",value="联系电话")
+    @Column(length = 50)
+    protected String bsSuppMobile;
+
+    /**
+     * 性别
+     */
+    @ApiModelProperty(name="bsSuppSex",value="性别")
+    @Column(length = 10)
+    protected String bsSuppSex;
+
+    /**
+     * 电子邮箱
+     */
+    @ApiModelProperty(name="bsSuppEmail",value="电子邮箱")
+    @Column(length = 50)
+    protected String bsSuppEmail;
+
+    /**
+     * 联系人职位
+     */
+    @ApiModelProperty(name="bsSuppPosition",value="联系人职位")
+    @Column(length = 50)
+    protected String bsSuppPosition;
+
+    /**
+     * 联系人1
+     */
+    @ApiModelProperty(name="bsSuppContactName1",value="联系人1")
+    @Column(length = 150)
+    protected String bsSuppContactName1;
+
+    /**
+     * 联系电话1
+     */
+    @ApiModelProperty(name="bsSuppMobile1",value="联系电话1")
+    @Column(length = 50)
+    protected String bsSuppMobile1;
+
+    /**
+     * 性别1
+     */
+    @ApiModelProperty(name="bsSuppSex",value="性别1")
+    @Column(length = 10)
+    protected String bsSuppSex1;
+
+    /**
+     * 电子邮箱1
+     */
+    @ApiModelProperty(name="bsSuppEmail1",value="电子邮箱1")
+    @Column(length = 50)
+    protected String bsSuppEmail1;
+
+    /**
+     * 联系人职位1
+     */
+    @ApiModelProperty(name="bsSuppPosition",value="联系人职位1")
+    @Column(length = 50)
+    protected String bsSuppPosition1;
+
+    /**
+     * 联系人2
+     */
+    @ApiModelProperty(name="bsSuppContactName2",value="联系人2")
+    @Column(length = 150)
+    protected String bsSuppContactName2;
+
+    /**
+     * 联系电话2
+     */
+    @ApiModelProperty(name="bsSuppMobile2",value="联系电话2")
+    @Column(length = 50)
+    protected String bsSuppMobile2;
+
+    /**
+     * 性别2
+     */
+    @ApiModelProperty(name="bsSuppSex2",value="性别2")
+    @Column(length = 10)
+    protected String bsSuppSex2;
+
+    /**
+     * 电子邮箱2
+     */
+    @ApiModelProperty(name="bsSuppEmail2",value="电子邮箱2")
+    @Column(length = 50)
+    protected String bsSuppEmail2;
+
+    /**
+     * 联系人职位2
+     */
+    @ApiModelProperty(name="bsSuppPosition2",value="联系人职位2")
+    @Column(length = 50)
+    protected String bsSuppPosition2;
+
+    /**
+     * 付款方式
+     */
+    @ApiModelProperty(name="bsPayMethod",value="付款方式")
+    @Column(length = 50)
+    protected String bsPayMethod;
+
+    /**
+     * 付款条件
+     */
+    @ApiModelProperty(name="bsPayCondition",value="付款条件")
+    @Column(length = 50)
+    protected String bsPayCondition;
+
+    /**
+     * 税率
+     */
+    @ApiModelProperty(name="bsVatCode",value="税率")
+    @Column(length = 20)
+    protected String bsVatCode;
+
+    /**
+     * 支付地点
+     */
+    @ApiModelProperty(name="bsPayFlag",value="支付地点")
+    @Column(length = 50)
+    protected String bsPayFlag;
+
+    /**
+     * 采购地点
+     */
+    @ApiModelProperty(name="bsPurchaseFlag",value="采购地点")
+    @Column(length = 50)
+    protected String bsPurchaseFlag;
+
+    /**
+     * 开户银行
+     */
+    @ApiModelProperty(name="bsDepositBank",value="开户银行")
+    @Column(length = 50)
+    protected String bsDepositBank;
+
+    /**
+     * 开户分行
+     */
+    @ApiModelProperty(name="bsSubsidiaryBank",value="开户分行")
+    @Column(length = 50)
+    protected String bsSubsidiaryBank;
+
+    /**
+     * 银行账号
+     */
+    @ApiModelProperty(name="bsBankAccount",value="银行账号")
+    @Column(length = 50)
+    protected String bsBankAccount;
+
+    /**
+     * 账户名
+     */
+    @ApiModelProperty(name="bsAccountName",value="账户名")
+    @Column(length = 50)
+    protected String bsAccountName;
+
+    /**
+     * 供应商级别
+     */
+    @ApiModelProperty(name="bsSuppGrade",value="供应商级别")
+    @Column(length = 10)
+    protected String bsSuppGrade;
+
+    /**
+     * 供应商状态
+     */
+    @ApiModelProperty(name="bsSuppStatus",value="供应商状态")
+    @Column(length = 10)
+    protected String bsSuppStatus;
+
+    /**
+     * 使用币别
+     */
+    @ApiModelProperty(name="bsCurrency",value="使用币别")
+    @Column(length = 20)
+    protected String bsCurrency;
+
+    /**
+     * 是否管理员创建
+     */
+    @ApiModelProperty(name="bsAddtype",value="是否管理员创建")
+    @Column(length = 10)
+    protected String bsAddtype;
+
+    /**
+     * 资质文件附件1
+     */
+    @ApiModelProperty(name="bsSupp001",value="资质文件附件1")
+    @Column(length = 150)
+    protected String bsSupp001;
+
+    /**
+     * 资质文件附件2
+     */
+    @ApiModelProperty(name="bsSupp002",value="资质文件附件2")
+    @Column(length = 150)
+    protected String bsSupp002;
+
+    /**
+     * 资质文件附件3
+     */
+    @ApiModelProperty(name="bsSupp003",value="资质文件附件3")
+    @Column(length = 150)
+    protected String bsSupp003;
+
+    /**
+     * 资质文件附件4
+     */
+    @ApiModelProperty(name="bsSupp004",value="资质文件附件4")
+    @Column(length = 150)
+    protected String bsSupp004;
+
+    /**
+     * 资质文件附件5
+     */
+    @ApiModelProperty(name="bsSupp005",value="资质文件附件5")
+    @Column(length = 150)
+    protected String bsSupp005;
+
+    /**
+     * 资质文件附件6
+     */
+    @ApiModelProperty(name="bsSupp006",value="资质文件附件6")
+    @Column(length = 150)
+    protected String bsSupp006;
+
+    /**
+     * 资质文件附件7
+     */
+    @ApiModelProperty(name="bsSupp007",value="资质文件附件7")
+    @Column(length = 150)
+    protected String bsSupp007;
+
+    /**
+     * 资质文件附件8
+     */
+    @ApiModelProperty(name="bsSupp008",value="资质文件附件8")
+    @Column(length = 150)
+    protected String bsSupp008;
+
+    /**
+     * 风险等级
+     */
+    @ApiModelProperty(name="bsRiskLevel",value="风险等级")
+    @Column
+    protected int bsRiskLevel;
+
+    /**
+     * 风险等级得分
+     */
+    @ApiModelProperty(name="bsRiskScore",value="风险等级得分")
+    @Column
+    protected int bsRiskScore;
+
+    /**
+     * 手动管理风险等级
+     */
+    @ApiModelProperty(name="bsRiskManual",value="手动管理风险等级")
+    @Column
+    protected int bsRiskManual;
+
+    /**
+     * 风险等级(系统)
+     */
+    @ApiModelProperty(name="bsRiskLevelSys",value="风险等级(系统)")
+    @Column
+    protected int bsRiskLevelSys;
+
+    /**
+     * 风险等级评定时间(系统)
+     */
+    @ApiModelProperty(name="bsRiskTimeSys",value="风险等级评定时间(系统)")
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+08:00")
+    protected Date bsRiskTimeSys;
+
+    /**
+     * 风险等级(user)
+     */
+    @ApiModelProperty(name="bsRiskLevelUser",value="风险等级(user)")
+    @Column
+    protected int bsRiskLevelUser;
+
+    /**
+     * 风险等级评定时间(user)
+     */
+    @ApiModelProperty(name="bsRiskTimeUser",value="风险等级评定时间(user)")
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+08:00")
+    protected Date bsRiskTimeUser;
+
+    /**
+     * 风险等级备注(user)
+     */
+    @ApiModelProperty(name="bsRiskDescUser",value="风险等级备注(user)")
+    @Column(length = 500)
+    protected String bsRiskDescUser;
+
+    /**
+     * 供应商等级
+     */
+    @ApiModelProperty(name="bsSuppLevel",value="供应商等级")
+    @Column(length = 20)
+    protected String bsSuppLevel;
+
+    /**
+     * 体系审核流程记录ID
+     */
+    @ApiModelProperty(name="bsSuppRecordId",value="体系审核流程记录ID")
+    @Column
+    protected Long bsSuppRecordId;
+
+    /**
+     * 是否审核中
+     */
+    @ApiModelProperty(name="bsIsApprove",value="是否审核中")
+    @Column
+    protected int bsIsApprove;
+
+    /**
+     * 初评计划完成时间
+     */
+    @ApiModelProperty(name="bsPreTime",value="初评计划完成时间")
+    @Column(length = 20)
+    protected String bsPreTime;
+
+    /**
+     * SRM供应商创建人
+     */
+    @ApiModelProperty(name="bsCreateBy",value="SRM供应商创建人")
+    @Column(length = 20)
+    protected String bsCreateBy;
+
+    /**
+     * 修改人
+     */
+    @ApiModelProperty(name="pkModifiedBy",hidden=true,value="修改人")
+    @Column
+    protected Long pkModifiedBy;
+
+    @ApiModelProperty(name="modifiedBy",hidden=true,value="修改人--user")
+    @ManyToOne
+    @JoinColumn(name = "pkModifiedBy", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser modifiedBy;
+
+    public String getBsLoginName() {
+        return bsLoginName;
+    }
+
+    public void setBsLoginName(String bsLoginName) {
+        this.bsLoginName = bsLoginName;
+    }
+
+    public String getBsSuppCode() {
+        return bsSuppCode;
+    }
+
+    public void setBsSuppCode(String bsSuppCode) {
+        this.bsSuppCode = bsSuppCode;
+    }
+
+    public String getBsSuppChieseName() {
+        return bsSuppChieseName;
+    }
+
+    public void setBsSuppChieseName(String bsSuppChieseName) {
+        this.bsSuppChieseName = bsSuppChieseName;
+    }
+
+    public String getBsSuppEnglishName() {
+        return bsSuppEnglishName;
+    }
+
+    public void setBsSuppEnglishName(String bsSuppEnglishName) {
+        this.bsSuppEnglishName = bsSuppEnglishName;
+    }
+
+    public String getBsSuppAliaName() {
+        return bsSuppAliaName;
+    }
+
+    public void setBsSuppAliaName(String bsSuppAliaName) {
+        this.bsSuppAliaName = bsSuppAliaName;
+    }
+
+    public String getBsSuppType() {
+        return bsSuppType;
+    }
+
+    public void setBsSuppType(String bsSuppType) {
+        this.bsSuppType = bsSuppType;
+    }
+
+    public String getBsRegistMetal() {
+        return bsRegistMetal;
+    }
+
+    public void setBsRegistMetal(String bsRegistMetal) {
+        this.bsRegistMetal = bsRegistMetal;
+    }
+
+    public String getBsMetalDescribe() {
+        return bsMetalDescribe;
+    }
+
+    public void setBsMetalDescribe(String bsMetalDescribe) {
+        this.bsMetalDescribe = bsMetalDescribe;
+    }
+
+    public String getBsSuppAddress() {
+        return bsSuppAddress;
+    }
+
+    public void setBsSuppAddress(String bsSuppAddress) {
+        this.bsSuppAddress = bsSuppAddress;
+    }
+
+    public String getBsProvince() {
+        return bsProvince;
+    }
+
+    public void setBsProvince(String bsProvince) {
+        this.bsProvince = bsProvince;
+    }
+
+    public String getBsCity() {
+        return bsCity;
+    }
+
+    public void setBsCity(String bsCity) {
+        this.bsCity = bsCity;
+    }
+
+    public String getBsSuppContactName() {
+        return bsSuppContactName;
+    }
+
+    public void setBsSuppContactName(String bsSuppContactName) {
+        this.bsSuppContactName = bsSuppContactName;
+    }
+
+    public String getBsSuppMobile() {
+        return bsSuppMobile;
+    }
+
+    public void setBsSuppMobile(String bsSuppMobile) {
+        this.bsSuppMobile = bsSuppMobile;
+    }
+
+    public String getBsSuppSex() {
+        return bsSuppSex;
+    }
+
+    public void setBsSuppSex(String bsSuppSex) {
+        this.bsSuppSex = bsSuppSex;
+    }
+
+    public String getBsSuppEmail() {
+        return bsSuppEmail;
+    }
+
+    public void setBsSuppEmail(String bsSuppEmail) {
+        this.bsSuppEmail = bsSuppEmail;
+    }
+
+    public String getBsSuppPosition() {
+        return bsSuppPosition;
+    }
+
+    public void setBsSuppPosition(String bsSuppPosition) {
+        this.bsSuppPosition = bsSuppPosition;
+    }
+
+    public String getBsSuppContactName1() {
+        return bsSuppContactName1;
+    }
+
+    public void setBsSuppContactName1(String bsSuppContactName1) {
+        this.bsSuppContactName1 = bsSuppContactName1;
+    }
+
+    public String getBsSuppMobile1() {
+        return bsSuppMobile1;
+    }
+
+    public void setBsSuppMobile1(String bsSuppMobile1) {
+        this.bsSuppMobile1 = bsSuppMobile1;
+    }
+
+    public String getBsSuppSex1() {
+        return bsSuppSex1;
+    }
+
+    public void setBsSuppSex1(String bsSuppSex1) {
+        this.bsSuppSex1 = bsSuppSex1;
+    }
+
+    public String getBsSuppEmail1() {
+        return bsSuppEmail1;
+    }
+
+    public void setBsSuppEmail1(String bsSuppEmail1) {
+        this.bsSuppEmail1 = bsSuppEmail1;
+    }
+
+    public String getBsSuppPosition1() {
+        return bsSuppPosition1;
+    }
+
+    public void setBsSuppPosition1(String bsSuppPosition1) {
+        this.bsSuppPosition1 = bsSuppPosition1;
+    }
+
+    public String getBsSuppContactName2() {
+        return bsSuppContactName2;
+    }
+
+    public void setBsSuppContactName2(String bsSuppContactName2) {
+        this.bsSuppContactName2 = bsSuppContactName2;
+    }
+
+    public String getBsSuppMobile2() {
+        return bsSuppMobile2;
+    }
+
+    public void setBsSuppMobile2(String bsSuppMobile2) {
+        this.bsSuppMobile2 = bsSuppMobile2;
+    }
+
+    public String getBsSuppSex2() {
+        return bsSuppSex2;
+    }
+
+    public void setBsSuppSex2(String bsSuppSex2) {
+        this.bsSuppSex2 = bsSuppSex2;
+    }
+
+    public String getBsSuppEmail2() {
+        return bsSuppEmail2;
+    }
+
+    public void setBsSuppEmail2(String bsSuppEmail2) {
+        this.bsSuppEmail2 = bsSuppEmail2;
+    }
+
+    public String getBsSuppPosition2() {
+        return bsSuppPosition2;
+    }
+
+    public void setBsSuppPosition2(String bsSuppPosition2) {
+        this.bsSuppPosition2 = bsSuppPosition2;
+    }
+
+    public String getBsPayMethod() {
+        return bsPayMethod;
+    }
+
+    public void setBsPayMethod(String bsPayMethod) {
+        this.bsPayMethod = bsPayMethod;
+    }
+
+    public String getBsPayCondition() {
+        return bsPayCondition;
+    }
+
+    public void setBsPayCondition(String bsPayCondition) {
+        this.bsPayCondition = bsPayCondition;
+    }
+
+    public String getBsVatCode() {
+        return bsVatCode;
+    }
+
+    public void setBsVatCode(String bsVatCode) {
+        this.bsVatCode = bsVatCode;
+    }
+
+    public String getBsPayFlag() {
+        return bsPayFlag;
+    }
+
+    public void setBsPayFlag(String bsPayFlag) {
+        this.bsPayFlag = bsPayFlag;
+    }
+
+    public String getBsPurchaseFlag() {
+        return bsPurchaseFlag;
+    }
+
+    public void setBsPurchaseFlag(String bsPurchaseFlag) {
+        this.bsPurchaseFlag = bsPurchaseFlag;
+    }
+
+    public String getBsDepositBank() {
+        return bsDepositBank;
+    }
+
+    public void setBsDepositBank(String bsDepositBank) {
+        this.bsDepositBank = bsDepositBank;
+    }
+
+    public String getBsSubsidiaryBank() {
+        return bsSubsidiaryBank;
+    }
+
+    public void setBsSubsidiaryBank(String bsSubsidiaryBank) {
+        this.bsSubsidiaryBank = bsSubsidiaryBank;
+    }
+
+    public String getBsBankAccount() {
+        return bsBankAccount;
+    }
+
+    public void setBsBankAccount(String bsBankAccount) {
+        this.bsBankAccount = bsBankAccount;
+    }
+
+    public String getBsAccountName() {
+        return bsAccountName;
+    }
+
+    public void setBsAccountName(String bsAccountName) {
+        this.bsAccountName = bsAccountName;
+    }
+
+    public String getBsSuppGrade() {
+        return bsSuppGrade;
+    }
+
+    public void setBsSuppGrade(String bsSuppGrade) {
+        this.bsSuppGrade = bsSuppGrade;
+    }
+
+    public String getBsSuppStatus() {
+        return bsSuppStatus;
+    }
+
+    public void setBsSuppStatus(String bsSuppStatus) {
+        this.bsSuppStatus = bsSuppStatus;
+    }
+
+    public String getBsCurrency() {
+        return bsCurrency;
+    }
+
+    public void setBsCurrency(String bsCurrency) {
+        this.bsCurrency = bsCurrency;
+    }
+
+    public String getBsAddtype() {
+        return bsAddtype;
+    }
+
+    public void setBsAddtype(String bsAddtype) {
+        this.bsAddtype = bsAddtype;
+    }
+
+    public String getBsSupp001() {
+        return bsSupp001;
+    }
+
+    public void setBsSupp001(String bsSupp001) {
+        this.bsSupp001 = bsSupp001;
+    }
+
+    public String getBsSupp002() {
+        return bsSupp002;
+    }
+
+    public void setBsSupp002(String bsSupp002) {
+        this.bsSupp002 = bsSupp002;
+    }
+
+    public String getBsSupp003() {
+        return bsSupp003;
+    }
+
+    public void setBsSupp003(String bsSupp003) {
+        this.bsSupp003 = bsSupp003;
+    }
+
+    public String getBsSupp004() {
+        return bsSupp004;
+    }
+
+    public void setBsSupp004(String bsSupp004) {
+        this.bsSupp004 = bsSupp004;
+    }
+
+    public String getBsSupp005() {
+        return bsSupp005;
+    }
+
+    public void setBsSupp005(String bsSupp005) {
+        this.bsSupp005 = bsSupp005;
+    }
+
+    public String getBsSupp006() {
+        return bsSupp006;
+    }
+
+    public void setBsSupp006(String bsSupp006) {
+        this.bsSupp006 = bsSupp006;
+    }
+
+    public String getBsSupp007() {
+        return bsSupp007;
+    }
+
+    public void setBsSupp007(String bsSupp007) {
+        this.bsSupp007 = bsSupp007;
+    }
+
+    public String getBsSupp008() {
+        return bsSupp008;
+    }
+
+    public void setBsSupp008(String bsSupp008) {
+        this.bsSupp008 = bsSupp008;
+    }
+
+    public int getBsRiskLevel() {
+        return bsRiskLevel;
+    }
+
+    public void setBsRiskLevel(int bsRiskLevel) {
+        this.bsRiskLevel = bsRiskLevel;
+    }
+
+    public int getBsRiskScore() {
+        return bsRiskScore;
+    }
+
+    public void setBsRiskScore(int bsRiskScore) {
+        this.bsRiskScore = bsRiskScore;
+    }
+
+    public int getBsRiskManual() {
+        return bsRiskManual;
+    }
+
+    public void setBsRiskManual(int bsRiskManual) {
+        this.bsRiskManual = bsRiskManual;
+    }
+
+    public int getBsRiskLevelSys() { return bsRiskLevelSys; }
+
+    public void setBsRiskLevelSys(int bsRiskLevelSys) { this.bsRiskLevelSys = bsRiskLevelSys; }
+
+    public Date getBsRiskTimeSys() { return bsRiskTimeSys; }
+
+    public void setBsRiskTimeSys(Date bsRiskTimeSys) { this.bsRiskTimeSys = bsRiskTimeSys; }
+
+    public int getBsRiskLevelUser() { return bsRiskLevelUser; }
+
+    public void setBsRiskLevelUser(int bsRiskLevelUser) { this.bsRiskLevelUser = bsRiskLevelUser; }
+
+    public Date getBsRiskTimeUser() { return bsRiskTimeUser; }
+
+    public void setBsRiskTimeUser(Date bsRiskTimeUser) { this.bsRiskTimeUser = bsRiskTimeUser; }
+
+    public String getBsRiskDescUser() { return bsRiskDescUser; }
+
+    public void setBsRiskDescUser(String bsRiskDescUser) { this.bsRiskDescUser = bsRiskDescUser; }
+
+    public String getBsSuppLevel() {
+        return bsSuppLevel;
+    }
+
+    public void setBsSuppLevel(String bsSuppLevel) {
+        this.bsSuppLevel = bsSuppLevel;
+    }
+
+    public Long getBsSuppRecordId() {
+        return bsSuppRecordId;
+    }
+
+    public void setBsSuppRecordId(Long bsSuppRecordId) {
+        this.bsSuppRecordId = bsSuppRecordId;
+    }
+
+    public int getBsIsApprove() {
+        return bsIsApprove;
+    }
+
+    public void setBsIsApprove(int bsIsApprove) {
+        this.bsIsApprove = bsIsApprove;
+    }
+
+    public String getBsPreTime() {
+        return bsPreTime;
+    }
+
+    public void setBsPreTime(String bsPreTime) {
+        this.bsPreTime = bsPreTime;
+    }
+
+    public Long getPkModifiedBy() {
+        return pkModifiedBy;
+    }
+
+    public void setPkModifiedBy(Long pkModifiedBy) {
+        this.pkModifiedBy = pkModifiedBy;
+    }
+
+    public SysUser getModifiedBy() {
+        return modifiedBy;
+    }
+
+    public void setModifiedBy(SysUser modifiedBy) {
+        this.modifiedBy = modifiedBy;
+    }
+
+    public String getBsCreateBy() {
+        return bsCreateBy;
+    }
+
+    public void setBsCreateBy(String bsCreateBy) {
+        this.bsCreateBy = bsCreateBy;
+    }
+}

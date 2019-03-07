@@ -1,0 +1,21 @@
+import httpservice from '@/libs/service'
+
+export default{
+
+    selectList:function(data){
+        return httpservice.get('/lmp/bookingconfiguration/selectList',data);
+    },
+    deleteBookingconfiguration:function(data){
+        return httpservice.get('/lmp/bookingconfiguration/deleteBookingconfiguration',data);
+    },
+    insertBookingconfiguration:function(data){
+        return httpservice.get('/lmp/bookingconfiguration/insertBookingconfiguration',data);
+    },
+    updateBookingconfiguration:function(data){
+        return httpservice.get('/lmp/bookingconfiguration/updateBookingconfiguration',data);
+    },
+    selectBy:function(data){
+        return httpservice.get('/lmp/bookingconfiguration/selectBy',data);
+    },
+   
+}

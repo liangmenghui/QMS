@@ -1,0 +1,108 @@
+
+import pmp from './pmp.js'  //计划预测
+import forecast from './pmp.forecast.js'  //客户需求管理
+import tsr from './pmp.tsr.js'  //运输路线
+import lmp from './lmp/index' //物流管理系统
+import lab from './lab/index' //实验室管理系统
+import erp from './erp' //erp基础数据
+import mw from './mw' //erp基础数据
+import admin from './admin' //后台管理系统
+import fs from './fs/index' //文件管理系统
+import shipmentconfig from './pmp.shipmentconfig.js' //计划拼柜参数配置
+// import workflow from './workflow' //工作流程相关
+
+import workflow from './workflow/index' //工作流程相关
+import Audit from './qms.audit.js' //审核条款\
+import ApprovedItem from './qms.approvedItem.js' //创建审核项目
+import ApprovedEHSItems from './qms.approvedEHSItems.js' //创建审核EHS审核条款
+import ApprovedFlow from './qms.approvedFlow.js' //创建审核流程
+import ApprovedItemsResult from './qms.approvedItemsResult.js' //审批项目结果
+import supplierinfo from './qms.supplierinfo.js'    //供应商信息
+import supplierrisk from './qms.supplierrisk.js'    //供应商风险信息
+import productinfo from './qms.productinfo.js'     //产品信息
+import productrisk from './qms.productrisk.js'     //产品风险信息
+import sampleinfo from './qms.sampleinfo.js'    //样品信息
+import sampleRegular from './qms.sampleRegular.js'      //样品规格
+import sampleRegularRecord from './qms.sampleRegularRecord.js'      //样品规格记录
+import approvedFlowRecord from './qms.approvedFlowRecord.js'
+import orderInspect from './qms.orderInspect.js'   //验货计划       
+import shipmentInspect from './qms.shipmentInspect.js'   //出货检查报告
+import qualityInspect from './qms.qualityInspect.js'   //出货检查报告
+import feedback from './qms.feedback.js'
+import todo from './qms.todo.js'
+import recordgetlist from './qms.recordgetlist.js'
+import approvedTermsScoreFile from './qms.approvedTermsScoreFile.js' //上传文件   
+import fileQms from './qms.fileQms.js' //下载文件
+import approvedItemsRecordapproved from './qms.approvedItemsRecordapproved.js'
+import feedbackInfoFile from './qms.feedbackInfoFile.js'
+import risklevelrecord from './qms.risklevelrecord.js'  // 获取风险管理记录
+import feedbackRefund from './qms.feedbackRefund.js'  //退货
+import shipmentInspectFile from './qms.shipmentInspectFile.js' 
+import shipmentRecordFile from './qms.shipmentRecordFile.js' 
+import promote from './qms.promote.js'   //不合符项改进
+import sampleLevelCodeNum from './qms.sampleLevelCodeNum.js'   //抽样数量
+import hr from './hr/index.js'   //
+import riskLevelManagement from './qms.riskLevelManagement.js'   //获取风险等级管理(审核周期和检验水平)
+import productPpm from './qms.productPpm.js'
+import excelTemp from './qms.excelTemp.js'
+import riskApprovedRecord from './qms.riskApprovedRecord.js'
+import feedbackInfoExtra from './qms.feedbackInfoExtra.js'  
+import customerApprovedRecord from './qms.customerApprovedRecord.js' //客户审核
+import customerApprovedFile from './qms.customeraAprovedFile.js' //客户审核文件  
+import sampleLevelRisk from './qms.sampleLevelRisk.js' //样品检验水平 
+import sampleLevelTotalCode from './qms.sampleLevelTotalCode.js' //检验水平表格2
+
+
+export default {
+    admin,
+    pmp,
+    lmp,
+    lab,
+    erp,
+    mw,
+    fs,
+    forecast,
+    tsr,
+    shipmentconfig,
+    workflow,
+    hr,
+    Audit,
+    ApprovedItem,
+    ApprovedEHSItems,
+    ApprovedFlow,
+	ApprovedItemsResult,
+    supplierinfo,
+    supplierrisk,
+    productinfo,
+    productrisk,
+    sampleinfo,
+    sampleRegular,
+    sampleRegularRecord,
+    approvedFlowRecord,
+    recordgetlist,
+    orderInspect,
+    shipmentInspect,
+    qualityInspect,
+    todo,
+    feedback,
+    approvedTermsScoreFile,
+    fileQms,
+    approvedItemsRecordapproved,
+    feedbackInfoFile,
+    feedbackRefund,
+    risklevelrecord,
+    shipmentInspectFile,
+    promote,
+    riskLevelManagement,
+	shipmentRecordFile,
+	sampleLevelCodeNum,
+	productPpm,
+	excelTemp,
+	riskApprovedRecord,
+	feedbackInfoExtra,
+    customerApprovedRecord,
+    customerApprovedFile,
+    sampleLevelRisk,
+    sampleLevelTotalCode
+	
+}

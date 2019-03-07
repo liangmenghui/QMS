@@ -1,0 +1,379 @@
+<template>
+    <div class="sup-inp">
+		<Row :gutter="10">
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：客诉及关闭
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.feedback')}}
+               	</p>
+        	
+			<div class="body">
+				<el-select v-model="supplierrisk.bsFeedbackType" style="width: 300px;margin-left: 130px;" disabled>
+    				<el-option v-for="item in optionFeedback" :key="item.value" :label="item.label" :value="item.value">
+    				</el-option>
+  				</el-select>
+			</div>
+			</Card>
+		</Col>
+		
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：PPM
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;PPM
+               	</p>
+        	
+			<div class="body">
+				<div class="body-text">PPM：</div>
+				<div class="body-model">
+					<el-input v-model="supplierrisk.bsPpmValue" placeholder="请输入内容" style="width: 300px;" readonly></el-input>
+				</div>
+			</div>
+			</Card>
+		</Col>
+		</Row>
+	
+		<Row :gutter="10">
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：交货达成情况
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.DeliveryAchieved')}}
+                </p>
+        
+			<div class="body">
+				<el-select v-model="supplierrisk.bsDeliveryType" style="width: 300px;margin-left: 130px;">
+    				<el-option v-for="item in options1" :key="item.value" :label="item.label" :value="item.value">
+    				</el-option>
+  				</el-select>
+			</div>
+			</Card>
+		</Col>
+		
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：验货情况
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.InspectionSituation')}}
+               	</p>
+        	
+			<div class="body">
+				<div class="body-text">{{$t('product.TheInspectionOfShipmentIsNotQualified')}}：</div>
+				<div class="body-model">
+					<el-input v-model="supplierrisk.bsInspectValue" placeholder="请输入内容" style="width: 300px;" readonly></el-input>
+				</div>
+			</div>
+			</Card>
+		</Col>
+		</Row>
+		
+		<Row :gutter="10">
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：付款期
+        -->
+		<Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.payment')}}
+                </p>
+        	
+			<div class="body">
+				<el-select v-model="supplierrisk.bsPaymentType" style="width: 300px;margin-left: 130px;" disabled>
+    				<el-option v-for="item in options2" :key="item.value" :label="item.label" :value="item.value">
+    				</el-option>
+  				</el-select>
+			</div>
+			</Card>
+		</Col>
+		
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：关键工序SPC制程能力监控
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.SPC')}}
+               	</p>
+        	
+			<div class="body">
+				<div class="body-text">CPK：</div>
+				<div class="body-model">
+					<el-input v-model="supplierrisk.bsCpkValue" placeholder="请输入内容" style="width: 300px;" readonly></el-input>
+				</div>
+			</div>
+			</Card>
+		</Col>
+		</Row>
+		
+		<Row :gutter="10">
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：高风险产品占比
+        -->
+		<Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.dangerRiskProductsRate')}}
+                </p>
+        	
+			<div class="body">
+				<el-select v-model="supplierrisk.bsDangerProType" style="width: 300px;margin-left: 130px;">
+    				<el-option v-for="item in optionsDanger" :key="item.value" :label="item.label" :value="item.value">
+    				</el-option>
+  				</el-select>
+			</div>
+			</Card>
+		</Col>
+		
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：体系审核
+        -->
+		<Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.SystemAudit')}}
+					<span v-if="this.supplierrisk.bsFlowRecordId != undefined">
+						({{$t('New-audit.score_percent')}}：{{approvedInfo.rate}}
+						&nbsp;{{$t('New-audit.approvedConclusion')}}：{{approvedInfo.standard}})
+					</span>
+                </p>
+        	
+			<div class="body">
+				<el-select v-model="supplierrisk.bsApproveType" style="width: 300px;margin-left: 130px;">
+    				<el-option v-for="item in optionsApproved" :key="item.value" :label="item.label" :value="item.value">
+    				</el-option>
+  				</el-select>
+			</div>
+			</Card>
+		</Col>
+		</Row>
+		
+		<Row :gutter="10">
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：EHS不符合性
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.EHS')}}
+                </p>
+        	
+			<div class="body">
+				<div class="body-text">{{$t('supplier.NotsumNumbers')}}：</div>
+				<div class="body-model">
+					<el-input v-model="supplierrisk.bsEhsValue" style="width: 300px;"></el-input>
+				</div>
+			</div>
+			</Card>
+		</Col>
+		
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：商务总评
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.BusinessJudgement')}}
+                </p>
+      
+			<div style="width: 300px;height: 245px;padding-top: 10px;padding-left: 0px;">
+    			<el-checkbox v-model="supplierrisk.bsComStability" label="公司股东构成的稳定性 ( 从上市公司 / 销售额 / 股东数量 / 地域 / 行业等考虑 )" style="display: block;height: 40px;margin-left: 30px;"></el-checkbox>
+    			<el-checkbox v-model="supplierrisk.bsAntiCorruptProtocol" label="未签订反腐协议" style="display: block;height: 40px;"></el-checkbox>
+    			<el-checkbox v-model="supplierrisk.bsLongTermProtocol" label="未签订长期协议" style="display: block;height: 40px;"></el-checkbox>
+    			<el-checkbox v-model="supplierrisk.bsCooperProtocol" label="未签订战略合作协议" style="display: block;height: 40px;"></el-checkbox>
+    			<el-checkbox v-model="supplierrisk.bsBusinessBroScore" label="未签订商务手册" style="display: block;height: 40px;"></el-checkbox>
+			</div>
+			</Card>
+		</Col>
+		</Row>
+		
+		<div id="bottom">
+			<center>
+            <el-button type="primary" @click="edit()" style="padding: 7px 20px;">
+            	<i class="el-icon-news"></i>&nbsp;&nbsp;{{$t('Button.SaveChanges')}}
+            </el-button>
+            </center>
+        </div>
+    </div>
+</template>
+
+<script>
+	export default {
+    data() {
+      return {
+      	supplierrisk:{},
+        options1: [{
+          value: 1,
+          label: '大于24个月无交货延迟'
+        }, {
+          value: 2,
+          label: '大于12个月无交货延迟'
+        }, {
+          value: 3,
+          label: '大于2个月无交货延迟'
+        }, {
+          value: 4,
+          label: '3个月内有1次以上交货延迟'
+        }, {
+          value: 5,
+          label: '3个月内有2次以上交货延迟'
+        }],
+        options2: [{
+          value: 1,
+          label: '大于120天'
+        }, {
+          value: 2,
+          label: '小于120天'
+        }, {
+          value: 3,
+          label: '小于90天'
+        }, {
+          value: 4,
+          label: '小于30天'
+        }, {
+          value: 5,
+          label: '小于15天,或现金'
+        }],
+		optionFeedback: [{
+          value: 1,
+          label: '0次'
+        }, {
+          value: 2,
+          label: '1次及以上 ，6个月以上客诉'
+        }, {
+          value: 3,
+          label: '1次及以上 ，3到6个月的客诉 ，且关闭'
+        }, {
+          value: 4,
+          label: '1次 及以上 ，3个月以内的客诉，且关闭'
+        }, {
+          value: 5,
+          label: '1次及以上，且未关闭'
+        }],
+		optionsDanger: [{
+          value: 1,
+          label: '无高风险产品'
+        }, {
+          value: 2,
+          label: '有其他高风险产品同系列产品'
+        }, {
+          value: 3,
+          label: '有高风险产品产值超过100万RMB/或者数量1个'
+        }, {
+          value: 4,
+          label: '高风险产品产值超过300万RMB/或者数量2个'
+        }, {
+          value: 5,
+          label: '高风险产品产值超过600万RMB/或者数量大于3个'
+        }],
+		optionsApproved: [{
+          value: 1,
+          label: '客户审核通过，金合联审核通过'
+        }, {
+          value: 2,
+          label: '客户审核通过，金合联审核未审核'
+        }, {
+          value: 3,
+          label: '客户审核通过，金合联审核不通过'
+        }, {
+          value: 4,
+          label: '客户审核不通过，金合联审核通过'
+        }, {
+          value: 5,
+          label: '客户审核不通过，金合联审核不通过'
+        }],
+        checkList: [],
+		approvedInfo:{
+			rate:'0%',
+			standard:'通过'
+		},
+      }
+    },
+    created(){
+		this.supplierrisk = this.$store.getters.getRiskData;
+		this.getData();
+    },
+    methods:{
+		getData(){
+			if(this.supplierrisk.bsFlowRecordId != undefined){
+				this.api.ApprovedItem.getrecords({bsFlowRecordId:this.supplierrisk.bsFlowRecordId}).then((res) => {
+					var totalScores = 0;
+					var getScores = 0;
+					var percentage = 0;
+					
+					for (var i = 0; i < res.data.rows.length; i++) {
+						var row = res.data.rows[i];
+						
+						if(row.bsScoreNum != undefined){
+							var scores = row.bsScoreNum.split('/');
+							getScores += parseFloat(scores[0]);
+							totalScores += parseFloat(scores[1]);
+						}
+					};
+					
+					if(totalScores>0) {
+						percentage = getScores/totalScores * 100;
+						this.approvedInfo.rate = percentage.toFixed(2) + '%';
+						if(percentage >= 50){
+							this.approvedInfo.standard = '通过';
+						}else{
+							this.approvedInfo.standard = '不通过';
+						}
+					}
+				});
+			}
+		},
+        edit(){
+        	var params = this.$Util.formattedParams(this.supplierrisk);
+			this.api.supplierrisk.edit(params).then((res) => {
+				this.$Message.info("修改完成");
+				var path = this.$route.matched[this.$route.matched.length-2].path;
+				var route = {path:path,query:{id:params.bsSuppId,refresh:true}};
+				this.$router.replace(route);
+			});
+        }
+    }
+  }
+</script>
+
+<style>
+    @import '~@/styles/supplier.css';
+</style>

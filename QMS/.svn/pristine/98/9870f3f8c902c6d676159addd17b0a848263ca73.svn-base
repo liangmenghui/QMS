@@ -1,0 +1,37 @@
+ <template>      
+ <el-select v-model="results.bsIsPrInfo" placeholder="请选择" size="small" >
+    <el-option
+      v-for="item in options"
+      :key="item.value"
+      :label="item.label"
+      :value="item.value">
+    </el-option>
+  </el-select>
+</template>
+<script>
+export default {
+    props:[],
+    data() {
+        return {
+            options: [{
+                value: '0',
+                label: '不通过'
+            }, {
+                value: '1',
+                label: '通过'
+             } ],
+             value: ''    
+         }
+    },
+    created(){
+       
+    },
+    methods: {    
+        
+    }
+  }
+</script>
+<style type="text/css">
+    
+
+</style>

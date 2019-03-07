@@ -1,0 +1,71 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-02
+    	描述：审核报告
+    -->
+	<div>
+		<el-table :data="TableData" style="width: 100%;padding: 1%;">
+		    <el-table-column prop="id" :label="$t('approved.number')">
+		    </el-table-column>
+		    <el-table-column prop="itemsBy.bsName" :label="$t('approved.AuditingItem')">
+		    </el-table-column>
+		    <el-table-column prop="bsScoreNum" :label="$t('New-audit.Auditscore')">
+		    </el-table-column>
+		    <el-table-column :label="$t('approved.statusLabel')">
+		    	<template scope="scope">
+					<span v-bind:class="{gray:scope.row.bsStatus==0, blue:scope.row.bsStatus==1, green:scope.row.bsStatus==2 ,orange:scope.row.bsStatus==3,gray:scope.row.bsStatus==4}">{{$t('approved.status['+scope.row.bsStatus+']')}}</span>
+				</template>
+		    </el-table-column>
+		    <el-table-column prop="users" :label="$t('approved.principal')">
+		    </el-table-column>
+		    <el-table-column prop="bsCreatedTime" :label="$t('ApprovedFlow.AudiTime')">
+		    </el-table-column>
+		    <el-table-column prop="" :label="$t('approved.note')">
+		    </el-table-column>
+   		</el-table>		
+	</div>
+</template>
+
+<script>
+export default {
+    data() {
+      return {
+        TableData: [],      
+      }
+    },
+    created(){
+		this.TableData = this.$store.getters.getFlowRecordData;
+		this.showRooterView = this.$route.matched.length>3;
+    }, 
+    watch: {
+        '$route' (to, from) {
+            this.showRooterView = to.matched.length>3;
+        }
+    },
+    methods:{
+    	
+	}
+}
+</script>
+
+<style>
+circle{
+  font-size: 14px;color: #27558e;width: 10px;height: 10px;display: inline-block;background-color:#999;
+  border-radius: 50%; 
+    margin-right: 5px
+}
+
+.layout-content{border:none;}
+.red{color: #fd5822;}
+.blue{color: #409EFF;}
+.green{color: #67C23A;}
+.orange{color: #fd5822;}
+.gray{color: #333;}
+
+ .bgred{background-color:#fd5822;}
+.bgblue{background-color: #409EFF;}
+.bggreen{background-color: #67C23A;}
+.bgorange{background-color: #fd5822;}
+.bggray{background-color: #333;}
+</style>

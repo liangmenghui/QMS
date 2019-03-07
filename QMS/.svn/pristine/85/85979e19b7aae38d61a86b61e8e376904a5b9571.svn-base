@@ -1,0 +1,197 @@
+<style lang="less">
+    .search-condition{
+        height: 55px;
+        padding: 10px 0;
+
+        .serach-item{
+            width:150px;
+            float:left;
+            margin-left:10px;
+        }
+    }
+
+    .main-table{
+        margin: 10px 10px;
+    }
+
+    .page-control{
+        float: right;
+        height: 55px;
+        padding: 10px 10px;
+    }
+</style>
+
+<template>
+
+    <div class="animated fadeIn">
+        <!--筛选条件-->
+        <div  class="search-condition">
+            <!--<Select v-model="model1" class="serach-item">
+                <Option v-for="item in cityList" :value="item.value" :key="item">{{ item.label }}</Option>
+            </Select>-->
+             <Input v-model="searchValue" class="serach-item" placeholder="请输入用户姓名或登录帐号"></Input>
+             <Button type="ghost" shape="circle" @click.native = "OnSearch" class="serach-item">查询</Button>
+             <Button type="ghost" shape="circle" @click.native = "isShowAdduser = true" class="serach-item">新增</Button>
+        </div>
+        <Table class="main-table" border :columns="columns" :data="tList"></Table>
+        <div class="page-control">
+            <Page :total="total" :current="1" :page-size="20" :page-size-opts="pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+        </div>
+        <!--添加用户组件-->
+        <add-role :isShow = "isShowAdduser" :type="1" @onClickOk = "okClick" @onClickCancel = "cancelClick"></add-role>
+
+    </div>
+
+</template>
+<script>
+    import AddRole from '@/components/addRole'
+    export default {
+        data() {
+            return {
+                pagination: [25, 50, 100],
+                total: 0,
+                page: 0,
+                isShowAdduser:false,
+                searchValue:'',
+                cityList: [],
+                model1: '',
+                columns: [
+                    {
+                        title: '日期',
+                        key: 'bsCreatedTime',
+                        align:'center',
+                        width:200
+                    },
+                    {
+                        title: '姓名',
+                        key: 'bsName',
+                        align:'center',
+                        width:200
+                    },
+                    {
+                        title: '编码',
+                        key: 'bsCode',
+                        align:'center',
+                        width:200
+                    },
+                    {
+                        title:'是否删除',
+                        key:'bsIsDel',
+                        width:200,
+                        align:'center',
+                        render:(h,params)=>{
+                            return params.row.bsIsDel == true?'已删除':'';
+                        }
+                    },
+                    {
+                        title: '备注',
+                        key: 'bsComment',
+                        align:'center'
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        width:200,
+                        align:'center',
+                        render: (h, params) => {
+                            return h('div', [
+                                h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            //跳转到编辑页面
+                                            this.$Loading.start();
+                                             //type=1:用户 type=2:组 type=3：组织
+                                            this.$router.push({
+                                                path:'/modifyUser',
+                                                query:{
+                                                    param:JSON.stringify(params.row),
+                                                    type:1
+                                                }
+                                            });
+                                        }
+                                    }
+                                }, '编辑'),
+                                h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            let self = this;
+                                            this.$Modal.confirm({
+                                                title: '用户信息',
+                                                content: `是否删除此记录`,
+                                                onOk: function(){
+                                                    this.$Loading.start();
+                                                    self.deleteUser(params.row.id);
+                                                }
+                                            })
+                                        }
+                                    }
+                                }, '删除')
+                            ]);
+                        }
+                    }
+                ],
+                tList: []
+            }
+        },
+        components:{
+            AddRole
+        },
+        created(){
+            this.getUserList();
+        },
+        methods:{
+            OnSearch(){
+                console.log(this.searchValue)
+            },
+            changePage(){
+                console.log('change')
+            },
+            getUserList(){
+                //获取用户列表
+                this.api.user.findlist({page:1,rows:20}).then((res) => {
+                    this.tList = res.data.rows;
+                    this.total = res.data.total;
+                    this.page = res.data.page;
+                    console.log(res.data);
+                });
+            },
+            deleteUser(userid){
+                this.api.user.deleteUser({id:userid}).then((res)=>{
+                    console.log(res)
+                    if(res.result ==true){
+                        this.getUserList();
+                        this.$Message.success("删除成功");
+                    }
+                })
+            },
+            //添加用户确认取消方法
+            okClick(userModel){
+                this.isShowAdduser=false;
+                this.api.user.addUser(userModel).then((res) => {
+                    console.log(res);
+                    if(res.result == true){
+                        this.getUserList();
+                    }
+                })
+            },
+            cancelClick(){
+                this.isShowAdduser =false;
+            },
+           
+        }
+    }
+
+</script>
+
+

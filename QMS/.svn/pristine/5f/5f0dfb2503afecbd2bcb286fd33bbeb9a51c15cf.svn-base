@@ -1,0 +1,330 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：供应商列表
+    -->
+    <div class="SupplierSpecialCheck">
+  <section v-if="!showRooterView">
+    <!--工具条-->
+   
+    	<Row style="margin-bottom: 10px;">                        
+            <Select size="large" style="width: 200px;display: inline-block;margin-top: -4px;" v-model="formQuery.bsRiskLevel" placeholder="按风险等级搜索">
+              	<Option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
+              	</Option>
+            </Select>              
+            <el-input size="medium" style="width: 200px;display: inline-block;" v-model="formQuery.keyWord" :placeholder="$t('Button.Keyword-search')">
+           	</el-input>             
+            <el-button style="padding: 10px 10px;" type="primary" icon="el-icon-search" @click="getData">{{$t('Button.Inquire')}}</el-button>
+            <el-button style="padding: 10px 10px;" type="primary" icon="el-icon-refresh" @click="cleargetData">{{$t('Button.Reset')}}</el-button>          
+      	</Row>
+        <template>
+            <el-table class="mytable"
+            :data="tableData"
+            style="width: 100%"
+            row-key="id"
+            :expand-row-keys="expands"
+            @row-click="rowClick">  
+            <el-table-column type="expand">
+            <template slot-scope="props">
+               <el-form label-position="left" inline class="demo-table-expand">
+                	 <el-button v-perm-query size="small" type="primary" @click="pushToChildWithData('supplier/basicInfo',props)">
+                		{{$t('supplier.BasicInfo')}}
+                	</el-button>
+                	<el-button v-perm-query size="small" type="primary" @click="pushToChildWithData('supplier/advanceInfo',props)">
+                		{{$t('supplier.AdvancelInfo')}}
+                	</el-button>
+                	<el-button v-perm-query size="small" type="primary" @click="pushToChildWithData('supplier/riskManagement',props)">
+                		{{$t('supplier.RiskManage')}}
+                	</el-button>
+                  <el-button v-perm-alloc size="small" type="primary" @click="pushToApprovedCreator('supplier/createApprovedRecord',props)" :disabled="props.row.bsIsApprove==1">
+                  	{{$t('supplier.NewAudit')}}
+                  </el-button>
+                	<el-button  v-perm-verify size="small" type="primary" @click="pushToSupplierArrovedFlow('supplier/approved',props)" :disabled="props.row.bsIsApprove==0">
+                		{{$t('supplier.SupplierAudit')}}
+                	</el-button>	
+                  <el-button v-perm-query size="small" type="primary" @click="pushToChildWithData('supplier/approvedRecordsList',props)">
+                    {{$t('supplier.AuditTrails')}}
+                  </el-button>
+                  <el-button v-perm-query size="small" type="primary" @click="showEditDialog(props)">
+                    {{$t('supplier.specialCheck')}}
+                  </el-button>
+              </el-form> 
+            </template>
+          </el-table-column>
+          <el-table-column
+            :label="$t('supplier.code')" width="170px"
+            prop="bsSuppCode">
+          </el-table-column>
+          <el-table-column
+            :label="$t('supplier.ChieseName')" width="330px"
+            prop="bsSuppChieseName">
+          </el-table-column>
+          <el-table-column
+            :label="$t('supplier.AliaName')" width="180px"
+            prop="bsSuppAliaName">
+          </el-table-column>
+          <!-- <el-table-column
+            :label="$t('supplier.SuppStatus')" width="150px"
+            prop="bsSuppStatus" :formatter="formatter">
+          </el-table-column> -->
+          <el-table-column
+            :label="$t('supplier.ContactName')" width="150px"
+            prop="bsSuppContactName">
+          </el-table-column>
+          <el-table-column
+            :label="$t('supplier.Mobile')" width="200px"
+            prop="bsSuppMobile">
+          </el-table-column>
+          <el-table-column
+            :label="$t('supplier.RiskLevel')" width="150px"
+            prop="bsRiskLevel">
+          </el-table-column>
+          <el-table-column
+            :label="$t('supplier.Type')" width="150px"
+            prop="bsSuppType">
+          </el-table-column>
+        </el-table>
+       
+        </template> 
+         <template> 
+            <div class="block">   
+                <el-pagination
+                  @current-change="changePage"
+                  @size-change="SizeChange"
+                  :current="1"
+                  :current-page.sync="queryParams.page"
+                  :page-sizes="pageSizesList"
+                  :page-size="queryParams.rows"
+                  layout="total, sizes, prev, pager, next, jumper"                 
+                  :page-size-opts="pageSizesList"
+                  :total="totalCount">
+                </el-pagination>
+             </div>     
+        </template>        
+      
+  </section>
+
+  <section v-else-if="showRooterView">
+    <router-view></router-view>
+  </section>
+
+  <Modal v-model="dialog.modal_dialog" title="供应商特批" @on-ok="ok" @on-cancel="cancel" width="500">
+            <p>
+                <Form :model="dialog.formItem" :ref="dialog.ruleForm" :rules="dialog.ruleForm" :label-width="80">
+                    <span style="display:none;">
+                        <Input v-model="dialog.formItem.id"></Input>
+                    </span>
+                <!-- <Row>
+                    <i-col span="12">
+                        <Form-item label="帐号" prop="bsCode">
+                            <Input v-model="dialog.formItem.bsCode" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                    <i-col span="12">
+                        <Form-item label="姓名" prop="bsName">
+                            <Input v-model="dialog.formItem.bsName" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row> -->
+                <Row>
+                    <i-col span="20">
+                        <Form-item label="有效期" prop="bsValidDate">
+                             <el-date-picker v-model="dialog.formItem.bsValidDate" type="date" placeholder="选择日期" :formatter="formatDeadline" value-format="yyyy-MM-dd"></el-date-picker>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                <Row>
+                    <i-col span="20">
+                        <Form-item label="供应商编号" prop="bsSuppCode">
+                             <Input v-model="dialog.formItem.bsSuppCode" :disabled="true"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                <Row>
+                    <i-col span="20">
+                        <Form-item label="供应商名称" prop="bsSuppChieseName">
+                             <Input v-model="dialog.formItem.bsSuppChieseName" :disabled="true"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                <Row>
+                  <i-col span="20">
+                    <Form-item label="特批类别" prop="bsCheckType1" >
+                    <Select size="large" style="width: 200px;display: inline-block;margin-top: -4px;" v-model="dialog.formItem.bsCheckType" placeholder="请选择">
+                      <Option v-for="item in check_options" :key="item.value" :label="item.label" :value="item.value">
+                      </Option>
+                   </Select>
+                  </Form-item>
+                  </i-col>
+                </Row>
+                <Row>
+                    <i-col span="20">
+                        <Form-item label="备注">
+                            <Input v-model="dialog.formItem.bsRemark" type="textarea" placeholder="请输入..."></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                </Form>
+            </p>
+        </Modal>
+
+ </div>
+</template>
+
+<script>
+export default {
+    data() {
+      return {
+        tableData: [],
+        expands: [],
+        formQuery: {},
+        showRooterView: false,
+        queryParams:{
+                page:1,
+                rows:10,
+                pkParent:-1
+            },      
+        pageSizesList: [10, 20, 30, 40, 50, 100],
+        totalCount: 0,//数据的总条数,
+        options: [{
+          value: '1',
+          label: '1级'
+        }, {
+          value: '2',
+          label: '2级'
+        }, {
+          value: '3',
+          label: '3级'
+        }, {
+          value: '4',
+          label: '4级'
+        }, {
+          value: '5',
+          label: '5级'
+        }],
+        check_options: [{
+          value: '客户指定',
+          label: '客户指定'
+        }, {
+          value: '总裁特批',
+          label: '总裁特批'
+        }],
+        dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: {
+                    bsCheckType: [
+                        { required: true, message: '请选择特批类型', trigger: 'blur' }
+                    ]
+                }
+            }
+      }
+    },
+    created(){
+        this.getData();
+        this.showRooterView = this.$route.matched.length>2;
+        debugger;
+        //设置默认选中第一个????
+        this.dialog.formItem.bsCheckType = this.check_options[0].value;
+    },
+    watch: {
+        '$route' (to, from) {
+            if(to.matched.length == 2) {
+                this.getData();
+            }
+            this.showRooterView = to.matched.length>2;
+        }
+    },
+    methods:{
+    	getData(){
+            let filter = Object.assign({},this.$route.query,this.formQuery, this.queryParams);
+    		this.api.supplierinfo.getlist(filter).then((res) => {
+              	this.tableData = res.data.rows;
+                this.totalCount= res.data.total;
+            });
+    	},
+      reloadData() {
+            this.datagrid.data = this.getData();
+        },
+
+      cleargetData(){
+        this.formQuery.bsRiskLevel='';   
+
+      },
+    	rowClick(row, event, column) {
+                Array.prototype.remove = function (val) {
+                    let index = this.indexOf(val);
+                    if (index > -1) {
+                        this.splice(index, 1);
+                    }
+                };
+ 
+                if (this.expands.indexOf(row.id) < 0) {
+                    this.expands.push(row.id);
+                } else {
+                    this.expands.remove(row.id);
+                }
+        },
+      pushToChildWithData(url,row){
+        this.$store.commit("updateSupplierDataStates",row.row);
+        this.$router.push({path: url});
+      },
+      pushToSupplierArrovedFlow(url,data) {
+        this.$router.push({path: url,query:{bsFlowRecordId:data.row.bsSuppRecordId}});
+      },
+      pushToApprovedCreator(url,data){
+        this.$router.push({path: url,query: {supplier:data.row.id,bsName:data.row.bsSuppChieseName,bsCode:data.row.bsSuppCode}});
+      },
+      changePage (page) {
+            this.queryParams.page = page;
+            this.getData();
+        },
+        SizeChange(size){
+            this.queryParams.rows = size;
+            this.getData();
+        },
+        formatter(row, column){
+            return this.$t('supplier.StatusDesc['+row.bsSuppStatus+']');
+        },
+    showEditDialog(param){
+      //console.log(param);
+      //alert(param.bsSuppCode);
+      let r = param.row;
+      this.dialog.formItem = {bsSuppCode:r.bsSuppCode, bsSuppChieseName:r.bsSuppChieseName, id:r.id};
+      this.dialog.modal_dialog = true;
+    },
+    ok(){
+      this.api.supplierinfo.doPecialCheckSupplier(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+<<<<<<< .mine
+=======
+                    if(this.modal_form.bsDeadline != undefined){
+                this.modal_form.bsDeadline = moment(this.modal_form.bsDeadline).format('YYYY-MM-DD')+' 17:00:00';
+            }          
+>>>>>>> .r1306
+                                //refresh
+                                this.reloadData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+    },
+    cancel(){
+
+    }
+    }
+}
+</script>
+
+<style lang="less">
+	@import "../public.less";
+.ivu-input{height: 38px;}
+.block{text-align: right;margin-top:10px;}
+
+.mytable.el-table th{
+     background:#f0f0f0 !important;
+           
+  }
+</style>

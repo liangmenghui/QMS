@@ -1,0 +1,19 @@
+import httpService from '@/libs/service'
+
+export default {
+    getlist: function (data) {
+        return httpService.get('/apiconfig/getlist', data)
+    },
+    add: function (data) {
+        return httpService.postdata('/apiconfig/add', data)
+    },
+    edit: function (data) {
+        return httpService.postdata('/apiconfig/edit', data)
+    },
+    delete: function (data) {
+        return httpService.post('/apiconfig/delete', data)
+    },
+    test: function (data, revision, code) {
+        return httpService.post('../openapi/'+revision+'/prod/'+code, data)
+    }
+}

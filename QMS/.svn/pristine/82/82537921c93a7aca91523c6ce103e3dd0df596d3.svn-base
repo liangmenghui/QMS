@@ -1,0 +1,192 @@
+<template>
+    <div>
+        <div>
+            <Row>
+                <i-col>
+                    <Form :model="form" :label-width="120" inline>
+                        <Form-item label="Booking 日期:">
+                            <DatePicker type="date" @on-change="handleSelectDay" placeholder="请选择日期"></DatePicker>
+                        </Form-item>
+                        <Form-item>
+                            <Button type="primary" @click="handleSubmit">查 询</Button>
+                            <Button type="primary" @click="handleBooking" style="margin-left:20px;">Booking</Button>
+                        </Form-item>
+                    </Form>
+                </i-col>
+            </Row>
+        </div>
+        <Row>
+            <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" ref="datagrid" height="700" stripe></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" :current="1" @on-change="changePage" @on-page-size-change="chageSize" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+    </div>
+</template>
+
+<script>
+import { mapState } from "vuex";
+export default {
+  created() {},
+  computed: {
+    ...mapState({
+      menuData: state => state.menuData
+    })
+  },
+  data() {
+    return {
+      form: {
+        day: ""
+      },
+      datagrid: {
+        queryParams: {
+          page: 1,
+          rows: 15,
+          pkParent: -1
+        },
+        pagination: [15, 50, 100],
+        data: { rows: [], total: 0 },
+        columns: [
+          {
+            title: " ",
+            key: "Id",
+            width: 40,
+            align: "center",
+            render: (h, param) => {
+              return h("span", {}, param.index);
+            }
+          },
+          {
+            title: "Booking 日期",
+            key: "bsBookingDay"
+          },
+          {
+            title: "客户",
+            key: "bsCustomer"
+          },
+          {
+            title: "货代",
+            key: "bsAgent"
+          },
+          {
+            title: "运输路线",
+            key: "bsRouter"
+          },
+          {
+            title: "柜子数量",
+            key: "bsContainerQty"
+          },
+          {
+            title: "SO",
+            key: "bsSO"
+          },
+          {
+            title: "状态",
+            key: "bsState",
+            width: 80,
+            align: "center"
+          },
+          {
+            title: " ",
+            key: "action",
+            width: 160,
+            align: "center",
+            render: (h, param) => {
+              return h("div", [
+                h(
+                  "Button",
+                  {
+                    props: {
+                      type: "primary",
+                      size: "small"
+                    },
+                    style: {
+                      marginRight: "5px"
+                    },
+                    on: {
+                      click: () => {
+                        this.handleUpdateSO(param.row);
+                      }
+                    }
+                  },
+                  "上传SO"
+                ),
+                h(
+                  "Button",
+                  {
+                    props: {
+                      type: "primary",
+                      size: "small"
+                    },
+                    style: {
+                      marginRight: "5px"
+                    },
+                    on: {
+                      click: () => {
+                        this.handleDetail(param.row);
+                      }
+                    }
+                  },
+                  "详细"
+                )
+              ]);
+            }
+          }
+        ]
+      } //datagrid
+    };
+  },
+
+  methods: {
+    //查 询
+    handleSubmit: function() {
+      console.log(this.form.day);
+      this.api.lmp.booking.paging(this.form).then(res => {
+        if (res.result) {
+          this.datagrid.total = res.data.count;
+          this.datagrid.rows = res.data.content;
+        }
+      });
+    },
+    handleSelectDay: function(day) {
+      this.form.day = day;
+    }, //
+    handleDetail: function(row) {}, //handleDetail
+    handleUpdateSO: function(row) {}, //handleUpdateSO
+    handleBooking: function() {
+      this.$router.push({ name: "出货计划"});
+    }, //handleBooking
+    //换页
+    changePage(pageSize) {
+      this.start = (pageSize - 1) * this.datagrid.queryParams.rows;
+      this.end = pageSize * this.datagrid.queryParams.rows;
+      if (
+        this.formQuery.cdSendDate != undefined &&
+        this.formQuery.cdSendDate != ""
+      ) {
+        this.handleSubmit();
+      } else {
+        this.getData();
+      }
+    },
+    //改变每页显示数据
+    chageSize(pageSizeOpts) {
+      this.datagrid.queryParams.rows = pageSizeOpts;
+      this.start = 0;
+      this.end = pageSizeOpts;
+      if (
+        this.formQuery.cdSendDate != undefined &&
+        this.formQuery.cdSendDate != ""
+      ) {
+        this.handleSubmit();
+      } else {
+        this.getData();
+      }
+    }
+  }
+};
+</script>

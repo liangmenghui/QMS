@@ -1,0 +1,407 @@
+<template>
+    <div>
+        <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                    <Form-item prop="bsCustomerItemNumber">
+                        <Input type="text" v-model="formQuery.bsCustomerItemNumber" placeholder="客户物料编码" />
+                    </Form-item>
+                    <Form-item prop="bsCustomerItemDesc">
+                        <Input type="text" v-model="formQuery.bsCustomerItemDesc" placeholder="客户物料名称" />
+                    </Form-item>
+                    <Form-item prop="bsItemCode">
+                        <Input type="text" v-model="formQuery.bsItemCode" placeholder="物料编码" />
+                    </Form-item>
+                    <Form-item prop="bsItemName">
+                        <Input type="text" v-model="formQuery.bsItemName" placeholder="物料名称" />
+                    </Form-item>
+                    <Form-item prop="bsCustomerCode">
+                        <Input type="text" v-model="formQuery.bsCustomerCode" placeholder="客户编码" />
+                    </Form-item>
+                    <Form-item v-if="true">
+                        <Button type="primary" @click="handleSubmit('formQuery')">查 询</Button>
+                    </Form-item>
+                    <Form-item v-if="false">
+                        <Button type="primary" @click="showAddDialog()">新 增</Button>
+                    </Form-item>
+                    <Form-item v-if="true">
+                        <Button type="primary" @click="download()">导 入</Button>
+                    </Form-item>
+                </Form>
+            </i-col>
+        </Row>
+        <Row>
+            <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe height="500"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+        <Modal v-model="dialog.modal_dialog" title="" @on-ok="ok" @on-cancel="cancel" width="800">
+            <p>
+                <Form :model="dialog.formItem" :ref="dialog.ruleForm" :rules="dialog.ruleForm" :label-width="80">
+                <span style="display:none;">
+                    <Input v-model="dialog.formItem.id"></Input>
+                </span>
+                <Row>
+                    <i-col span="12">
+                        <Form-item label="物料ID" prop="bsItemId">
+                            <Input v-model="dialog.formItem.bsItemId" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                    <i-col span="12">
+                        <Form-item label="物料编码" prop="bsItemCode">
+                            <Input v-model="dialog.formItem.bsItemCode" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                <Row>
+                    <i-col span="24">
+                        <Form-item label="物料名称" prop="bsItemName">
+                            <Input v-model="dialog.formItem.bsItemName" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                <Row>
+                    <i-col span="12">
+                        <Form-item label="客户ID" prop="bsCustomerId">
+                            <Input v-model="dialog.formItem.bsCustomerId" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                    <i-col span="12">
+                        <Form-item label="客户编码" prop="bsCustomerCode">
+                            <Input v-model="dialog.formItem.bsCustomerCode" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                <Row>
+                    <i-col span="24">
+                        <Form-item label="客户名称" prop="bsCustomerName">
+                            <Input v-model="dialog.formItem.bsCustomerName" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                <Row>
+                    <i-col span="12">
+                        <Form-item label="客户物料号" prop="bsCustomerItemNumber">
+                            <Input v-model="dialog.formItem.bsCustomerItemNumber" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                    <i-col span="12">
+                        <Form-item label="客户物料名称" prop="bsCustomerItemDesc">
+                            <Input v-model="dialog.formItem.bsCustomerItemDesc" placeholder="请输入"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                </Form>
+            </p>
+        </Modal>
+    </div>
+</template>
+<script>
+import {mapState} from 'vuex'
+import custDialog from '../../../components/business-component/custDialog.vue';
+export default {
+    components: {
+        custDialog
+    },
+    data() {
+        return {
+            formQuery: {
+                bsCode: '',
+                bsName: ''
+            },
+            dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: {
+                    bsOrganizationId: [
+                        { required: true, message: '请填写组织ID', trigger: 'blur' }
+                    ],
+                    bsItemId: [
+                        { required: true, message: '请填写物料ID', trigger: 'blur' }
+                    ],
+                    bsCode: [
+                        { required: true, message: '请填写编码', trigger: 'blur' }
+                    ],
+                    bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ]
+                }
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:25,
+                    pkParent:-1
+                },
+                pagination: [25, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title: '物料编码',
+                        key: 'bsItemCode'
+                    },
+                    {
+                        title: '部件号',
+                        key: 'bsCustomerItemNumber'
+                    },
+                    {
+                        title: '客户编码',
+                        key: 'bsCustomerCode'
+                    },
+                    {
+                        title: '客户名称',
+                        key: 'bsCustomerName'
+                    },
+                    {
+                        title: '物料名称',
+                        key: 'bsItemName'
+                    },
+                    {
+                        title: 'PN状态',
+                        key: 'bsInactiveFlag',
+                        render: (h, params) => {
+                            return h('span', {
+                                style: {
+                                    fontColor: 'red'
+                                }
+                            }, params.row.bsInactiveFlag);
+                        }
+                    },
+                    {
+                        title: '删除标识',
+                        key: 'bsIsDel',
+                        render: (h, params) => {
+                            return h('span', {
+                                style: {
+                                    fontColor: 'red'
+                                }
+                            }, params.row.bsIsDel==0?'-':'已删除');
+                        }
+                    },
+                    {
+                        title: '组织ID',
+                        key: 'bsOrganizationId'
+                    },
+                    {
+                        title: '物料ID',
+                        key: 'bsItemId'
+                    },
+                    {
+                        title: '客户ID',
+                        key: 'bsCustomerId'
+                    },
+                    {
+                        title: '更新时间',
+                        key: 'bsModifiedTime'
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let ary = [];
+                            ary.push(h('Button', {
+                                props: {
+                                    type: 'primary',
+                                    size: 'small'
+                                },
+                                style: {
+                                    marginRight: '5px'
+                                },
+                                on: {
+                                    click: () => {
+                                        let query = {id: params.row.id, bsItemCode:params.row.bsItemCode,bsItemName:params.row.bsItemName,
+                                            bsCustomerCode:params.row.bsCustomerCode,bsCustomerName:params.row.bsCustomerName,
+                                            bsCustomerItemNumber:params.row.bsCustomerItemNumber, bsCustomerItemDesc:params.row.bsCustomerItemDesc};
+                                        this.$router.push({
+                                            name: 'PMP_SHIPMENT_CONFIG',
+                                            query: query
+                                        });
+                                    }
+                                }
+                            }, '扩展表'));
+                            if(this.menuData.perms.EDIT) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditDialog(params)
+                                        }
+                                    }
+                                }, '编辑'));
+                            }
+                            if(this.menuData.perms.DELETE) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.delete(params)
+                                        }
+                                    }
+                                }, '删除'))
+                            }
+                            if(this.menuData.perms.CUSTOMFIELD) {
+                                ary.push(h(custDialog, {
+                                    props:{
+                                        type: 'primary',
+                                        size: 'small',
+                                        name: '客制化',
+                                        ref:'custDialog',
+                                        catelog: 'ErpItemCustomerBo',
+                                        rid: params.row.id
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.$refs.custDialog.showDialog();
+                                        }
+                                    }
+                                }));
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            },
+            
+            // add_display: false,
+            // edit_display: false,
+            // delete_display: false
+        }
+    },
+    created(){
+    },
+    computed:{
+        ...mapState({
+            menuData:state=>state.menuData  
+        })
+    },
+    methods: {
+        handleSubmit(name) {
+            this.getData();
+        },
+        getData() {
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+            console.log("after===>");
+            console.log(this.formQuery);
+            this.api.erp.itemcustomer.getlist(this.formQuery).then((res) => {
+                console.log("get list===>");
+                console.log(res.data);
+                if(res.result) {
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        reloadData() {
+            this.datagrid.data = this.getData();
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.datagrid.data = this.getData();
+        },
+        edit(params) {
+            console.log(params);
+            this.api.erp.itemcustomer.edit(params.row).then((res)=>{
+                console.log(res)
+                if(res.result) {
+                    //refresh
+                    this.reloadData();
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        delete(params) {
+            console.log(params);
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.erp.itemcustomer.delete({id:params.row.id}).then((res)=>{
+                        console.log(res)
+                        if(res.result) {
+                            //refresh
+                            this.reloadData();
+                            this.$Message.info('删除成功');
+                            this.$Modal.remove();
+                        }else {
+                            this.$Message.error(res.msg);
+                        }
+                    });
+                }
+            });
+        },
+        download() {
+            this.api.erp.itemcustomer.download(this.dialog.formItem).then((res) => {
+                if(res.result) {
+                    //refresh
+                    this.reloadData();
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        showAddDialog() {
+            this.dialog.modal_dialog = true;
+            this.dialog.formItem = {};
+        },
+        showEditDialog(params) {
+            this.dialog.modal_dialog = true;
+            let r = params.row;
+            this.dialog.formItem = {id:r.id,bsCode:r.bsCode, bsName:r.bsName, bsItemId:r.bsItemId,bsItemCode:r.bsItemCode,bsItemName:r.bsItemName,bsCustomerId:r.bsCustomerId,bsCustomerCode:r.bsCustomerCode,bsCustomerName:r.bsCustomerName,bsCustomerItemNumber:r.bsCustomerItemNumber,bsCustomerItemDesc:r.bsCustomerItemDesc};
+        },
+        ok () {
+            console.log("this.dialog.formItem====>"+typeof(this.dialog.formItem.id));
+            if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                console.log("编辑1");
+                console.log(JSON.stringify(this.dialog.formItem));
+                // this.$refs["dialog.ruleForm"].validate((valid) => {
+                //     if (valid) {
+                        this.api.erp.itemcustomer.edit(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                //refresh
+                                this.reloadData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                //     }
+                // });
+            }else {
+                console.log("新增1");
+                // this.$refs["dialog.ruleForm"].validate((valid) => {
+                //     if (valid) {
+                        this.api.erp.itemcustomer.add(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                //refresh
+                                this.reloadData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                //     }
+                // });
+            }
+        },
+        cancel () {
+            
+        }
+    }
+}
+</script>

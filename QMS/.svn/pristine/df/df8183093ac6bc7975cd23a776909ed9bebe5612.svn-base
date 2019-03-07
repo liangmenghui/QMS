@@ -1,0 +1,29 @@
+package com.unind.qms.web.approved.service;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.provider.BusinessException;
+import org.springframework.data.domain.PageRequest;
+
+import java.nio.charset.Charset;
+
+/**
+ * 审批项目记录
+ * @author chen
+ *
+ */
+public interface ApprovedItemsRecordService {
+	public static final String HASH_ALGORITHM = "SHA-1";
+	public static final int HASH_INTERATIONS = 1024;
+	public static final int SALT_SIZE = 8;
+	public static final Charset CHARSET = Charset.forName("UTF-8");
+
+//	public ApiResponseResult add(ApprovedItemsRecord approvedItemsRecord, int prType) throws BusinessException;
+
+//	public ApiResponseResult edit(ApprovedFlowRecord approvedFlowRecord) throws BusinessException;
+//
+//	public ApiResponseResult delete(Long id) throws BusinessException;
+
+	public ApiResponseResult approved(Long bsItemsId, Long bsItemsRecordId, int bsResult, String resultDesc, String itemsDesc) throws BusinessException;
+
+	public ApiResponseResult getlist(Long bsFlowRecordId, Long id, PageRequest pageRequest) throws BusinessException;
+}

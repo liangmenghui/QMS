@@ -1,0 +1,274 @@
+<template>
+  <div>
+    <div>
+      <Row>
+        <i-col>
+          <Form class="query_area" ref="formQuery" :model="formQuery" :label-width=120 inline>
+            <Form-item label="发货日期:">
+              <Input v-model="formQuery.cdSendDate" placeholder="请输入发货日期" style="width:200px"></Input>
+            </Form-item>
+            <Form-item>
+              <Button type="primary" @click="handleSubmit()">查 询</Button>
+              <Button type="primary" style="margin-left:20px;" @click="initModal">Booking</Button>
+            </Form-item>
+          </Form>
+        </i-col>
+      </Row>
+    </div>
+    <Row>
+      <i-col span="24">
+        <Table :data="datagrid.data.rows" :columns="datagrid.columns" @on-select-all='selectall' @on-expand='expandChange' @on-select-cancel='selectBoxcancle' @on-select='selectBox' ref="selection" stripe style="height:auto;"></Table>
+        <div style="margin: 10px;overflow: hidden">
+          <div style="float: right;">
+            <Page :total="datagrid.data.total" :current="1" @on-change="changePage" @on-page-size-change="chageSize" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" show-total show-elevator show-sizer></Page>
+          </div>
+        </div>
+      </i-col>
+    </Row>
+    <modal v-model="generateModal.show" width=960>
+      <p slot="header">
+        <Row>
+          <i-col span="24">
+            <p style="font-size:14px;margin-bottom:12px;margin-left:20px;">
+              <b>Booking 信息</b>
+            </p>
+          </i-col>
+        </Row>
+      </p>
+      <generate-component ref="generate" @close="closeModal" @initializeClosing="showModal" :cabinets="boxData" :display="generateModal.init == true"></generate-component>
+      <p slot="footer"></p>
+    </modal>
+  </div>
+</template>
+
+<script>
+import { mapState } from "vuex";
+import expandRow from "./preplantable-expand.vue";
+import GenerateComponent from "@/view/logistics/booking/generate";
+
+export default {
+  created() {
+    this.getData();
+  },
+  components: {
+    GenerateComponent
+  }, //components
+  computed: {
+    ...mapState({
+      menuData: state => state.menuData
+    })
+  },
+  data() {
+    return {
+      generateModal: {
+        show: false,
+        init:false,
+      },
+      start: 0,
+      end: 15,
+      boxData: [],
+      boxData1:[],
+      cdSendDateList: [{}],
+      cdSendDateList1: [],
+      formQuery: {
+        cdCustomerItemNum: "",
+        bsCustomer: "",
+        bsContract: "",
+        cdSendDate: "",
+        cdSendDate1: ""
+      },
+      datagrid: {
+        queryParams: {
+          page: 1,
+          rows: 15,
+          pkParent: -1
+        },
+        pagination: [15, 50, 100],
+        data: { rows: [], total: 0, rows1: [] },
+        columns: [
+          {
+            type:"index",
+            width:60,
+            align:"center"
+          },
+          {
+            type: "selection",
+            width: 60,
+            align: "center"
+          },
+          {
+            title: "详情",
+            type: "expand",
+            width: 100,
+            render: (h, params) => {
+              return h(expandRow, {
+                props: {
+                  row: params.row
+                }
+              });
+            }
+          },
+          {
+            title: "日期",
+            key: "cdSendDate"
+          },
+          {
+            title: "柜子型号",
+            key: "cdCabinetModel"
+          },
+          {
+            title: "运输路线",
+            key: "cdTransCode"
+          },
+          // {
+          //   title: "客户名称",
+          //   key: "cdCustomerNo"
+          // }
+        ]
+      }
+    };
+  },
+
+  methods: {
+    //获取列表
+    getData() {
+      this.api.lmp.preplan.selectlist().then(res => {
+        if (res.result) {
+          this.cdSendDateList = [];
+          for (var i = 0; i < res.data.length; i++) {
+            let item = res.data[i];
+            this.cdSendDateList.push({
+              cdSendDate: item.day,
+              cdTransCode: item.route,
+              cdCabinetModel: item.model,
+              cdCustomerNo: item.customer
+            });
+          }
+          this.datagrid.data.rows = this.cdSendDateList.slice(
+            this.start,
+            this.end
+          );
+          this.datagrid.data.total = res.data.length;
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
+    //查 询
+    handleSubmit() {
+      if (
+        this.formQuery.cdSendDate != undefined &&
+        this.formQuery.cdSendDate != ""
+      ) {
+        this.formQuery.cdSendDate = this.formQuery.cdSendDate.trim();
+        this.api.lmp.preplan.selectbyDate(this.formQuery).then(res => {
+          if (res.result) {
+            this.cdSendDateList = [];
+            for (var i = 0; i < res.data.length; i++) {
+              let item = res.data[i];
+              this.cdSendDateList.push({
+                cdSendDate: item.day,
+                cdTransCode: item.route,
+                cdCabinetModel: item.model,
+                cdCustomerNo: item.customer
+              });
+            }
+            this.datagrid.data.rows = this.cdSendDateList.slice(
+              this.start,
+              this.end
+            );
+            this.datagrid.data.total = res.data.length;
+          } else {
+            this.$Message.error(res.msg);
+          }
+        });
+      } else {
+        this.getData();
+      }
+    },
+    //生成柜单
+    initModal() {
+      if (this.boxData == undefined || this.boxData == "") {
+        this.$Message.error("请至少勾选一项");
+      } else {
+        this.$refs.generate.init();
+      }
+    },
+    closeModal(){
+      this.generateModal.show = false;
+      this.getData();
+    },
+    showModal(){
+      this.generateModal.show = true;
+    },
+    //选择选框
+    selectBox(selection, row) {
+      let rowData = [];
+      selection.forEach(element => {
+        rowData.push({
+          day: element.cdSendDate,
+          route: element.cdTransCode,
+          model: element.cdCabinetModel,
+          customer: element.cdCustomerNo
+        });
+      });
+      this.boxData = rowData;
+    },
+    //取消选框
+    selectBoxcancle(selection, row) {
+      let rowData = [];
+      selection.forEach(element => {
+        rowData.push({
+          day: element.cdSendDate,
+          route: element.cdTransCode,
+          model: element.cdCabinetModel,
+          customer: element.cdCustomerNo
+        });
+      });
+      this.boxData = rowData;
+    },
+    //全部选择
+    selectall(selection) {
+     let rowData = [];
+      selection.forEach(element => {
+        rowData.push({
+          day: element.cdSendDate,
+          route: element.cdTransCode,
+          model: element.cdCabinetModel,
+          customer: element.cdCustomerNo
+        });
+      });
+      this.boxData = rowData;
+    },
+    //点击扩展
+    expandChange(rows, status) {},
+    //换页
+    changePage(pageSize) {
+      this.start = (pageSize - 1) * this.datagrid.queryParams.rows;
+      this.end = pageSize * this.datagrid.queryParams.rows;
+      if (
+        this.formQuery.cdSendDate != undefined &&
+        this.formQuery.cdSendDate != ""
+      ) {
+        this.handleSubmit();
+      } else {
+        this.getData();
+      }
+    },
+    //改变每页显示数据
+    chageSize(pageSizeOpts) {
+      this.datagrid.queryParams.rows = pageSizeOpts;
+      this.start = 0;
+      this.end = pageSizeOpts;
+      if (
+        this.formQuery.cdSendDate != undefined &&
+        this.formQuery.cdSendDate != ""
+      ) {
+        this.handleSubmit();
+      } else {
+        this.getData();
+      }
+    }
+  }
+};
+</script>

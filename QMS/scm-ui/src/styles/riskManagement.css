@@ -1,0 +1,42 @@
+.boxs{
+  	width: 55%;border: 1px solid #DDDDDD;margin-left: 1%;padding-top: 10px;height: 104px;margin-top:30px;
+  } 
+
+  .clearfix:after {
+    content:".";
+    visibility:hidden;
+    display:block; 
+     clear:both;
+  }
+  
+  .Sysmessage{
+  width:100%;height:60px;list-style:none;
+}
+.Sysmessage li{
+	float:left;width:30%; text-align:center;
+	}
+.Sysmessage li p{
+	line-height:35px;font-size:14px; color:#555;font-family:"Microsoft YaHei";margin-bottom:10px; position:relative;
+	}
+.Sysmessage li p.RatingSystem{
+	font-size:25px; color:#409EFF;font-family:"Arial";
+	}
+.Sysmessage li p.RatingSystem:after{
+	content:'';height:50px;display:inline-block;border-left:1px solid #ddd; position:absolute;right:0;top:-20px;
+	}
+
+  .Sysmessage li p.Pattern:before{
+content:'';height:50px;display:inline-block;border-left:1px solid #ddd; position:absolute;left:0;top:-20px;
+  }
+
+.Sysmessage li p.ManualClassification,.Sysmessage li p.Pattern{
+	font-size:25px;color:#67C23A;font-family:"Arial";
+	}
+  .Sysmessage li p.Pattern{
+    color:#E6A23C;font-size: 22px;font-family: "Microsoft  YaHei"
+  }
+  .Radios{margin-left: 53px;margin-top: 20px;margin-bottom: 30px;}
+  .changeRiskGrade  .el-input{width: 80%}
+  .mt10{margin-top: 10px; font-size: 14px;color: #444;font-family: "Microsoft YaHei"}
+  .Note{color: #666;margin-top: 20px;}
+  .moderecord .ivu-modal-footer{border-top:none!important; }

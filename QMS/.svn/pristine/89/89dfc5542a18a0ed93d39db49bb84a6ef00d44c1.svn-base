@@ -1,0 +1,11 @@
+package com.unind.qms.web.supplier.dao;
+
+import com.unind.qms.web.supplier.entity.SupplierPreReport;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.CrudRepository;
+
+/**
+ * @author Shen
+ */
+public interface SupplierPreReportDao extends CrudRepository<SupplierPreReport, Long>, JpaSpecificationExecutor<SupplierPreReport> {
+}

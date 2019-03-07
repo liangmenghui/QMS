@@ -1,0 +1,221 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：样品管理
+    -->
+	<div class="SampleManagement" v-if="!showRooterView">		
+        <Row style="margin-bottom: 10px;">                                             
+            <el-input size="medium" style="width: 200px;display: inline-block;" v-model="formQuery.keyWord" :placeholder="$t('Button.Keyword-search')"></el-input>                      
+            <el-button style="padding: 10px 10px;" type="primary" icon="el-icon-search" @click="getData">{{$t('Button.Inquire')}}</el-button>
+            <el-button style="padding: 10px 10px;" type="primary" icon="el-icon-plus" @click="showAddDialog()" v-perm-add="">{{$t('sample.NewSample')}}</el-button>                                                           
+       	</Row>
+			
+		<Row>           
+            <Table :data="datagrid.data.rows" :columns="datagrid.columns">                  
+            </Table>
+            <div style="margin: 10px;overflow: hidden">
+                <div style="float: right;">
+                    <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+                </div>
+            </div>           
+       	</Row>
+		<Modal v-model="dialog.modal_dialog" :title="$t('sample.NewSample')" @on-ok="ok" @on-cancel="cancel" >
+            <el-form :ref="dialog.formItem" :model="dialog.formItem" :rules="dialog.ruleForm" label-width="80">                   
+                <el-form-item :label="$t('sample.SampleName')" prop="bsName" >
+                    <el-input v-model="dialog.formItem.bsName" placeholder="请输入"></el-input>
+                </el-form-item>                                     
+            </el-form>
+       	</Modal>		
+	</div>
+	<div v-else-if="showRooterView">
+        <router-view></router-view>
+  	</div>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+        	showRooterView: false,
+            formQuery: {
+                bsName: ''
+            },
+            dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: {                  
+                    bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ],                   
+                }
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:25,
+                    pkParent:-1
+                },
+                pagination: [25, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title: this.$t('sample.SampleName'),
+                        key: 'bsName'
+                    },                   
+                    {
+                        title: this.$t('sample.Creater'),
+                        key: 'bsCreater',
+                    },
+                    {
+                        title: this.$t('sample.CreateTime'),
+                        key: 'bsCreatedTime',
+                    },
+                   
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let ary = [];
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('EDIT')
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditDialog(params)
+                                        }
+                                    }
+                                }, '设置'));
+                            }
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('DELETE')
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.delete(params)
+                                        }
+                                    }
+                                }, '删除'));
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    created(){
+        this.getData();
+        this.showRooterView = this.$route.matched.length>3;
+    },
+    beforeUpdate:function(){
+        this.showRooterView = this.$route.matched.length>3;
+    },
+    watch: {
+        '$route' (to, from) {
+            if(to.matched.length == 2) {
+                this.getData();
+            }
+            this.showRooterView = to.matched.length>2;
+        }
+    },
+    methods: {
+        handleSubmit(name) {         
+            this.getData();
+        },
+        getData() {
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+            this.api.sampleinfo.getlist(this.formQuery).then((res) => {
+                if(res.result) {
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        reloadData() {
+            this.getData();
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.getData();
+        },
+        edit(params) {           
+            this.api.sampleinfo.edit(params.row).then((res)=>{
+                if(res.result) {
+                    this.reloadData();
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        delete(params) {
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                onOk: () => {
+                    this.api.sampleinfo.delete({id:params.row.id}).then((res)=>{
+                        if(res.result) {
+                            this.reloadData();
+                            this.$Modal.remove();
+                            this.$Message.info('删除成功');
+                        }else {
+                            this.$Message.error(res.msg);   
+                        }
+                    });
+                }
+            });
+        },
+        showAddDialog() {       
+            this.dialog.modal_dialog = true;            
+            this.dialog.formItem = {};
+        },
+        showEditDialog(params) {
+            let r = params.row;
+			r.bsSampleId = r.id;
+            this.$store.commit("updateSampleDataStates",r);         
+            this.$router.push("sampleManagement/regularManagement");
+        },
+        ok () {
+ 
+            if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                        this.api.sampleinfo.edit(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+ 
+                                this.reloadData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+            }else {
+                        this.api.sampleinfo.add(this.dialog.formItem).then((res) => {
+                            if(res.result) {    
+                                this.reloadData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+            }
+        },
+        cancel () {
+            
+        },
+    }
+}
+</script>
+
+<style lang="less">
+@import "../public.less";
+</style>

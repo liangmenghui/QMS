@@ -1,0 +1,422 @@
+<template>
+    <div class="box">
+        <div class="createtitle"><span class="el-icon-circle-plus-outline"></span>
+           {{$t('approved.AuditProcessSetting')}}
+        </div>
+        <el-form ref="formItem" :model="flowdata" label-width="140px">
+             <el-form-item :label="$t('ApprovedFlow.Process-M')"  prop="bsName" readonly class="inputItem">
+                <el-input readonly style="width: 200px;" v-model="flowdata.bsName" :placeholder="$t('Button.Keyword-search')" ></el-input>
+            </el-form-item>
+                <el-form-item :label="$t('ApprovedFlow.FlowType')" prop="bsType" class="inputItem" >
+                    <el-input readonly style="width: 200px;" :value="$t('approved.type['+flowdata.bsType+']')"></el-input>
+                </el-form-item>
+            <el-form-item  :label="$t('ApprovedFlow.Principal')" prop="bsApprovedUser" class="inputItem"  >
+                    <el-input style="width: 200px;" v-model="flowdata.approvedBy.bsName" readonly>
+                    </el-input>
+            </el-form-item>
+                
+            <el-form-item :label="$t('approved.can_yield')" prop="bsCanYield" class="inputItem" >
+                    <el-input readonly style="width: 200px;" :value="$t('approved.yield['+flowdata.bsCanYield+']')"></el-input>
+            </el-form-item>
+                
+            <el-form-item label="通过审核状态" prop="bsApprovedStatus" class="inputItem"  >
+                    <el-input readonly style="width: 200px;" :value="$t('product.StatusDesc['+flowdata.bsApprovedStatus+']')" v-if="flowdata.bsType<=20"></el-input>
+                    <el-input readonly style="width: 200px;" :value="$t('supplier.StatusDesc['+flowdata.bsApprovedStatus+']')" v-if="flowdata.bsType>20"></el-input>
+            </el-form-item>
+             <el-form-item label="未过审核状态" prop="bsRejectStatus" class="inputItem" >
+                    <el-input readonly style="width: 200px;" :value="$t('product.StatusDesc['+flowdata.bsRejectStatus+']')" v-if="flowdata.bsType<=20"></el-input>
+                    <el-input readonly style="width: 200px;" :value="$t('supplier.StatusDesc['+flowdata.bsRejectStatus+']')" v-if="flowdata.bsType>20"></el-input>
+            </el-form-item>            
+
+        </el-form>
+
+        <el-Row style="margin-top:5%">
+           <el-col :span="2"><div class="flowtext" prop="bsFlowId" v-model="flowdata.bsFlowId">{{$t('ApprovedFlow.process')}}</div>
+            </el-col> 
+            
+            <el-button type="primary" size="small" icon="el-icon-plus" @click="showAddDialog()">{{$t('Button.Newitem')}}</el-button> 
+            <el-col :span="24">
+
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="margin-top:15px" >                  
+                </Table>
+            </el-col>
+        </el-Row>
+        
+        <Modal v-model="dialog.modal_dialog" :title="$t('ApprovedFlow.Projectmanagement')" @on-ok="ok" @on-cancel="cancel" >
+            <div class="modeform">
+                <el-form :ref="dialog.formItem" :model="dialog.formItem" :rules="dialog.ruleForm" label-width="120px">
+                    <el-form-item :label="$t('ApprovedFlow.ProjectName')" prop="bsName">
+                        <el-input v-model="dialog.formItem.bsName" placeholder="请输入"></el-input>
+                    </el-form-item>
+                     <el-form-item :label="$t('ApprovedFlow.PageRouting')" prop="bsRouter">
+                        <el-button type="primary" v-if="dialog.formItem.bsRouter!=undefined"  @click="toSelectRouter()">{{dialog.formItem.bsRouterName}}</el-button> 
+                        <el-button id="settingBtn" type="primary" v-if="dialog.formItem.bsRouter==undefined" @click="toSelectRouter()">{{$t('Button.NotSet')}}</el-button> 
+
+                        <Tree :data="menuTree"  :render="renderContent" v-if="showMenuTree"></Tree>
+                    </el-form-item>
+                     <el-form-item :label="$t('ApprovedFlow.AuditMethod')" prop="bsContentType">
+                        <el-select v-model="dialog.formItem.bsContentType" placeholder="请输入">
+                            <el-option :label="$t('approved.contentType[1]')" :value="1"></el-option>
+                            <el-option :label="$t('approved.contentType[2]')" :value="2"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item :label="$t('New-audit.Terms-conditions')" v-if="dialog.formItem.bsContentType==1">
+                        <el-select v-model="dialog.formItem.selectedAudits" multiple style="width:260px">
+                            <el-option v-for="item in audits" :value="item.id" :key="item.id" :label="item.bsName+item.bsNo+item.tag"></el-option>
+                        </el-select>
+                    </el-form-item>
+                   <el-form-item :label="$t('ApprovedFlow.Principal')"  style="display: none">
+                        <el-select style="width:300px;" multiple v-model="dialog.formItem.selectedUsers" value-key="id" placeholder="请选择">
+                            <el-option v-for="user in users" :key="user.id" :label="user.bsName" :value="user" ></el-option>
+                        </el-select>
+                    </el-form-item>
+                </el-form>
+            </div>
+        </Modal>
+    </div>
+</template>
+<script>
+
+export default {
+    data() {
+        return {
+            menuTree: [],
+            showMenuTree: false,
+            flowdata:{},
+            dialog: {
+                index: 0,
+                modal_dialog: false,
+                formItem: {
+                    selectedAudits: [],
+                    selectedUsers:[]
+                },
+                ruleForm: {
+                    bsName: [
+                        { required: true, message: '请填写项目名称', trigger: 'blur' }
+                    ],
+                    bsType:[
+                        { required: true, message: '请填写审核类型', trigger: 'blur'}
+                    ],
+                    bsContentType:[
+                        { required: true, message: '请选择审核方式', trigger: 'blur'}
+                    ],
+                     bsRouter:[
+                        { required: true, message: '请设置页面路由', trigger: 'blur'}
+                    ]
+                   /*  userStr:[
+                        { required: true, message: '请选择负责人', trigger: 'blur'}
+                    ]*/
+                },
+            },
+            users :[],
+            audits:[],
+            originAudits: [],
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:25,
+                    pkParent:-1
+                },
+                pagination: [25, 50, 100],
+                data: {
+                    rows:[],
+                    total:0
+                },
+                columns: [
+                    {
+                        title: this.$t('ApprovedFlow.ProjectName'),
+                        key: 'bsName'
+                    },
+                    {
+                        title: this.$t('ApprovedFlow.PageRouting'),
+                        key: 'bsRouterName'
+                    },
+                    {
+                        title: this.$t('ApprovedFlow.AuditMethod'),
+                        key: 'bsContentType',
+                        render: (h,params) => {
+                            return h('span', this.$t('approved.contentType['+params.row.bsContentType+']'));
+                        }
+                    },  
+                  /*  {
+                        title: this.$t('ApprovedFlow.Principal'),
+                        key: 'selectedUsers',
+                        render: (h,params) => {
+                            var users = params.row.selectedUsers.map(function (user) {
+                                return user.bsName;
+                            })
+                            return h('span', users.toString());
+                        }
+                    },*/          
+                    {
+                        title: this.$t('New-audit.Operating'),
+                        key: 'action',
+                        render: (h, params) => {
+                            let ary = [];
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditDialog(params)
+                                        }
+                                    }
+                                },  this.$t('Button.Edit')));
+                            }
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.delete(params)
+                                        }
+                                    }
+                                },  this.$t('Button.Delete')));
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    created(){
+        this.flowdata = this.$store.getters.getFlowdata;
+        this.getAuditData();
+        this.getData();
+    },
+    methods: {
+        renderContent (h, { root, node, data }) {
+            return h('span', {
+                style: {
+                    display: 'inline-block',
+                    width: '100%'
+                }
+            }, [
+                h('span', [
+                    h('span', data.title)
+                ]),
+                h('span', {
+                    style: {
+                        display: 'inline-block',
+                        float: 'right',
+                        marginRight: '32px'
+                    }
+                }, [
+                    h('Button', {
+                        props: Object.assign({}, this.buttonProps, {
+                            icon: (data.url == this.dialog.formItem.bsRouter)?'ios-checkmark-outline':'ios-circle-outline',
+                            disabled: (node.children != undefined && node.children.length >0)
+                        }),
+                        style: {
+                            marginRight: '1px'
+                        },
+                        on: {
+                            click: () => { this.selectRouter(root,node,data) }
+                        },
+                    })
+                ])
+            ]);
+        },
+        selectRouter(root,node,data){
+            if(data.children == undefined){
+                this.dialog.formItem.bsRouter = data.url;
+                this.dialog.formItem.bsRouterName = data.title;
+                this.showMenuTree = false;
+            } 
+        },
+        toSelectRouter(){
+            var supplierRoutes = {
+                title: "供应商审核",
+                url: 'approved',
+                children: [
+                    { title: "条款审核", url: "approved/itemsRecordDetails"},
+                    { title: "文件审核", url: "approved/otherReports"},
+                    { title: "审核报告", url: "approved/report"}
+                ]
+            };
+            var productApproveRoutes = {
+                title: "产品审核",
+                url: 'approved',
+                children: [
+                    { title: "条款审核", url: "approved/itemsRecordDetails"},
+                    { title: "文件审核", url: "approved/otherReports"},
+                    { title: "审核报告", url: "approved/report"},
+                ]
+            };
+            var productionCheck = {
+                title: "成品检验",
+                url: 'approved',
+                children: [
+                    { title: "出货检验报告", url: "approved/inspectReport"},
+                    { title: "出货检验报告核查", url: "approved/inspectReportCheck"},
+                    { title: "文件审核", url: "approved/otherReports"}
+                ]
+            }
+            this.menuTree = [supplierRoutes,productApproveRoutes,productionCheck];
+            this.showMenuTree = !this.showMenuTree;
+        },
+        getAuditData(){
+            var type = this.flowdata.bsType>20?2:1;
+            this.api.Audit.getlist({bsType:type}).then((res) => { 
+                if(res.result) { 
+                    this.originAudits = res.data.rows.map(function (row) {
+                        row.tag = '';
+                        return row;
+                    });
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        getData() {
+            this.api.ApprovedItem.getlist({bsFlowId:this.flowdata.id,bsType:this.flowdata.bsType}).then((res) => {
+                if(res.result) {
+                    var rows = [];
+                    for (var i = 0; i < res.data.rows.length; i++) {
+                        var row = res.data.rows[i];
+                        
+                        row.deletedAudits = [];
+                        row.selectedAudits = [];
+                        row.termsSet.sort(function (a,b) {
+                            return a.termsBy.bsNo>b.termsBy.bsNo;
+                        });
+                        for(var j = 0; j < row.termsSet.length; j++) {
+                            var terms = row.termsSet[j];
+                            var termsBy = terms.termsBy;
+                            termsBy.tag = '';
+                            if(termsBy.bsIsDel) {
+                                termsBy.tag = '(已删除)';
+                                row.deletedAudits.push(termsBy);
+                            }
+                            if(!terms.bsIsDel) row.selectedAudits.push(termsBy.id);
+                        }
+                        row.recorderSet.sort(function (r1,r2) {
+                            return r1.bsPriority>r2.bsPriority;
+                        });
+                        row.selectedUsers = [];
+                        for(var j = 0;j < row.recorderSet.length; j++) {
+                            var recorder = row.recorderSet[j];
+                            if(recorder.bsIsDel) continue;
+                            else {
+                                row.selectedUsers.push(recorder.recorderBy)
+                            }
+                        }
+                        rows.push(row);
+                    }
+                    res.data.rows = rows;
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+
+            this.api.user.getlist().then((res)=>{
+                this.users = res.data.rows;
+            });
+        },
+        delete(params) {
+            if(params.index != this.datagrid.data.rows.length-1) {
+                this.$Message.info("只能删除流程最后一步")
+                return;
+            }
+
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                onOk: () => {
+                    this.api.ApprovedItem.delete({id:params.row.id}).then((res)=>{
+                        if(res.result) {
+                            this.getData();
+                            this.$Modal.remove();
+                            this.$Message.info('删除成功');
+                        }else {
+                            this.$Message.error(res.msg);   
+                        }
+                    });
+                }
+            });
+        },
+        showAddDialog() {
+            this.dialog.modal_dialog = true;
+            this.dialog.formItem = {selectedAudits:[],selectedUsers:[],bsType:this.flowdata.bsType};
+            this.dialog.formItem.bsPriority = this.datagrid.data.rows.length + 1;
+            this.audits = this.originAudits;
+        },
+        showEditDialog(params) {
+            this.dialog.modal_dialog = true;
+            this.dialog.formItem = Object.assign({},params.row);
+            this.dialog.formItem.bsPriority = params.index+1;
+            this.audits = Object.assign(this.originAudits,this.dialog.formItem.deletedAudits);
+        },
+        ok () {
+            var formItem = this.dialog.formItem;
+            var userStr = formItem.selectedUsers.map(function (user) {
+                return user.id;
+            }).toString();
+            var form = {
+                bsName: formItem.bsName,
+                bsType: this.flowdata.bsType,
+                bsRouter: formItem.bsRouter,
+                bsRouterName: formItem.bsRouterName,
+                bsContentType: formItem.bsContentType,
+                bsFlowId: this.flowdata.id,
+                bsPriority:  formItem.bsPriority,
+                termsStr:formItem.selectedAudits.toString(),
+                userStr: userStr
+            };
+            if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                form.id = this.dialog.formItem.id;
+                this.api.ApprovedItem.edit(form).then((res) => {
+                    if(res.result) {
+                        this.getData();
+                    }
+                });
+            }else {
+                this.api.ApprovedItem.add(form).then((res) => {
+                    if(res.result) {
+                        this.getData();
+                    }
+                });
+            }
+        },
+        cancel () {
+            
+        }
+    }
+    
+}      
+
+
+
+  
+
+  </script>
+<style>
+     .box{padding:8px 20px; width: 100%;background: #fff;min-height: 600px;}
+   .modeform .el-input{width: 300px;}
+   .modeform .ivu-select-multiple .ivu-select-selection{width: 300px;}
+   .modeform .settingBtn{width: 150px;}
+   .modeform .ivu-select-multiple .ivu-tag{margin-top: 9px;}
+   .flowtext{font-size: 14px; margin-left: 10px;line-height: 40px;}
+   .createtitle {
+    padding-left: 3%;
+    height: 50px;
+    font-size: 16px;
+    font-family: "Microsoft YaHei";
+    background: #f2f7fb;
+    line-height: 50px;
+    margin-bottom: 20px;
+}
+.inputItem{width: 40%;display: inline-block;}
+
+</style>

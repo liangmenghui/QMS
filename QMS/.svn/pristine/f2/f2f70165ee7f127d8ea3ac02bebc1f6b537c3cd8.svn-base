@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?><project name="QMS for UNIND" company="PLEE" webLink="" view-date="2018-02-04" view-index="0" gantt-divider-location="424" resource-divider-location="300" version="2.8.5" locale="en_US">
+    <description/>
+    <view zooming-state="default:7" id="gantt-chart">
+        <field id="tpd3" name="Name" width="222" order="0"/>
+        <field id="tpd4" name="Begin date" width="66" order="1"/>
+        <field id="tpd5" name="End date" width="115" order="2"/>
+    </view>
+    <view id="resource-table">
+        <field id="0" name="Name" width="147" order="0"/>
+        <field id="1" name="Default role" width="147" order="1"/>
+    </view>
+    <!-- -->
+    <calendars>
+        <day-types>
+            <day-type id="0"/>
+            <day-type id="1"/>
+            <default-week id="1" name="default" sun="1" mon="0" tue="0" wed="0" thu="0" fri="0" sat="1"/>
+            <only-show-weekends value="false"/>
+            <overriden-day-types/>
+            <days/>
+        </day-types>
+    </calendars>
+    <tasks empty-milestones="true">
+        <taskproperties>
+            <taskproperty id="tpd0" name="type" type="default" valuetype="icon"/>
+            <taskproperty id="tpd1" name="priority" type="default" valuetype="icon"/>
+            <taskproperty id="tpd2" name="info" type="default" valuetype="icon"/>
+            <taskproperty id="tpd3" name="name" type="default" valuetype="text"/>
+            <taskproperty id="tpd4" name="begindate" type="default" valuetype="date"/>
+            <taskproperty id="tpd5" name="enddate" type="default" valuetype="date"/>
+            <taskproperty id="tpd6" name="duration" type="default" valuetype="int"/>
+            <taskproperty id="tpd7" name="completion" type="default" valuetype="int"/>
+            <taskproperty id="tpd8" name="coordinator" type="default" valuetype="text"/>
+            <taskproperty id="tpd9" name="predecessorsr" type="default" valuetype="text"/>
+        </taskproperties>
+        <task id="0" name="准备工作" color="#000000" meeting="false" start="2018-02-23" duration="2" complete="0" expand="true">
+            <depend id="4" type="2" difference="0" hardness="Strong"/>
+            <task id="1" name="服务器环境配置" color="#8cb6ce" meeting="false" start="2018-02-23" duration="1" complete="0" expand="true">
+                <depend id="2" type="2" difference="0" hardness="Strong"/>
+                <depend id="3" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="2" name="数据库表设计" color="#8cb6ce" meeting="false" start="2018-02-26" duration="1" complete="0" expand="true"/>
+            <task id="3" name="前端结构设计" color="#8cb6ce" meeting="false" start="2018-02-26" duration="1" complete="0" expand="true"/>
+        </task>
+        <task id="4" name="系统管理" meeting="false" start="2018-02-27" duration="2" complete="0" expand="true">
+            <depend id="68" type="2" difference="0" hardness="Strong"/>
+            <task id="8" name="系统日志" meeting="false" start="2018-02-27" duration="1" complete="0" expand="true"/>
+            <task id="9" name="防火墙及安全性设置" meeting="false" start="2018-02-27" duration="1" complete="0" expand="true"/>
+            <task id="7" name="操作日志" color="#8cb6ce" meeting="false" start="2018-02-27" duration="2" complete="0" expand="true"/>
+        </task>
+        <task id="68" name="基本功能" meeting="false" start="2018-03-01" duration="2" complete="0" expand="true">
+            <depend id="40" type="2" difference="0" hardness="Strong"/>
+            <task id="69" name="首页" color="#8cb6ce" meeting="false" start="2018-03-01" duration="2" complete="0" expand="true"/>
+            <task id="71" name="登录" color="#8cb6ce" meeting="false" start="2018-03-02" duration="1" complete="0" expand="true"/>
+        </task>
+        <task id="20" name="用户管理" meeting="false" start="2018-03-05" duration="10" complete="0" expand="true">
+            <depend id="26" type="2" difference="0" hardness="Strong"/>
+            <task id="22" name="用户详情" color="#8cb6ce" meeting="false" start="2018-03-05" duration="1" complete="0" expand="true"/>
+            <task id="16" name="用户可读管理" meeting="false" start="2018-03-06" duration="9" complete="0" expand="false">
+                <task id="17" name="授权查看信息" color="#8cb6ce" meeting="false" start="2018-03-06" duration="1" complete="0" expand="true">
+                    <depend id="18" type="2" difference="0" hardness="Strong"/>
+                </task>
+                <task id="18" name="分配予用户待办" color="#8cb6ce" meeting="false" start="2018-03-07" duration="2" complete="0" expand="true">
+                    <depend id="19" type="2" difference="0" hardness="Strong"/>
+                </task>
+                <task id="19" name="相关事项查询" color="#8cb6ce" meeting="false" start="2018-03-09" duration="2" complete="0" expand="true">
+                    <depend id="25" type="2" difference="0" hardness="Strong"/>
+                </task>
+                <task id="25" name="提醒&amp;通知" color="#8cb6ce" meeting="false" start="2018-03-13" duration="4" complete="0" expand="true"/>
+            </task>
+        </task>
+        <task id="40" name="产品" meeting="false" start="2018-03-07" duration="36" complete="0" expand="true">
+            <depend id="64" type="2" difference="0" hardness="Strong"/>
+            <task id="41" name="产品浏览/查询" meeting="false" start="2018-03-07" duration="1" complete="0" expand="true">
+                <depend id="43" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="43" name="产品审核" meeting="false" start="2018-03-08" duration="27" complete="0" expand="false">
+                <depend id="49" type="2" difference="0" hardness="Strong"/>
+                <task id="44" name="试订单" meeting="false" start="2018-03-08" duration="1" complete="0" expand="true">
+                    <depend id="45" type="2" difference="0" hardness="Strong"/>
+                </task>
+                <task id="45" name="质量和工艺文件" meeting="false" start="2018-03-09" duration="1" complete="0" expand="true">
+                    <depend id="127" type="2" difference="0" hardness="Strong"/>
+                </task>
+                <task id="46" name="过程审核" meeting="false" start="2018-03-12" duration="25" complete="0" expand="true">
+                    <task id="127" name="审核流程控制" color="#8cb6ce" meeting="false" start="2018-03-12" duration="4" complete="0" expand="true">
+                        <depend id="52" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="52" name="审核说明指导" meeting="false" start="2018-03-16" duration="1" complete="0" expand="true">
+                        <depend id="53" type="2" difference="0" hardness="Strong"/>
+                        <depend id="54" type="2" difference="0" hardness="Strong"/>
+                        <depend id="55" type="2" difference="0" hardness="Strong"/>
+                        <depend id="56" type="2" difference="0" hardness="Strong"/>
+                        <depend id="57" type="2" difference="0" hardness="Strong"/>
+                        <depend id="58" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="53" name="试产场地审核" color="#8cb6ce" meeting="false" start="2018-03-19" duration="3" complete="0" expand="true">
+                        <depend id="54" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="54" name="工装、模具和检具审核" color="#8cb6ce" meeting="false" start="2018-03-22" duration="3" complete="0" expand="true">
+                        <depend id="55" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="55" name="原材料和外协件审核" color="#8cb6ce" meeting="false" start="2018-03-27" duration="3" complete="0" expand="true">
+                        <depend id="56" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="56" name="人力资源审核" color="#8cb6ce" meeting="false" start="2018-03-30" duration="3" complete="0" expand="true">
+                        <depend id="57" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="57" name="文件审核" color="#8cb6ce" meeting="false" start="2018-04-04" duration="3" complete="0" expand="true">
+                        <depend id="58" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="58" name="产品符合性审核" color="#8cb6ce" meeting="false" start="2018-04-09" duration="3" complete="0" expand="true">
+                        <depend id="63" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="63" name="过程审核报告" color="#8cb6ce" meeting="false" start="2018-04-12" duration="2" complete="0" expand="true"/>
+                </task>
+                <task id="47" name="成品检验" color="#000000" meeting="false" start="2018-03-12" duration="14" complete="0" expand="true">
+                    <depend id="50" type="2" difference="0" hardness="Strong"/>
+                    <task id="192" name="产品品质履历卡" color="#8cb6ce" meeting="false" start="2018-03-12" duration="3" complete="0" expand="true">
+                        <depend id="59" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="59" name="量产产品状况检查单" color="#8cb6ce" meeting="false" start="2018-03-15" duration="3" complete="0" expand="true">
+                        <depend id="60" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="60" name="产品图纸" meeting="false" start="2018-03-20" duration="1" complete="0" expand="true">
+                        <depend id="61" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="61" name="产品质量审核报告" color="#8cb6ce" meeting="false" start="2018-03-21" duration="3" complete="0" expand="true">
+                        <depend id="62" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="62" name="出货检验报告" color="#8cb6ce" meeting="false" start="2018-03-26" duration="3" complete="0" expand="true">
+                        <depend id="220" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="220" name="出货检验报告总汇" color="#8cb6ce" meeting="false" start="2018-03-29" duration="1" complete="0" expand="true">
+                        <depend id="222" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                </task>
+                <task id="222" name="试订单检验" meeting="false" start="2018-03-30" duration="1" complete="0" expand="true"/>
+                <task id="50" name="审核报告" meeting="false" start="2018-03-30" duration="1" complete="0" expand="true"/>
+            </task>
+            <task id="49" name="产品质量履历" color="#8cb6ce" meeting="false" start="2018-04-16" duration="3" complete="0" expand="true">
+                <depend id="223" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="223" name="产品风险管理" color="#8cb6ce" meeting="false" start="2018-04-19" duration="3" complete="0" expand="true">
+                <depend id="225" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="225" name="数据监控" color="#8cb6ce" meeting="false" start="2018-04-24" duration="2" complete="0" expand="true"/>
+        </task>
+        <task id="26" name="供应商" meeting="false" start="2018-03-30" duration="29" complete="0" expand="true">
+            <depend id="64" type="2" difference="0" hardness="Strong"/>
+            <task id="28" name="供应商浏览/查询" meeting="false" start="2018-03-30" duration="1" complete="0" expand="true">
+                <depend id="29" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="29" name="供应商审核" meeting="false" start="2018-04-02" duration="27" complete="0" expand="true">
+                <task id="30" name="体系审核(客户要求、供应商自评)" meeting="false" start="2018-04-02" duration="26" complete="0" expand="true">
+                    <depend id="39" type="2" difference="0" hardness="Strong"/>
+                    <task id="122" name="审核流程控制" color="#8cb6ce" meeting="false" start="2018-04-02" duration="2" complete="0" expand="true">
+                        <depend id="31" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="31" name="审核说明指导" meeting="false" start="2018-04-04" duration="1" complete="0" expand="true">
+                        <depend id="32" type="2" difference="0" hardness="Strong"/>
+                        <depend id="33" type="2" difference="0" hardness="Strong"/>
+                        <depend id="34" type="2" difference="0" hardness="Strong"/>
+                        <depend id="35" type="2" difference="0" hardness="Strong"/>
+                        <depend id="36" type="2" difference="0" hardness="Strong"/>
+                        <depend id="37" type="2" difference="0" hardness="Strong"/>
+                        <depend id="38" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="32" name="质量目标、年度计划与质量组织架构" color="#8cb6ce" meeting="false" start="2018-04-05" duration="3" complete="0" expand="true">
+                        <depend id="33" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="33" name="岗位职责、技能、培训" color="#8cb6ce" meeting="false" start="2018-04-10" duration="3" complete="0" expand="true">
+                        <depend id="34" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="34" name="来料质量控制" color="#8cb6ce" meeting="false" start="2018-04-13" duration="3" complete="0" expand="true">
+                        <depend id="35" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="35" name="过程与质量控制" color="#8cb6ce" meeting="false" start="2018-04-18" duration="3" complete="0" expand="true">
+                        <depend id="36" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="36" name="产品质量控制" color="#8cb6ce" meeting="false" start="2018-04-23" duration="3" complete="0" expand="true">
+                        <depend id="37" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="37" name="持续改进与纠正预防" color="#8cb6ce" meeting="false" start="2018-04-26" duration="3" complete="0" expand="true">
+                        <depend id="38" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="38" name="文件控制及记录管理" color="#8cb6ce" meeting="false" start="2018-05-01" duration="3" complete="0" expand="true">
+                        <depend id="92" type="2" difference="0" hardness="Strong"/>
+                    </task>
+                    <task id="92" name="审核报告" color="#8cb6ce" meeting="false" start="2018-05-04" duration="2" complete="0" expand="true"/>
+                </task>
+                <task id="39" name="审核记录&amp;表现" meeting="false" start="2018-05-08" duration="1" complete="0" expand="true">
+                    <depend id="51" type="2" difference="0" hardness="Strong"/>
+                </task>
+            </task>
+            <task id="51" name="供应商产品列表" meeting="false" start="2018-05-09" duration="1" complete="0" expand="true"/>
+        </task>
+        <task id="64" name="项目/招投标展示(参考SRM)" color="#8cb6ce" meeting="false" start="2018-05-10" duration="6" complete="0" expand="true"/>
+        <task id="198" name="看板" meeting="false" start="2018-05-21" duration="5" complete="0" expand="true">
+            <task id="199" name="管理员看板" color="#8cb6ce" meeting="false" start="2018-05-21" duration="3" complete="0" expand="true"/>
+            <task id="200" name="其他角色看板" color="#8cb6ce" meeting="false" start="2018-05-21" duration="5" complete="0" expand="true"/>
+        </task>
+    </tasks>
+    <resources>
+        <resource id="0" name="陈谦藤" function="Default:0" contacts="" phone=""/>
+        <resource id="1" name="陈步乐" function="Default:0" contacts="" phone=""/>
+        <resource id="2" name="梁孟慧" function="Default:0" contacts="" phone=""/>
+        <resource id="3" name="叶育梁" function="Default:0" contacts="" phone=""/>
+        <resource id="4" name="Zhang Hang" function="Default:0" contacts="" phone=""/>
+    </resources>
+    <allocations/>
+    <vacations/>
+    <previous/>
+    <roles roleset-name="Default"/>
+</project>

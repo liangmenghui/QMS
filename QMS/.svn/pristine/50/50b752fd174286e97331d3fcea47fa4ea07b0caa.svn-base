@@ -1,0 +1,562 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：产品风险管理
+    -->
+	<div v-if="!showRooterView">
+		<div style="height: 50px;">
+			<Col :md="9">
+				<div style="height: 1px;"></div>
+			</Col>
+			<Col :md="6">
+			<Col :md="12">
+				<router-link :to="{path: 'details'}">
+				<el-button type="primary" style="width: 99%;border-radius: 8px 0px 0px 8px;height:40px;font-size: 14px;">
+					{{$t('product.ProductDetail')}}
+				</el-button>
+				</router-link>
+			</Col>
+			<Col :md="12">
+				<div  style="width: 99%;height:40px;border-radius: 0px 8px 8px 0px;background-color:#76C6F3;color:white;padding-top: 10px;font-size: 14px;">
+					<center>{{$t('product.RiskManagement')}}</center>
+				</div>
+			</Col>			
+			<!--<Col :md="8">
+				<router-link :to="{path: 'dataMonitor'}">
+				<el-button type="primary" style="width: 99%;height:40px;border-radius: 0px 8px 8px 0px;font-size: 14px;">
+					{{$t('product.DataMonitor')}}
+				</el-button>
+				</router-link>
+			</Col>-->
+			</Col>
+			<Col :md="9">
+				<div style="height: 1px;"></div>
+			</Col>
+		</div>
+		
+		<div style="height: 40px;">
+			<div style="float:right"> 
+            	<el-tag color="white" style="font-size: 16px;width: 160px;padding-left: 20px;">
+          		{{$t('product.RiskLevel')}}：{{productData.bsRiskLevel+'&nbsp级'}}
+        		</el-tag>   
+				
+				
+      			<el-button type="success" @click="pushToInputInformation('riskManagement/inputInformation')" style="padding: 8px 20px;margin-left: 10px;">
+        			<i class="el-icon-edit-outline"></i>&nbsp;&nbsp;{{$t('product.InputInformation')}}
+      			</el-button>
+				
+      		</div>
+ 		</div>
+		
+		<!--
+    	作者：offline
+    	时间：2018-07-23
+    	描述：质量经理批准
+    --> 
+    	<Row :style="{marginBottom: '20px'}" v-if="isApprover">
+    		<Card>
+				<p slot="title">
+                    <Icon type="social-buffer" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.ChangeOfRiskLevel')}}
+               	</p>
+     			
+				<el-form style="margin-left:5%">
+					<el-input v-model="riskApprovedRecord.bsOriginalRiskLevel" size="small" readonly style="width:8%"></el-input>
+					<Icon type="shuffle" style="font-size: 20px;padding:10px"></Icon>
+					<el-input v-model="riskApprovedRecord.bsNewRiskLevel" size="small" readonly style="width:8%"></el-input>
+					
+					<p style="margin-top:10px;"></p>
+					<el-radio v-model="riskApprovedRecord.bsStatus" label="1" border size="small">{{$t('risk.approval')}}</el-radio>
+					<el-radio v-model="riskApprovedRecord.bsStatus" label="2" border size="small">{{$t('risk.reject')}}</el-radio>
+              
+                    <p class="mt10">{{$t('risk.approvalDesc')}}:</p>
+                    <el-input type="textarea"  :autosize="{ minRows: 3, maxRows: 3}" style="width:50%" v-model="riskApprovedRecord.bsApprovedAdvice"></el-input>
+					<p style="margin-top:10px;"></p>
+					<el-button type="primary" style="width: 12%;" @click="approveRisk()">{{$t('risk.SubmitApprovalResult')}}</el-button>
+				</el-form>
+      		
+      		</Card>
+      	</Row>
+		
+    <!--
+    	作者：offline
+    	时间：2018-04-25
+    	描述：产品风险评分记录
+    --> 
+    	<Row :style="{marginBottom: '20px'}">
+    		<Card>
+				<p slot="title">
+                    <Icon type="social-buffer" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.ProductRiskScoreRecord')}}
+               	</p>
+               	<div slot="extra" @click="toInstructions('riskManagement/instructions')">
+					<Tooltip content="点击进入风险管理说明" placement="bottom-end">                   
+                        <Icon type="information-circled" style="font-size: 25px"></Icon>
+                    </Tooltip>	
+     			</div>
+     			
+      		<div style="background-color: white;">
+				<el-table :data="productrisk" style="width: 100%;">
+                    <el-table-column prop="bsRiskLevel" :label="$t('product.RiskLevel')">
+                    </el-table-column>
+					<el-table-column prop="bsRiskScore" :label="$t('product.riskscore')">
+                    </el-table-column>						
+		    		<el-table-column :label="$t('product.EvaluateTime')">
+		    			<template scope="scope">
+							<span>{{scope.row.bsCreatedTime.substring(0,7)}}</span>
+						</template>
+		    		</el-table-column>
+		    		<el-table-column prop="bsMassProductScore" :label="$t('product.ApprovalOfMassProduction')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsApprovedScore" :label="$t('product.ProcessAudit')">
+		    		</el-table-column>
+		    		<!-- <el-table-column prop="bsStandardScore" :label="$t('product.StandardizedOperation')">
+		    		</el-table-column> -->
+		    		<el-table-column prop="bsCpkScore" :label="$t('product.SPC')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsGrrScore" :label="$t('product.TestEquipmentCalibration')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsEngineeringScore" :label="$t('product.EngineeringChange')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsInspectScore" :label="$t('product.TheInspectionOfShipmentIsNotQualified')">
+		    		</el-table-column>
+<!-- 		    		<el-table-column prop="" :label="$t('product.BusinessJudgement')">
+		    		</el-table-column> -->
+		    		<el-table-column prop="bsFeedbackScore" :label="$t('product.feedback')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsPpmScore" label="PPM">
+		    		</el-table-column>  		
+   				</el-table>	
+      		</div>
+			<div style="margin: 10px;overflow: hidden">
+				<div style="float: right;">
+					<el-pagination @current-change="changePage" :current-page.sync="page"
+						:page-size="rows" layout="prev, pager, next, jumper" :total="total">
+					</el-pagination>
+				</div>
+			</div>
+      		</Card>
+      	</Row>
+    <!--
+    	作者：offline
+    	时间：2018-04-25
+    	描述：PPM,验货不合格次数,CPK
+    --> 	
+      	<Row :gutter="10">
+      		<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+      			<Card>
+				<p slot="title">
+                    <Icon type="podium" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.PPMdatagraph')}}
+               	</p>
+				<div style="height: 250px;">
+					<ppmChart :values="ppmValues" :labels="createdTimes"></ppmChart>
+				</div>
+				</Card>
+      		</Col>
+      		<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+      			<Card>
+				<p slot="title">
+                    <Icon type="podium" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.TheNumberOfUnqualifiedInspection')}}
+              	</p>				
+				<div style="height: 250px;">
+					<inspectValue :values="inspectValues" :labels="createdTimes"></inspectValue>
+				</div>
+				</Card>
+      		</Col>
+      		<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+      			<Card>
+				<p slot="title">
+                    <Icon type="podium" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.CPK')}}
+               	</p>
+				<div style="height: 250px;">
+					<cpkChart :values="cpkValues" :labels="createdTimes"></cpkChart>
+				</div>
+				</Card>
+      		</Col>
+      	</Row>
+    <!--
+    	作者：offline
+    	时间：2018-04-25
+    	描述：GRR,风险评分
+    -->  	
+      	<Row :gutter="10">     		
+      		<Col :md="24" :lg="8" :style="{marginBottom: '20px'}">
+      			<Card>
+				<p slot="title">
+                    <Icon type="podium" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.GRR')}}
+               	</p>	
+				<div style="height: 250px;">
+					<grrChart :values="grrValues" :labels="createdTimes"></grrChart>
+				</div>
+				</Card>
+      		</Col>
+      		<Col :md="24" :lg="16" :style="{marginBottom: '20px'}">
+      			<Card>
+				<p slot="title">
+                    <Icon type="ios-pulse-strong" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.riskscore')}}
+               	</p>
+      	
+				<div style="height:250px;">
+					<riskScore :values="riskScores" :labels="createdTimes"></riskScore>
+				</div>
+				</Card>
+      		</Col>
+      	</Row>
+    <!--
+    	作者：offline
+    	时间：2018-04-25
+    	描述：
+    -->       	
+      	<!-- <Row :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="star" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.ProductRiskLevelManagement')}}
+      	</p>     	
+    	
+       		<div class="boxs">             
+          		<ul class="Sysmessage">
+            		<li>
+              			<p>{{$t('product.SystemClassification')}}</p>
+              			<p class="RatingSystem">{{productData.bsRiskLevelSys+'&nbsp级'}}</p>
+            		</li>
+            		<li>
+                		<p>{{$t('product.ManualClassification')}}</p>
+                		<p class="ManualClassification">{{productData.bsRiskLevelUser+'&nbsp级'}}</p>
+            		</li>  
+                 <li>
+                    <p>{{$t('product.RiskLevelManagementMode')}}</p>
+                    <p class="Pattern">{{$t('product.ProductRiskType['+productData.bsRiskManual+']')}}</p>
+                </li>        
+          		</ul>
+      		</div>
+      		
+      		<div style="margin:25px 10px;">
+      		    <div>
+      			      <el-button type="primary" style="padding: 7px 5px;" @click="showChangeRiskGrade()">
+      				    {{$t('product.ApplicationForChangeOfRiskLevel')}}
+      			      </el-button>
+                  <el-button type="primary" style="padding: 7px 5px;" @click="showApproved()">
+                  {{$t('supplier.ApplicationApproval')}}
+                  </el-button>
+      			      <el-button type="primary" style="padding: 7px 5px;" @click="switchingMode()">
+      				    {{$t('product.SwitchManagementMode')}}
+      			      </el-button>
+      			      <el-button type="primary" style="padding: 7px 5px;" @click="showRecordOfChanges()">
+      				    {{$t('product.RecordOfChangeOfRiskLevel')}}
+      			      </el-button>
+      		    </div>
+      		</div>
+      		</Card>
+     	</Row> -->
+     	
+   <!--  风险等级变更   -->	
+     <Modal class="changeRiskGrade" v-model="productRiskGrade.modal_dialog" :title="$t('product.ChangeOfRiskLevel')"   :okText="$t('product.SubmitApplications')"  @on-ok="submitapplication" @on-cancel="cancel" >                
+           <el-form>
+                 <el-input v-model="productData.bsRiskLevel" readonly style="width:38%">
+                 </el-input>
+            <Icon type="shuffle" style="font-size: 20px;padding:10px"></Icon>
+            <el-select v-model="productData.bsRiskLevelUser">
+              <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
+              </el-option>
+            </el-select>                
+              
+                    <p class="mt10">{{$t('product.ToApplyForAdvice')}}:</p>
+                    <el-input type="textarea"  :autosize="{ minRows: 6, maxRows: 10}" style="width:80%" v-model="productData.bsRiskDescUser">
+          </el-input>          
+                    <p style="Note">* {{$t('product.TheRiskLevelWillBeManuallyManaged')}}</p>
+           </el-form>
+                         
+    </Modal>
+ <!--  风险等级变更申请核准  -->            
+      <Modal class="changeRiskGrade" v-model="applicationApproval.modal_dialog" :title="$t('supplier.ApplicationApproval')"   okText='通过' cancelText="拒绝"  @on-ok="ok" @on-cancel="cancel" >                
+           <el-form v-model="applicationApproval.formItem">
+                 <el-input v-model="productData.bsRiskLevel" readonly style="width:38%">
+                 </el-input>
+            <Icon type="shuffle" style="font-size: 20px;padding:10px"></Icon>
+                 <el-input v-model="productData.bsRiskLevelUser" readonly style="width:38%">
+                 </el-input>        
+           
+                    <p class="mt10">{{$t('supplier.application')}}</p>
+                    <el-input type="textarea"  :autosize="{ minRows: 4, maxRows: 10}" style="width:80%" v-model="productData.bsRiskDescUser" readonly>
+          </el-input>          
+                    <p style="Note">* {{$t('product.TheRiskLevelWillBeManuallyManaged')}}</p>
+           </el-form>
+                         
+      </Modal>
+    			
+<!--      风险等级变更记录 -->          
+            <Modal v-model="recordOfChanges.modal_dialog" :title="$t('product.RecordOfChangeOfRiskLevel')" @on-ok="" @on-cancel="cancel" :width="850" class="moderecord">
+                  <el-table :data="gridData">
+              <el-table-column align="center" property="bsOriginalRiskLevel" :label="$t('product.OriginalRiskLevel')" width="120"></el-table-column>
+              <el-table-column  align="center"  property="bsNewRiskLevel" :label="$t('product.NewRiskLevel')" width="120"></el-table-column>
+              <el-table-column  align="center" property="bsAdvice" :label="$t('product.ToApplyForAdvice')" width="120"></el-table-column>
+              <el-table-column align="center"  property="applyBy.bsName" :label="$t('product.proposer')" width="120"></el-table-column>
+              <el-table-column align="center"  property="approvedBy.bsName" :label="$t('product.approver')" width="120"></el-table-column>
+              <el-table-column align="center" property="bsCreatedTime" :label="$t('product.time')"></el-table-column>
+            </el-table>
+            </Modal>  
+<!--  Modal end  -->
+      		
+	</div>	
+	<div v-else-if="showRooterView">
+        <router-view></router-view>
+    </div>
+</template>
+
+<script>
+	import ppmChart from './components/ppmChart.vue';
+	import inspectValue from './components/inspectValue.vue';
+	import cpkChart from './components/cpkChart.vue';
+	import grrChart from './components/grrChart.vue';
+	import riskScore from './components/riskScore.vue';
+	import {mapState} from 'vuex';
+	import Cookies from 'js-cookie';
+	export default {
+	components: {          
+        ppmChart,
+        inspectValue,
+        cpkChart,
+        grrChart,
+        riskScore,
+    },
+    data() {
+      return {
+      	textarea:'',
+      	productrisk:[],
+      	ppmValues: [],
+      	createdTimes: [],
+      	inspectValues:[],
+      	cpkValues:[],
+      	grrValues:[],
+      	riskScores:[],
+      	theproductrisk:{},
+      	showRooterView: false,      	
+        productRiskGrade: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: {                  
+                   /* bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ],*/                   
+                }
+            }, 
+        applicationApproval:{
+            modal_dialog: false,
+                formItem: {
+                }
+              
+        }, 
+
+         recordOfChanges:{
+            modal_dialog: false,
+                formItem: {
+                }
+              
+        },  	
+      	radio:'',
+      	productData:{},
+        gridData: [],
+        options: [{
+          value: 1,
+          label: '1级'
+        }, {
+          value: 2,
+          label: '2级'
+        }, {
+          value: 3,
+          label: '3级'
+        }, {
+          value: 4,
+          label: '4级'
+        }, {
+          value: 5,
+          label: '5级'
+        }],
+		total:0,
+		page:1,
+		rows:3,
+		riskApprovedRecord:{},
+		isApprover:false,
+      } 
+    },
+    created(){
+        this.showRooterView = this.$route.matched.length>3;
+        this.getData();
+    },
+	updated(){
+        if(this.$route.query.refresh) {
+            this.$route.query.refresh = false;
+            this.getData();
+        }
+    },
+    watch: {
+        '$route' (to, from) {
+            this.showRooterView = to.matched.length>3;
+        }
+    },
+    methods:{
+    	getData(){
+            if(this.$route.query.id != undefined) {
+                this.api.productinfo.getlist({id:this.$route.query.id}).then((res)=>{
+                    this.productData = res.data.rows[0];
+                    this.$store.commit("updateProductDataStates",res.data.rows[0]);
+                    this.getRiskData();
+                });
+            }
+            else {
+				this.productData = this.$store.getters.getProductData;
+				this.api.productinfo.getlist({id:this.productData.id}).then((res)=>{
+                    this.productData = res.data.rows[0];
+                    this.$store.commit("updateProductDataStates",res.data.rows[0]);
+                    this.getRiskData();
+                });
+            }
+    	},
+        getRiskData(){
+			var params = {
+				bsPrId:this.productData.id,
+				page:this.page,
+				rows:this.rows
+			};
+            this.api.productrisk.getlist(params).then((res) => {
+                this.productrisk = res.data.rows;
+				this.total = res.data.total;
+				
+				this.ppmValues = [];
+				this.createdTimes = [];
+				this.inspectValues = [];
+				this.cpkValues = [];
+				this.grrValues = [];
+				this.riskScores = [];
+                for(var i = this.productrisk.length - 1; i >= 0; i--) {
+					this.productrisk[i].bsFlowRecordId = this.productData.bsProcessRecordId;
+					
+                    this.ppmValues.push(this.productrisk[i].bsPpmValue);
+                    this.createdTimes.push(this.productrisk[i].bsCreatedTime);
+                    this.inspectValues.push(this.productrisk[i].bsInspectValue);
+                    this.cpkValues.push(this.productrisk[i].bsCpkValue);
+                    this.grrValues.push(this.productrisk[i].bsGrrValue);
+                    this.riskScores.push(this.productrisk[i].bsRiskScore);
+                }
+				
+				if(this.productrisk[0].bsStatus == 1){
+					this.api.riskApprovedRecord.getlist({bsPrId:this.productData.id,bsStatus:0}).then((res) => {
+						this.riskApprovedRecord = res.data.rows[0];
+						if(this.riskApprovedRecord.approvedBy.bsCode == Cookies.get('user')){
+							this.isApprover = true;
+						}
+					});
+				}else this.isApprover = false;
+            });
+        },
+		changePage (page) {
+            this.page = page;
+            this.getRiskData();
+        },
+		approveRisk(){
+			if(this.riskApprovedRecord.bsStatus == 0){
+				this.$Message.error('请选择结果');
+			}else{
+				this.api.riskApprovedRecord.approve(this.riskApprovedRecord).then((res) => {
+					if(res.result){
+						this.$Message.info('成功提交批准结果');
+						this.getData();
+					}
+				});
+			}
+		},
+    	showChangeRiskGrade(){
+    		this.productRiskGrade.modal_dialog=true;
+        
+    	},
+    	showRecordOfChanges(){     //风险管理变更记录      
+             var parm={
+               bsType:23,
+               bsPrSuppId:this.productData.id,
+             }               
+
+            this.api.risklevelrecord.getlist(parm).then((res) => {
+               if(res.result) {            
+                  this.gridData= res.data.rows; 
+              }         
+            
+          })            
+            this.recordOfChanges.modal_dialog = true;
+        },
+        showApproved(){
+        this.applicationApproval.modal_dialog=true;
+      },
+    	pushToInputInformation(url){
+            this.showRooterView = true;
+    		this.$router.push({path:url,query:this.$route.query});
+    		this.$store.commit("updateRiskDataStates",this.productrisk[0]);       	
+      	},
+      	toInstructions(url){
+            this.showRooterView = true;
+      		this.$router.push({path:url,query:this.$route.query});
+      	},
+        submitapplication(){    //提交变更申请
+         var parm={
+            id:this.productData.id,
+            bsRiskLevelUser:this.productData.bsRiskLevelUser,
+            bsRiskDescUser:this.productData.bsRiskDescUser
+         }
+          this.api.productinfo.applyRiskLevel(parm).then((res) => {            
+            if(res.result) {                    
+                  this.$Message.info('手动调整风险等级申请成功！', 10);
+              }else {
+                  this.$Message.error(res.msg);
+             }
+          });
+        },
+      	ok(){   //变更核准
+          var parm={
+            id:this.productData.id,
+            bsRiskLevelUser:this.productData.bsRiskLevelUser,
+            bsRiskDescUser:this.productData.bsRiskDescUser
+          }
+
+          this.api.productinfo.completeRiskLevel(parm).then((res) => {            
+            if(res.result) {
+                  this.productData.bsRiskLevel=this.productData.bsRiskLevelUser; 
+                  this.productData.bsRiskManual=1;
+
+                  this.$Message.info('准核通过！', 10);
+              }else {
+                  this.$Message.error(res.msg);
+             }
+          });
+        },
+
+        switchingMode(){
+            var parm={
+               id:this.productData.id,
+               bsRiskManual:this.productData.bsRiskManual
+            }                 
+
+            this.api.productinfo.autoRiskLevel(parm).then((res) => {
+               if(res.result) {               
+                  this.productData.bsRiskManual=this.productData.bsRiskManual?0:1;
+                  this.productData.bsRiskLevel=this.productData.bsRiskManual?this.productData.bsRiskLevelUser:this.productData.bsRiskLevelSys;
+              }          
+              
+          })
+        },
+      	cancel(){
+      		
+      	},
+    },
+  };
+</script>
+
+<style>
+  @import '~@/styles/riskManagement.css';
+</style>

@@ -1,0 +1,337 @@
+package com.unind.qms.web.approved.service.internal;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springside.modules.persistence.SearchFilter;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.qms.web.approved.dao.ApprovedEHSMapDao;
+import com.unind.qms.web.approved.dao.ApprovedEHSRecordDao;
+import com.unind.qms.web.approved.dao.ApprovedEHSTermsDao;
+import com.unind.qms.web.approved.dao.ApprovedTermsDao;
+import com.unind.qms.web.approved.entity.ApprovedEHSMap;
+import com.unind.qms.web.approved.entity.ApprovedEHSRecord;
+import com.unind.qms.web.approved.entity.ApprovedEHSTerms;
+import com.unind.qms.web.approved.entity.ApprovedItemsMap;
+import com.unind.qms.web.approved.entity.ApprovedTerms;
+import com.unind.qms.web.approved.entity.ApprovedTermsScore;
+import com.unind.qms.web.approved.service.ApprovedEHSTermsService;
+
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class ApprovedEHSTermsImpl extends BaseOprService implements ApprovedEHSTermsService {
+    @Autowired
+    private ApprovedTermsDao approvedTermsDao;
+    
+    @Autowired
+    private ApprovedEHSTermsDao approvedEHSTermsDao;
+    
+    @Autowired
+    private ApprovedEHSRecordDao approvedEHSRecordDao ;
+    
+    @Autowired
+    private ApprovedEHSMapDao approvedEHSMapDao;
+    
+
+    @Transactional
+    public ApiResponseResult add(ApprovedEHSTerms approvedEHSTerms) throws BusinessException {
+        if (StringUtils.isEmpty(approvedEHSTerms.getBsNo()) || StringUtils.isEmpty(approvedEHSTerms.getBsNo().trim())) {
+            return ApiResponseResult.failure("条款号不能为空");
+        }
+		if (StringUtils.isEmpty(approvedEHSTerms.getBsName()) || StringUtils.isEmpty(approvedEHSTerms.getBsName().trim())) {
+            return ApiResponseResult.failure("条款名称不能为空");
+        }
+        approvedEHSTerms.setBsNo(approvedEHSTerms.getBsNo().trim());
+
+        approvedEHSTerms.setBsCreatedTime(new Date());
+		approvedEHSTerms.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+		approvedEHSTermsDao.save(approvedEHSTerms);
+        return ApiResponseResult.success("新增成功！").data(approvedEHSTerms);
+    }
+
+    @Transactional
+    public ApiResponseResult edit(ApprovedEHSTerms approvedEHSTerms) throws BusinessException {
+        if (null == approvedEHSTerms || null == approvedEHSTerms.getId()) {
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        if (StringUtils.isEmpty(approvedEHSTerms.getBsNo()) || StringUtils.isEmpty(approvedEHSTerms.getBsNo().trim())) {
+            return ApiResponseResult.failure("条款号不能为空");
+        }
+		if (StringUtils.isEmpty(approvedEHSTerms.getBsName()) || StringUtils.isEmpty(approvedEHSTerms.getBsName().trim())) {
+            return ApiResponseResult.failure("条款名称不能为空");
+        }
+        ApprovedEHSTerms o = approvedEHSTermsDao.findOne(approvedEHSTerms.getId());
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        o.setBsNo(approvedEHSTerms.getBsNo().trim());
+        o.setBsName(approvedEHSTerms.getBsName());
+        o.setBsContent(approvedEHSTerms.getBsContent());
+        o.setBsStandard(approvedEHSTerms.getBsStandard());
+        o.setBsRemark(approvedEHSTerms.getBsRemark());
+        o.setBsNameEn(approvedEHSTerms.getBsNameEn());
+        o.setBsContentEn(approvedEHSTerms.getBsContentEn());
+        o.setBsStandardEn(approvedEHSTerms.getBsStandardEn());
+        o.setBsGrade(approvedEHSTerms.getBsGrade());
+
+        o.setBsModifiedTime(new Date());
+		o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+//        o.setPkModifiedBy(Long.parseLong("1"));
+		approvedEHSTermsDao.save(o);
+        return ApiResponseResult.success("修改成功！");
+    }
+
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        ApprovedEHSTerms o = approvedEHSTermsDao.findOne(id);
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除").status("error1");
+        }
+        if (o.getId() <= 0) {
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        o.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+        approvedEHSTermsDao.save(o);
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponseResult getlist(String keyWord, Long mapId, Long itemsRecordId,  PageRequest pageRequest) {
+    	Map<String, Object> param = new HashMap<String, Object>();
+    	StringBuffer sqlbf1 = new StringBuffer();
+    	if(null != mapId&&null != mapId){
+    		param.put("mapId", mapId);
+    		sqlbf1.append(" select a.*,b.ehs_comments_reference,b.ehs_corrective_action,b.ehs_eval,b.ehs_remark,b.ehs_violation "
+            		+ "from  "+ApprovedEHSTerms.TABLE_NAME+" a ");
+            sqlbf1.append(" left join  "+ApprovedEHSRecord.TABLE_NAME+" b on a.id = b.bsehsitems_id and b.map_id=:mapId");
+            sqlbf1.append(" where a.bs_is_del='0' and b.bs_is_del='0' ORDER BY a.bs_no ASC ");
+    	}else{
+    		sqlbf1.append(" select a.*  "
+            		+ "from  "+ApprovedEHSTerms.TABLE_NAME+" a ");
+            sqlbf1.append(" where a.bs_is_del='0' ORDER BY a.bs_no ASC ");
+    	}
+    	List<Map<String, Object>> recorderList = super.findBySql(sqlbf1.toString(), param);
+    	return ApiResponseResult.success().data(recorderList);
+       /* if(null != mapId&&null != mapId){
+            Map<String, Object> param = new HashMap<String, Object>();
+            param.put("mapId", mapId);
+            StringBuffer sqlbf1 = new StringBuffer();
+            sqlbf1.append(" select a.*,b.ehs_comments_reference,b.ehs_corrective_action,b.ehs_eval,b.ehs_remark,b.ehs_violation "
+            		+ "from  "+ApprovedEHSTerms.TABLE_NAME+" a ");
+            sqlbf1.append(" left join  "+ApprovedEHSRecord.TABLE_NAME+" b on a.id = b.bsehsitems_id and b.map_id=:mapId");
+            sqlbf1.append(" where a.bs_is_del='0' and b.bs_is_del='0' ORDER BY a.bs_no ASC ");
+
+            List<Map<String, Object>> recorderList = super.findBySql(sqlbf1.toString(), param);
+            return ApiResponseResult.success().data(recorderList);
+        }else{
+            List<SearchFilter> filters = new ArrayList<SearchFilter>();
+            filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+            List<SearchFilter> filters1 = new ArrayList<SearchFilter>();
+            if(StringUtils.isNotEmpty(keyWord)){
+                filters1.add(new SearchFilter("bsNo", SearchFilter.Operator.LIKE, keyWord));
+                filters1.add(new SearchFilter("bsName", SearchFilter.Operator.LIKE, keyWord));
+            }
+
+            Specifications<ApprovedEHSTerms> spec = Specifications.where(super.and(filters, ApprovedEHSTerms.class));
+            Specifications<ApprovedEHSTerms> spec1 = spec.and(super.or(filters1, ApprovedEHSTerms.class));
+            Page<ApprovedEHSTerms> page = approvedEHSTermsDao.findAll(spec1, pageRequest);
+            return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+        }*/
+    }
+
+    @Transactional
+    public ApiResponseResult importExcel(MultipartFile file) throws Exception{
+        if(file == null){
+            return ApiResponseResult.failure("上传文件不存在！");
+        }
+
+        Workbook wb = null;
+        String fileName = file.getOriginalFilename();
+        //判断excel版本
+        if(fileName.matches("^.+\\.(?i)(xlsx)$")){
+            //xlsx版本
+            wb = new XSSFWorkbook(file.getInputStream());
+        }else{
+            //xls版本
+            wb = new HSSFWorkbook(new FileInputStream((File) file));
+        }
+
+        List<ApprovedTerms> approvedTermsList = new ArrayList<ApprovedTerms>();
+        Sheet sheet = wb.getSheetAt(0);  //获取第一张表
+        for(int i = 1; i < sheet.getLastRowNum(); i++){
+            ApprovedTerms approvedTerms = new ApprovedTerms();
+            Row row = sheet.getRow(i);
+            Integer type = new Double(row.getCell(0).getNumericCellValue()).intValue();    //类型
+            //选取类型存在的有用数据
+            if(type == null || type == 0){
+                continue;
+            }
+            String no = row.getCell(1).getStringCellValue();      //编号
+            String name = row.getCell(2).getStringCellValue();    //名称
+            String content = row.getCell(3).getStringCellValue(); //内容
+            String remark = row.getCell(4).getStringCellValue();  //备注
+            String standard = row.getCell(5).getStringCellValue();  //评分标准
+            String contentEn = row.getCell(6).getStringCellValue();  //评分标准（英文）
+            String standardEn = row.getCell(7).getStringCellValue();  //评分标准（英文）
+
+            //根据类型和编号查找条款，如果存在则修改条款，不存在则添加条款
+            List<SearchFilter> filters = new ArrayList<SearchFilter>();
+            filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+            filters.add(new SearchFilter("bsNo", SearchFilter.Operator.EQ, no));
+            filters.add(new SearchFilter("bsType", SearchFilter.Operator.EQ, type));
+            filters.add(new SearchFilter("bsName", SearchFilter.Operator.EQ, name));
+            Specification<ApprovedTerms> spec = Specifications.where(super.and(filters, ApprovedTerms.class));
+            ApprovedTerms o = approvedTermsDao.findOne(spec);
+            if(o != null){
+                //修改
+                o.setBsType(type);
+                o.setBsNo(no);
+                o.setBsName(name);
+                o.setBsContent(content);
+                o.setBsRemark(remark);
+                o.setBsStandard(standard);
+                o.setBsContentEn(contentEn);
+                o.setBsStandardEn(standardEn);
+                o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+                o.setBsModifiedTime(new Date());
+                approvedTermsDao.save(o);
+            }else{
+                //添加
+                approvedTerms.setBsType(type);
+                approvedTerms.setBsNo(no);
+                approvedTerms.setBsName(name);
+                approvedTerms.setBsContent(content);
+                approvedTerms.setBsRemark(remark);
+                approvedTerms.setBsStandard(standard);
+                approvedTerms.setBsContentEn(contentEn);
+                approvedTerms.setBsStandardEn(standardEn);
+                approvedTerms.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+                approvedTerms.setBsCreatedTime(new Date());
+                approvedTermsList.add(approvedTerms);
+            }
+        }
+        approvedTermsDao.save(approvedTermsList);
+        return ApiResponseResult.success("Excel表导入成功！");
+    }
+
+	@Override
+	public ApiResponseResult addEHSRecord(List<ApprovedEHSRecord> approvedEHSRecordList,String mapId,String supplierId) throws BusinessException {
+		// TODO Auto-generated method stub
+		/*for(ApprovedEHSRecord approvedEHSRecord:approvedEHSRecordList){
+			if(null == approvedEHSRecord.getId()){//新增
+				approvedEHSRecord.setBsCreatedTime(new Date());
+				approvedEHSRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+				approvedEHSRecordDao.save(approvedEHSRecord);
+            }else{//修改
+            	ApprovedEHSRecord o = approvedEHSRecord;//approvedEHSRecordDao.findOne(approvedEHSRecord.getId());
+                o.setEhsEval(approvedEHSRecord.getEhsEval());
+                o.setEhsCorrectiveAction(approvedEHSRecord.getEhsCorrectiveAction());
+                o.setEhsCommentsReference(approvedEHSRecord.getEhsCommentsReference());
+                o.setEhsViolation(approvedEHSRecord.getEhsViolation());
+                o.setEhsRemark(approvedEHSRecord.getEhsRemark());
+                o.setBsStatus(approvedEHSRecord.getBsStatus());
+                o.setBsModifiedTime(new Date());
+                o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+                approvedEHSRecordDao.save(o);
+            }
+		}*/
+		if(mapId.isEmpty() || mapId.equals("null")){
+			//新增
+			ApprovedEHSMap m = new ApprovedEHSMap();
+			m.setSupplierId(Long.parseLong(supplierId));
+			m.setBsCreatedTime(new Date());
+			m.setBsStatus("0");//保存状态
+			m.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+			m.setBsModifiedTime(new Date());
+	        m.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+			ApprovedEHSMap a = approvedEHSMapDao.save(m);
+			for(ApprovedEHSRecord approvedEHSRecord:approvedEHSRecordList){
+				approvedEHSRecord.setMapId(a.getId());
+				approvedEHSRecord.setBsCreatedTime(new Date());
+				approvedEHSRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+				approvedEHSRecordDao.save(approvedEHSRecord);
+			}
+		}else{
+			//修改
+			ApprovedEHSMap m = approvedEHSMapDao.findOne(Long.parseLong(mapId));
+			m.setBsModifiedTime(new Date());
+	        m.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+			ApprovedEHSMap a = approvedEHSMapDao.save(m);
+			for(ApprovedEHSRecord approvedEHSRecord:approvedEHSRecordList){
+				List<ApprovedEHSRecord> rl = approvedEHSRecordDao.findByMapIdAndBsEHSItemsId(Long.parseLong(mapId),approvedEHSRecord.getBsEHSItemsId());
+				ApprovedEHSRecord o = rl.get(0);
+				o.setEhsEval(approvedEHSRecord.getEhsEval());
+                o.setEhsCorrectiveAction(approvedEHSRecord.getEhsCorrectiveAction());
+                o.setEhsCommentsReference(approvedEHSRecord.getEhsCommentsReference());
+                o.setEhsViolation(approvedEHSRecord.getEhsViolation());
+                o.setEhsRemark(approvedEHSRecord.getEhsRemark());
+                o.setBsStatus(approvedEHSRecord.getBsStatus());
+                o.setBsModifiedTime(new Date());
+                o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+                approvedEHSRecordDao.save(o);
+			}
+		}
+		return ApiResponseResult.success("操作成功！").data(approvedEHSRecordList);
+	}
+
+	@Override
+	public ApiResponseResult getRecords(String keyWord, Long supplierId, PageRequest pageRequest)
+			throws BusinessException {
+		// TODO Auto-generated method stub
+		List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        filters.add(new SearchFilter("supplierId", SearchFilter.Operator.EQ, supplierId));
+        List<SearchFilter> filters1 = new ArrayList<SearchFilter>();
+        if(StringUtils.isNotEmpty(keyWord)){
+            filters1.add(new SearchFilter("bsNo", SearchFilter.Operator.LIKE, keyWord));
+            filters1.add(new SearchFilter("bsName", SearchFilter.Operator.LIKE, keyWord));
+        }
+        Specifications<ApprovedEHSMap> spec = Specifications.where(super.and(filters, ApprovedEHSMap.class));
+        Specifications<ApprovedEHSMap> spec1 = spec.and(super.or(filters1, ApprovedEHSMap.class));
+        Page<ApprovedEHSMap> page = approvedEHSMapDao.findAll(spec1, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+	}
+
+	@Override
+	public ApiResponseResult getItemList(String keyWord, PageRequest pageRequest) throws BusinessException {
+		// TODO Auto-generated method stub
+		List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        List<SearchFilter> filters1 = new ArrayList<SearchFilter>();
+        if(StringUtils.isNotEmpty(keyWord)){
+            filters1.add(new SearchFilter("bsNo", SearchFilter.Operator.LIKE, keyWord));
+            filters1.add(new SearchFilter("bsName", SearchFilter.Operator.LIKE, keyWord));
+        }
+
+        Specifications<ApprovedEHSTerms> spec = Specifications.where(super.and(filters, ApprovedEHSTerms.class));
+        Specifications<ApprovedEHSTerms> spec1 = spec.and(super.or(filters1, ApprovedEHSTerms.class));
+        Page<ApprovedEHSTerms> page = approvedEHSTermsDao.findAll(spec1, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+	}
+
+}

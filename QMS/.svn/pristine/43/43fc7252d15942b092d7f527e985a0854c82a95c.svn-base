@@ -1,0 +1,129 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-02
+    	描述：其他审核报告
+    -->
+	<div class="approvedextrareports">
+        <Row :style="{marginBottom: '20px'}">
+            <center><h4 style="font-size: 16px;">{{$t('approved.OtherReportDocumentsReviewed')}}</h4></center>
+        </Row>
+		<Row :style="{marginBottom: '20px'}">
+ 			<Card>
+				<p slot="title">
+                    <Icon type="pricetag" style="color: #ff9900;"></Icon>
+                    &nbsp;{{approvedItemRecord.itemsBy.bsName}}
+               	</p>
+		
+        		<div id="other-body">
+        			<div id="other-body-div1">				
+        			<div style="padding:0 15px;" class="fileList2">
+        				<upload :fileList="approvedItemRecord.fileSet" :canUpload="perms.edit"></upload>
+        			</div>
+        			</div>
+        			
+        		</div>  
+                <approvedResultRecord :approvedData="approvedItemRecord"></approvedResultRecord>
+        		<div id="bottom" v-if="perms.edit">			
+        			<ApprovedAction :approvedItemRecord="approvedItemRecord"></ApprovedAction>
+        		</div>
+			</Card>
+		</Row>
+	</div>
+</template>
+
+<script>
+import Cookies from 'js-cookie';
+import Upload from '../../components/Upload.vue';
+import ApprovedAction from '../../components/ApprovedAction.vue';
+import ApprovedResultRecord from '../../components/approvedResultRecord.vue';
+export default {
+    components: {      
+        ApprovedAction,    
+        Upload,
+        ApprovedResultRecord
+    },
+    data() {
+        return {
+            dialogImageUrl: '',
+            dialogVisible: false,
+            file:{},
+            perms:{},
+            approvedItemRecord: {},
+        }
+    },
+    created(){
+        this.approvedItemRecord = this.$store.getters.getItemRecordData;
+        if(this.approvedItemRecord.bsSuppId) this.supplierInfo = this.$store.getters.getSupplierData;
+        else this.productInfo = this.$store.getters.getProductData;
+		if(this.approvedItemRecord.fileSet == undefined) this.approvedItemRecord.fileSet = [];
+
+        this.perms.edit = 
+            (this.approvedItemRecord.users[this.approvedItemRecord.bsStep-1] == Cookies.get('user')||
+                    this.$Util.hasPerm('EDIT')) && this.approvedItemRecord.bsStatus == 1;
+    },
+    methods: {    
+        handleRemove(file, fileList) {  
+            var params = {
+                fsFileId:file.fsFileId
+            };      
+            this.api.approvedItemsRecordFile.delete(params).then((res)=>{
+                this.fileList.remove();
+                this.$Message.info('删除成功');
+            });
+        },     
+        handleUpload (file) {
+            this.file = file            
+            this.getData();
+            return false;
+        },
+    }
+}
+</script>
+
+<style>
+	.approvedextrareports #other-body{
+		margin-bottom: 30px;
+	}
+	.approvedextrareports #other-body-div1{
+		font-size: 14px;
+		padding-top: 20px;padding-left: 1%;padding-right: 1%;
+	}
+	.approvedextrareports .td1{
+		width: 25%;
+		height: 50px;
+		text-align: center;
+	}
+	.approvedextrareports #bottom{
+		background-color: white;padding-top: 60px;padding-bottom:100px;padding-left: 5%;
+	}
+	.td{padding: 10px; text-align:center;}
+ .td .el-upload--text{
+		border: none;
+		display: inline-block;
+		width: 90px;
+		height: 50px;
+		float: left;
+		margin-left: 10px;
+	}
+	.upload  .el-upload--text{
+		border: none;
+		display: inline-block;
+		height:50px;
+		width: 20%;
+		background: none;	
+		position: absolute;
+		right:8%;
+		top:10px;
+		margin-left: 10px;
+	}
+	.fileList2 .el-upload-list{
+		margin-top:35px;	
+    	
+   		 padding: 10px;
+   		 border: 1px dashed #ccc;
+   		 width: 80%;
+	}
+
+	.fileList2 .el-upload-list__item{width:80%;}
+</style>

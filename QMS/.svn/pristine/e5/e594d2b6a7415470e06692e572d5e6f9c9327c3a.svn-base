@@ -1,0 +1,538 @@
+<template>
+    <div>
+        <Row>
+        <div style="height: auto;margin-top: 10px;">
+			<div style="height:49%;">
+				<i-col>
+                    <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                        <Form-item prop="bsTransportCode">
+                            <Input type="text" v-model="formQuery.bsTransportCode" placeholder="运输路线代码" />
+                        </Form-item>
+                        <Form-item prop="bsTransportName">
+                            <Input type="text" v-model="formQuery.bsTransportName" placeholder="运输路线名称" />
+                        </Form-item>
+                        <Form-item>
+                            <Button type="primary" @click="handleSubmit1('formQuery')">查 询</Button>
+                        </Form-item>
+                        <Form-item>
+                            <Button type="primary" @click="showAddDialog()">新 增</Button>
+                        </Form-item>
+                    </Form>
+                </i-col>
+                <i-col>
+                    <Table highlight-row :data="datagrid1.data.rows" :columns="datagrid1.columns" @on-row-click="rowClick" stripe height="300"></Table>
+                    <div style="margin: 10px;overflow: hidden">
+                        <div style="float: right;">
+                            <Page :total="datagrid1.data.total" :current="1" :page-size="datagrid1.queryParams.rows" :page-size-opts="datagrid1.pagination" @on-change="changePage" @on-page-size-change="changePageSize" show-total show-elevator show-sizer></Page>
+                        </div>
+                    </div>
+                </i-col>
+      		</div>
+      		<div style="height:49%">
+      			<i-col>
+                    <Form class="query_area" ref="formQuery1" :model="formQuery1" inline>
+                        <Form-item prop="bsItemNum">
+                            <Input type="text" v-model="formQuery1.bsItemNum" placeholder="物料编码" />
+                        </Form-item>
+                        <Form-item prop="bsCustomerNum">
+                            <Input type="text" v-model="formQuery1.bsCustomerNum" placeholder="客户编号" />
+                        </Form-item>
+                        <Form-item>
+                            <Button type="primary" @click="handleSubmit2('formQuery1')">查 询</Button>
+                        </Form-item>
+                        <Form-item prop="bsTransportCode">
+                            <Input type="hidden" v-model="formQuery1.bsTransportCode" placeholder="运输路线代码" />
+                        </Form-item>
+                        <Form-item prop="bsInventoryItemId">
+                            <Input type="hidden" v-model="formQuery1.bsInventoryItemId" placeholder="供应商" />
+                        </Form-item>
+                    </Form>
+                </i-col>
+                <i-col>
+                    <Table :data="datagrid2.data.rows" :columns="datagrid2.columns" stripe height="300"></Table>
+                    <div style="margin: 10px;overflow: hidden">
+                        <div style="float: right;">
+                            <Page :total="datagrid2.data.total" :current="1" :page-size="datagrid2.queryParams.rows" :page-size-opts="datagrid2.pagination" @on-change="changePage2" @on-page-size-change="changePageSize2" show-total show-elevator show-sizer></Page>
+                        </div>
+                    </div>
+                </i-col>
+      		</div>
+      	</div>
+        </Row>
+        <Modal v-model="dialog.modal_dialog" :mask-closable="false" :closable="false" title="" >
+                <div slot="footer">
+                    <Button type="text" size="large" @click="addDetailCancel()">取消</Button>
+                    <Button type="primary" size="large" @click="addDetail(dialog.formItem)">确定</Button>
+                </div>
+                <Form :model="dialog.formItem" :rules="dialog.ruleForm" :label-width="100" ref= "dialog.formItem">
+                    <Input v-model="dialog.formItem.id" type="hidden"></Input>
+                    <Form-item label="运输路线代码">
+                        <Input v-model="dialog.formItem.bsTransportCode" disabled placeholder="请输入"></Input>
+                    </Form-item>
+                    <!-- <Form-item  label="供应商ID" prop="bsInventoryItemId">
+                        <Input v-model="dialog.formItem.bsInventoryItemId" placeholder="请输入"></Input>
+                    </Form-item> -->
+                    <Form-item label="物料编码" prop="bsItemNum">
+                        <Input v-model="dialog.formItem.bsItemNum" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="客户编号" prop="bsCustomerNum">
+                        <Input v-model="dialog.formItem.bsCustomerNum" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="运输周期" prop="bsTransTime">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsTransTime"  placeholder="请输入"></Input-number>
+                    </Form-item>
+                    <Form-item label="出货星期" prop="bsWeekDay">
+                        <Select v-model="dialog.formItem.bsWeekDay" placeholder="请选择">
+                            <Option :value="0">星期日</Option>
+                            <Option :value="1">星期一</Option>
+                            <Option :value="2">星期二</Option>
+                            <Option :value="3">星期三</Option>
+                            <Option :value="4">星期四</Option>
+                            <Option :value="5">星期五</Option>
+                            <Option :value="6">星期六</Option>
+                        </Select>
+                    </Form-item>
+                </Form>
+        </Modal>
+        <Modal v-model="dialog2.modal_dialog2" :mask-closable="false" :closable="false" >
+            <div slot="footer">
+                    <Button type="text" size="large" @click="addCancel()">取消</Button>
+                    <Button type="primary" size="large" @click="ok()">确定</Button>
+                </div>
+                <Form :model="dialog2.formItem2" :rules="dialog2.ruleForm2" :label-width="100" ref="dialog2.formItem2">
+                    <Input v-model="dialog2.formItem2.id" type="hidden"></Input>
+                    <Form-item label="运输路线代码" prop="bsTransportCode">
+                        <Input v-model="dialog2.formItem2.bsTransportCode" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="运输路线名称" prop="bsTransportName">
+                        <Input v-model="dialog2.formItem2.bsTransportName" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="运输路线描述" prop="bsTransportDesc">
+                        <Input v-model="dialog2.formItem2.bsTransportDesc" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="起运港" prop="bsPol">
+                            <Input v-model="dialog2.formItem2.bsPol" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="目的港" prop="bsPod">
+                            <Input v-model="dialog2.formItem2.bsPod" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="货运日期" prop="bsShipDate">
+                            <Input v-model="dialog2.formItem2.bsShipDate" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="货运时间" prop="bsShipTime">
+                            <Input v-model="dialog2.formItem2.bsShipTime" placeholder="请输入"></Input>
+                    </Form-item>
+                        
+                </Form>
+        </Modal>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            formQuery: {
+            },
+            formQuery1: {
+            },
+            dialog: {
+                    ruleForm: {
+                        // bsInventoryItemId: [
+                        //     { required: true, message: '请填写供应商ID', trigger: 'blur' }
+                        // ],
+                        bsItemNum: [
+                            { required: true, message: '请填写物料编码', trigger: 'blur' }
+                        ],
+                        bsCustomerNum: [
+                            { required: true, message: '请填写客户编号', trigger: 'blur' }
+                        ]
+                    },
+                modal_dialog: false,
+                formItem:{
+                    bsTransTime:1,
+                    bsWeekDay:0
+                },
+                
+            },
+            dialog2: {
+                    ruleForm2: {
+                        bsTransportCode: [
+                            { required: true, message: '请填写运输路线代码', trigger: 'blur' }
+                        ]
+                        // ,
+                        // bsTransportName: [
+                        //     { required: true, message: '请填写运输路线名称', trigger: 'blur' }
+                        // ],
+                        // bsTransportDesc: [
+                        //     { required: true, message: '运输路线描述', trigger: 'blur' }
+                        // ]
+                    },
+                modal_dialog2: false,
+                formItem2:{
+                    // bsTransportCode:"",
+                    // bsTransportName:""
+                },
+            },
+           
+            datagrid1: {
+                queryParams:{
+                    page:1,
+                    rows:10
+                },
+                pagination: [10,20, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title: '运输路线代码',
+                        key: 'bsTransportCode'
+                    },
+                    {
+                        title: '运输路线名称',
+                        key: 'bsTransportName'
+                    },
+                    {
+                        title: '运输路线描述',
+                        key: 'bsTransportDesc'
+                    },
+                    {
+                        title:'起运港',
+                        key:'bsPol'
+                    },
+                    {
+                        title:'目的港',
+                        key:'bsPod'
+                    },
+                    {
+                        title:'开始日期',
+                        key:'bsShipDate'
+                    },
+                    {
+                        title:'货运时间',
+                        key:'bsShipTime'
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let buttons = [];
+                            buttons.push(h('Button', {
+                                props: {
+                                    type: 'primary',
+                                    size: 'small'
+                                },
+                                style: {
+                                    marginRight: '5px'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.showBoundDialog(params)
+                                    }
+                                }
+                            }, '绑定'));
+                            buttons.push(h('Button', {
+                                props: {
+                                    type: 'primary',
+                                    size: 'small'
+                                },
+                                style: {
+                                    marginRight: '5px'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.showEditDialog(params)
+                                    }
+                                }
+                            }, '编辑'));
+                            return h('div', buttons);
+                        }
+                    }
+                ]
+            },
+            datagrid2: {
+                queryParams:{
+                    page:1,
+                    rows:10
+                },
+                pagination: [10,20, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title: '物料编码',
+                        key: 'bsItemNum'
+                    },
+                    // {
+                    //     title: '供应商',
+                    //     key: 'bsInventoryItemId'
+                    // },
+                    {
+                        title: '客户编号',
+                        key: 'bsCustomerNum'
+                    },
+                    {
+                        title: '运输周期',
+                        key: 'bsTransTime'
+                    },
+                    {
+                        title: '出货星期',
+                        key: 'bsWeekDay',
+                        render: (h, params) => {
+                            if(params.row.bsWeekDay==0) {
+                                return h('span', '星期日');
+                            }else if(params.row.bsWeekDay==1) {
+                                return h('span', '星期一');
+                            }else if(params.row.bsWeekDay==2) {
+                                return h('span', '星期二');
+                            }else if(params.row.bsWeekDay==3) {
+                                return h('span', '星期三');
+                            }else if(params.row.bsWeekDay==4) {
+                                return h('span', '星期四');
+                            }else if(params.row.bsWeekDay==5) {
+                                return h('span', '星期五');
+                            }else if(params.row.bsWeekDay==6) {
+                                return h('span', '星期六');
+                            }else {
+                                return h('span', 'Unknown');
+                            }
+                        }
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let buttons = [];
+                            buttons.push(h('Button', {
+                                props: {
+                                    type: 'primary',
+                                    size: 'small'
+                                },
+                                style: {
+                                    marginRight: '5px'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.showEditDetailDialog(params)
+                                    }
+                                }
+                            }, '编辑'));
+                            buttons.push(h('Button', {
+                                props: {
+                                    type: 'error',
+                                    size: 'small'
+                                },
+                                style: {
+                                    marginRight: '5px'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.deleteDetail(params)
+                                    }
+                                }
+                            }, '删除'));
+                            return h('div', buttons);
+                        }
+                    }
+
+                ]
+            }
+        }
+    },
+    created(){
+        this.getData();
+        this.getData2();
+    },
+    methods: {
+        handleSubmit1(name) {
+            this.getData();
+        },
+        handleSubmit2(name) {
+            this.getData2();
+        },
+        getData() {
+            Object.assign(this.formQuery, this.datagrid1.queryParams);
+            console.log("after===>");
+            console.log(this.formQuery);
+            this.api.tsr.gettranlist(this.formQuery).then((res) => {
+                console.log("get list===>");
+                console.log(res.data);
+                if(res.result) {
+                    this.datagrid1.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        rowClick(data,index){
+            console.log(data.bsTransportCode);
+            this.formQuery1.bsTransportCode = data.bsTransportCode;
+            this.getData2();
+        },
+        getData2() {
+            Object.assign(this.formQuery1, this.datagrid2.queryParams);
+            console.log("mayi===>");
+            console.log(this.formQuery1);
+            this.api.tsr.getdetaillist(this.formQuery1).then((res) => {
+                console.log("get list===>");
+                console.log(res.data);
+                if(res.result) {
+                    this.datagrid2.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        reloadData() {
+            this.datagrid1.data = this.getData();
+        },
+        changePage (page) {
+            this.datagrid1.queryParams.page = page;
+            this.datagrid1.data = this.getData();
+        },
+        changePageSize(pageSize) {  
+            this.datagrid1.queryParams.rows = pageSize;
+            this.datagrid1.data = this.getData();
+        },
+        changePage2 (page) {
+            this.datagrid2.queryParams.page = page;
+            this.datagrid2.data = this.getData2();
+        },
+        changePageSize2(pageSize){
+            this.datagrid2.queryParams.rows = pageSize;
+            this.datagrid2.data = this.getData();
+        },
+        showBoundDialog(params) {
+            console.log(params);
+            this.dialog.modal_dialog = true;
+            this.dialog.formItem.id=null;
+            this.dialog.formItem.bsTransportCode=params.row.bsTransportCode;
+        },
+        showEditDetailDialog(params){
+            console.log(params);
+            this.dialog.modal_dialog = true;
+            this.dialog.formItem.bsTransportCode=params.row.bsTransportCode;
+            let r = params.row;
+            this.dialog.formItem = {
+                id:r.id,
+                bsTransportCode:r.bsTransportCode,
+                bsInventoryItemId:r.bsInventoryItemId,
+                bsCustomerNum:r.bsCustomerNum,
+                bsItemNum:r.bsItemNum,
+                bsWeekDay:r.bsWeekDay,
+                bsTransTime:r.bsTransTime
+            }
+        },
+        showAddDialog() {
+            this.dialog2.modal_dialog2 = true;
+            this.dialog2.formItem2.id = null;
+        },
+        showEditDialog(params) {
+            this.dialog2.modal_dialog2 = true;
+            let r = params.row;
+            this.dialog2.formItem2 = {
+                id:r.id,
+                bsTransportCode:r.bsTransportCode, 
+                bsTransportName:r.bsTransportName, 
+                bsTransportDesc:r.bsTransportDesc,
+                bsPol:r.bsPol,
+                bsPod:r.bsPod,
+                bsShipDate:r.bsShipDate,
+                bsShipTime:r.bsShipTime
+            };
+        },
+        addDetailCancel(){
+            this.dialog.modal_dialog = false;
+            //清空form规则检查
+            this.$refs['dialog.formItem'].resetFields();
+        },
+        addDetail(params){
+            this.$refs['dialog.formItem'].validate((valid) => {
+                if (valid) {
+                     if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                        console.log("编辑1");
+                        this.api.tsr.editDetail(params).then((res) =>{
+                            if(res.result){
+                                this.dialog.modal_dialog = false;
+                                this.$refs['dialog.formItem'].resetFields();
+                                this.datagrid2.data = this.getData2();
+                            }else{
+                                this.$Message.info(res.msg);
+                            }
+                        });
+                     }else{
+                        console.log("新增1");
+                        this.api.tsr.addDetail(params).then((res) => {
+                            if(res.result){
+                                this.dialog.modal_dialog = false;
+                                this.$refs['dialog.formItem'].resetFields();
+                                this.datagrid2.data = this.getData2();
+                            }else{
+                                this.$Message.info(res.msg);
+                            }
+                        });
+                     }
+                    
+                } else {
+                    this.$Message.error('表单验证失败!');
+                }
+            })
+        },
+        addCancel(){
+            this.dialog2.modal_dialog2 = false;
+            //清空form规则检查
+            this.$refs['dialog2.formItem2'].resetFields();
+        },
+        deleteDetail(params) {
+            console.log(params);
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.tsr.deleteDetail({id:params.row.id}).then((res)=>{
+                        console.log(res)
+                        if(res.result) {
+                            this.datagrid2.data = this.getData2();
+                            this.$Message.info('删除成功');
+                            this.$Modal.remove();
+                        }else {
+                            this.$Message.error(res.msg);
+                        }
+                    });
+                }
+            });
+        },
+        ok () {
+            console.log("this.dialog2.formItem2====>"+typeof(this.dialog2.formItem2.id));
+
+            this.$refs['dialog2.formItem2'].validate((valid) => {
+                if (valid) {
+                    if(typeof(this.dialog2.formItem2.id)!=undefined && typeof(this.dialog2.formItem2.id)=="number") {
+                        console.log("编辑1");
+                        this.api.tsr.edit(this.dialog2.formItem2).then((res) => {
+                            if(res.result) {
+                            this.dialog2.modal_dialog2 = false;
+                            this.$refs['dialog2.formItem2'].resetFields();
+                            this.datagrid.data = this.getData();
+                            }else {
+                            this.$Message.error(res.msg);
+                            }
+                        });
+                    }else {
+                        console.log("新增1");
+                        this.api.tsr.add(this.dialog2.formItem2).then((res) => {
+                            if(res.result) {
+                                this.dialog2.modal_dialog2 = false;
+                                this.$refs['dialog2.formItem2'].resetFields();
+                                this.datagrid.data = this.getData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                    }
+                }else{
+                    this.$Message.error('表单验证失败!');
+                }
+            })
+        },
+    }
+}
+</script>

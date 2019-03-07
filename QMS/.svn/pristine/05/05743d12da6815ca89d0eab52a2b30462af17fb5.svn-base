@@ -1,0 +1,244 @@
+<template>
+	<!--
+    	作者：liang
+    	时间：2018-04-02
+    	描述：客户审核
+    -->
+	<div class="layout-content">	
+		<div style="padding-bottom:5px;border-bottom: 1px solid #ebeef5;">
+            <el-button size="small" type="primary" @click="showCustomerReview()" >
+				{{$t('supplier.NewAudit')}}
+			</el-button>		
+    	</div>  
+	
+      	<el-table :data="CustormerTable" class="custmoerTable">
+      		<el-table-column :label="$t('ApprovedFlow.AuditResults')" width="130">
+		    	<template scope="scope">
+           <span class="circle"  v-bind:class="{bggreen:scope.row.bsResult==1 ,bgorange:scope.row.bsResult==2}"></span>
+
+			<span v-bind:class="{green:scope.row.bsResult==1 ,orange:scope.row.bsResult==2}">{{$t('approved.customer_result['+scope.row.bsResult+']')}}</span>
+
+				</template>
+		    </el-table-column>
+		    <el-table-column prop="bsDesc" :label="$t('approved.AuditInstructions')">
+		    </el-table-column>
+		    <el-table-column prop="bsCusName" :label="$t('feedback.ClientsName')">		    	
+		    </el-table-column>
+		    <el-table-column prop="bsResponsible" :label="$t('approved.principal')">
+		    </el-table-column>
+		    
+<!-- 	下载附件 -->
+		   <el-table-column :label="$t('approved.Annex')">
+		    <template slot-scope="scope" >
+				<customerupload :fileList="scope.row.fileSet"  :bsCustomerApprovedId="scope.row.id" prop="scope.row.fileList"></customerupload>
+			</template>
+   		 	</el-table-column>
+
+   			<el-table-column :label="$t('Button.operating')">
+			    <template slot-scope="scope">			        
+			           <el-button size="mini" type="success" plain @click="showEditDialog(scope.row)" >{{$t('Button.Edit')}}</el-button>
+                       <el-button size="mini" @click="removeHandler(scope.row)">{{$t('Button.Delete')}}</el-button>	                               
+			    </template>
+   		 	</el-table-column>
+   		</el-table>	
+<!--    新增客户审核 -->
+   		<Modal v-model="modal_dialog" :title="$t('approved.AddCustomerReview')" @on-ok="saveHandler">
+            <div class="custmode">
+                <el-form label-width="120px" v-model="formItem" :ref="formItem">               
+                    <el-form-item :label="$t('ApprovedFlow.AuditResults')">
+					<el-select  v-model="formItem.bsResult" placeholder="请选择">
+						<el-option v-for="item in Options" :key="item.value" :label="item.label" :value="item.value" ></el-option>
+					</el-select>
+				</el-form-item>
+
+                    <el-form-item :label="$t('approved.AuditInstructions')" prop="bsDesc">
+                        <el-input v-model="formItem.bsDesc" :placeholder="$t('input')"></el-input>
+                    </el-form-item>               
+               
+                    <el-form-item :label="$t('feedback.ClientsName')" prop="bsCusName">
+                        <el-input v-model="formItem.bsCusName"  :placeholder="$t('input')"></el-input>
+                    </el-form-item>               
+               
+                    <el-form-item :label="$t('approved.principal')" prop="bsResponsible">
+                        <el-input v-model="formItem.bsResponsible"  :placeholder="$t('input')"></el-input>
+                    </el-form-item>
+                    
+                </el-form>
+            </div>
+        </Modal>	
+	</div>	
+</template>
+
+<script>
+	import customerupload from '../../components/customerupload.vue';
+	import Cookies from 'js-cookie';
+    export default {
+    name:'CustomerReview',
+    data() {
+      return {
+        RecordlistTable: [],
+		supplierData:{bsIsApprove:0},
+		productData:{bsIsApprove:0},
+		createType:0,
+		modal_dialog:false,
+		 fileList:[], //文件
+		 CustormerTable:[],
+		 formItem:{
+		 	bsResult:1,
+		 	bsCusName:'',
+		 	bsDesc:'',		 	
+		 	bsResponsible:'',
+		 	fileIdStr:''
+
+		 },
+		   perms: {
+                edit: false,
+                verify: false
+            },
+            Options:[
+            	{label:this.$t("approved.customer_result[0]"),value:0},
+				      {label:this.$t("approved.customer_result[1]"),value:1},
+				      {label:this.$t("approved.customer_result[2]"),value:2},			
+            ],
+            value:0,
+            custmerInfo:{}
+
+      }
+    },
+    components:{
+    	customerupload,    	
+    },
+    created(){    	
+        this.getlist();     
+      
+    }, 
+    methods:{
+    	getlist(){ 
+            if(this.$route.path.includes('supplier'))  {
+				this.createType = 1;
+				this.supplierData = this.$store.getters.getSupplierData;
+                this.api.customerApprovedRecord.getlist({bsSuppId:this.supplierData.id}).then((res) => { 
+                     	
+                this.CustormerTable = res.data.rows;  
+
+                for(var i = 0; i < res.data.rows.length; i++){
+                	if(res.data.rows[i].fileSet != undefined){
+						      this.fileList = res.data.rows[i].fileSet.map(function (file) {
+							     file.name = file.fsFileBy.bsName; //显示文件名文件类型
+							     return file; 
+						    }); 
+					   }
+            }
+             
+              }); 
+            }		  		
+              
+    },
+
+/*确认新增按钮*/
+        saveHandler(){        	
+         
+         var formItem = this.formItem;  
+
+   		 if(this.fileList.length>0){
+                formItem.fileIdStr = this.fileList.map(function (file) {
+                    return file.id;
+                }).toString();        	  	
+
+        }
+         var form={
+         		bsSuppId:this.supplierData.id,
+        	 	bsResult:this.formItem.bsResult,
+        	 	bsDesc:this.formItem.bsDesc,
+        	 	bsCusName:this.formItem.bsCusName,
+        	 	bsResponsible:this.formItem.bsResponsible,
+        	 	fileIdStr:formItem.fileIdStr
+
+        	}
+      
+       if(typeof(this.formItem.id)!=undefined && typeof(this.formItem.id)=="number") {
+                form.id = this.formItem.id;
+                this.api.customerApprovedRecord.edit(form).then((res) => {
+                    if(res.result) { 
+                        this.getlist();                                        
+
+                    }
+                });
+            }else {
+                this.api.customerApprovedRecord.add(form).then((res) => {             
+                    if(res.result) {                    
+                        this.getlist();
+                    }
+                });
+            }
+
+    },
+ //删除列表
+		removeHandler(row) {         
+		        this.$Modal.confirm({
+		            title: '提示信息',
+		            content: '<p>是否确定删除？</p>',
+		            onOk: () => {
+		                this.api.customerApprovedRecord.delete({id:row.id}).then((res)=>{
+		                    if(res.result) {
+		                        this.getlist();
+		                        this.$Modal.remove();
+		                        this.$Message.info('删除成功');
+		                    }else {
+		                        this.$Message.error(res.msg);   
+		                    }
+		                });
+		            }
+		        });
+		    },
+/*显示模态框*/
+       	showCustomerReview(){
+        	this.modal_dialog=true;
+        	this.formItem={
+        		bsResult:1,
+		 		bsCusName:'',
+		 		bsDesc:'',		 	
+		 		bsResponsible:'',
+		 		//fileIdStr:''		 		
+        	}
+        	
+        },
+
+//显示编辑
+		showEditDialog(row){
+		 	this.modal_dialog=true;
+		 	
+		 	this.formItem = Object.assign({},row);	
+
+		 	//this.formItem.fileList = Object.assign(this.fileList,{name:this.file.name});
+		},
+
+	}
+  }
+</script>
+
+<style>
+.circle{
+  font-size: 14px;color: #27558e;width: 10px;height: 10px;display: inline-block;background-color:#999;
+  border-radius: 50%; 
+    margin-right: 5px
+}
+
+.layout-content{padding-left: 1%;padding-right: 1%;}
+.red{color: #fd5822;}
+.blue{color: #409EFF;}
+.green{color: #67C23A;}
+.orange{color: #fd5822;}
+.gray{color: #333;}
+
+ .bgred{background-color:#fd5822;}
+.bgblue{background-color: #409EFF;}
+.bggreen{background-color: #67C23A;}
+.bgorange{background-color: #fd5822;}
+.bggray{background-color: #333;}
+.custmode .el-input{width:80%;}
+.custmode .el-select{width:100%;}
+.custmode .Upload{margin-top:0;}
+.custmoerTable{width:100%;}
+.custmoerTable.el-table .cell{font-size: 14px;font-family:"Microsoft YaHei", Times, serif;}
+</style>

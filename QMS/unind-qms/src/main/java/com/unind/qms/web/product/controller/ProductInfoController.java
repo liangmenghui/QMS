@@ -1,0 +1,132 @@
+package com.unind.qms.web.product.controller;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.web.Constants;
+import com.unind.base.web.WebController;
+import com.unind.qms.web.product.entity.ProductInfo;
+import com.unind.qms.web.product.service.ProductInfoService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * 产品基本资料
+ * @author chen
+ *
+ */
+@Api(description = "产品基本资料模块")
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping(value=Constants.CONTEXT_PATH + "/productInfo")
+public class ProductInfoController extends WebController {
+	@Autowired
+	private ProductInfoService productInfoService;
+
+//	@ApiOperation(value="新增产品", notes="新增产品")
+//	@RequestMapping(value = "/add", method = RequestMethod.POST)
+//	public ApiResponseResult add(ProductInfo productInfo) {
+//		try {
+//			return productInfoService.add(productInfo);
+//		} catch (BusinessException e) {
+//			e.printStackTrace();
+//			return ApiResponseResult.failure(e.getMessage());
+//		}
+//	}
+
+	@ApiOperation(value="删除产品", notes="删除产品")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "id", value = "ID", dataType = "Long", paramType="query",defaultValue=""),
+	})
+	@RequestMapping(value = "/delete", method = RequestMethod.POST)
+	public ApiResponseResult delete(Long id) {
+		try {
+			if(null!=id && id==-1) {
+				return ApiResponseResult.failure("没有删除权限");
+			}
+			return productInfoService.delete(id);
+		} catch (BusinessException e) {
+			return ApiResponseResult.failure(e.getMessage());
+		}
+	}
+
+	@ApiOperation(value="获取产品", notes="获取产品")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "keyWord", value = "查询条件", dataType = "String", paramType="query",defaultValue=""),
+			@ApiImplicitParam(name = "id", value = "产品ID", dataType = "Long", paramType="query",defaultValue=""),
+			@ApiImplicitParam(name = "suppCode", value = "供应商编号", dataType = "Long", paramType="query",defaultValue=""),
+			@ApiImplicitParam(name = "bsIsApprove", value = "是否审批中（0：否，1：是）", dataType = "Integer", paramType="query",defaultValue=""),
+			@ApiImplicitParam(name = "bsStatus", value = "产品状态", dataType = "Integer", paramType="query",defaultValue=""),
+			@ApiImplicitParam(name = "bsRiskLevel" ,value = "风险等级", dataType = "Integer", paramType="query",defaultValue="" ),
+	})
+	@RequestMapping(value = "/getlist", method = RequestMethod.GET)
+	public ApiResponseResult getlist(String keyWord, Long id, String suppCode, Integer bsIsApprove, Integer bsStatus, Integer bsRiskLevel) {
+		try {
+			Sort sort = new Sort(Sort.Direction.DESC,"id");
+			return productInfoService.getlist(keyWord, id, suppCode, bsIsApprove, bsStatus, bsRiskLevel, super.getPageRequest(sort));
+		} catch (BusinessException e) {
+			return ApiResponseResult.failure(e.getMessage());
+		}
+	}
+
+	@ApiOperation(value="申请变更风险等级（添加待办事项）", notes="申请修改风险等级（添加待办事项）")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(name = "id", value = "产品ID", dataType = "Long", paramType = "query", defaultValue = "", required = true),
+			@ApiImplicitParam(name = "bsRiskLevelUser", value = "风险等级(user)", dataType = "Integer", paramType = "query", defaultValue = "", required = true),
+			@ApiImplicitParam(name = "bsRiskDescUser", value = "风险等级备注(user)", dataType = "String", paramType = "query", defaultValue = ""),
+	})
+	@RequestMapping(value = "/applyRiskLevel", method = RequestMethod.POST)
+	public ApiResponseResult applyRiskLevel(Long id, Integer bsRiskLevelUser, String bsRiskDescUser){
+		try{
+			return productInfoService.applyRiskLevel(id, bsRiskLevelUser, bsRiskDescUser);
+		}catch(BusinessException e){
+			e.printStackTrace();
+			return ApiResponseResult.failure(e.getMessage());
+		}
+	}
+
+	@ApiOperation(value="完成变更风险等级（关闭待办事项）", notes="完成修改风险等级（关闭待办事项）")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "id", value = "产品ID", dataType = "Long", paramType = "query", defaultValue = "", required = true),
+			@ApiImplicitParam(name = "bsRiskLevelUser", value = "风险等级(user)", dataType = "Integer", paramType = "query", defaultValue = "", required = true),
+			@ApiImplicitParam(name = "isApprove", value = "是否通过（0.驳回 1.通过）", dataType = "Integer", paramType = "query", defaultValue = "")
+	})
+	@RequestMapping(value = "/completeRiskLevel", method = RequestMethod.POST)
+	public ApiResponseResult completeRiskLevel(Long id, Integer bsRiskLevelUser, Integer isApprove){
+		try{
+			//1.待办驳回则不做任何操作
+			if(isApprove != null && isApprove == BooleanStateEnum.FALSE.intValue()){
+				return ApiResponseResult.success("待办驳回！风险等级不调整。");
+			}else{
+				//2.待办通过，调整风险等级
+				return productInfoService.completeRiskLevel(id, bsRiskLevelUser);
+			}
+		}catch(BusinessException e){
+			e.printStackTrace();
+			return ApiResponseResult.failure(e.getMessage());
+		}
+	}
+
+	@ApiOperation(value = "切换调整风险等级模式", notes = "切换调整风险等级模式")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "id", value = "产品ID", dataType = "Long", paramType = "query", defaultValue = "", required = true),
+			@ApiImplicitParam(name = "bsRiskManual", value = "切换前管理模式(0.自动/1.手动)", dataType = "Integer", paramType = "query", defaultValue = "", required = true),
+	})
+	@RequestMapping(value = "autoRiskLevel", method = RequestMethod.POST)
+	public ApiResponseResult autoRiskLevel(Long id, Integer bsRiskManual){
+		try{
+			return productInfoService.autoRiskLevel(id, bsRiskManual);
+		}catch (BusinessException e){
+			e.printStackTrace();
+			return ApiResponseResult.failure(e.getMessage());
+		}
+	}
+}

@@ -1,0 +1,29 @@
+package com.unind.qms.web.sample.service;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.provider.BusinessException;
+import com.unind.qms.web.sample.entity.SampleRecord;
+import com.unind.qms.web.sample.entity.SampleRegular;
+import com.unind.qms.web.sample.entity.SampleRegularRecord;
+import org.springframework.data.domain.PageRequest;
+
+import java.nio.charset.Charset;
+import java.util.List;
+
+/**
+ * 样品规格记录
+ * @author chen
+ *
+ */
+public interface SampleRegularRecordService {
+	public static final String HASH_ALGORITHM = "SHA-1";
+	public static final int HASH_INTERATIONS = 1024;
+	public static final int SALT_SIZE = 8;
+	public static final Charset CHARSET = Charset.forName("UTF-8");
+
+	public ApiResponseResult add(SampleRecord sampleRecord, List<SampleRegularRecord> sampleRegularRecordList) throws BusinessException;
+
+	public ApiResponseResult delete(Long id) throws BusinessException;
+
+	public ApiResponseResult getlist(Long id, PageRequest pageRequest) throws BusinessException;
+}

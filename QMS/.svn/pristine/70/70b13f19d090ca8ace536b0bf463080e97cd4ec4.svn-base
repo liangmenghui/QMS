@@ -1,0 +1,146 @@
+package com.unind.qms.web.risk.entity;
+
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.base.domain.admin.user.SysUser;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+
+/**
+ * 风险批准记录表
+ * @author Shen
+ */
+@Entity
+@Table(name = RiskApprovedRecord.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class RiskApprovedRecord extends BaseEntity {
+
+    private static final long serialVersionUID = 1154151142960277043L;
+    public static final String TABLE_NAME = "t_risk_approved_record";
+
+    /**
+     * 产品ID
+     */
+    @ApiModelProperty(name = "bsPrId", value = "产品ID")
+    @Column
+    protected Long bsPrId;
+
+    /**
+     * 供应商ID
+     */
+    @ApiModelProperty(name = "bsSuppId", value = "供应商ID")
+    @Column
+    protected Long bsSuppId;
+
+
+    /**
+     * 原风险等级
+     */
+    @ApiModelProperty(name = "bsOriginalRiskLevel", required = true, value = "原风险等级")
+    @Column
+    protected int bsOriginalRiskLevel;
+
+    /**
+     * 新风险等级
+     */
+    @ApiModelProperty(name = "bsNewRiskLevel", required = true, value = "新风险等级")
+    @Column
+    protected int bsNewRiskLevel;
+
+    /**
+     * 批准人ID
+     */
+    @ApiModelProperty(name = "bsApproverId", value = "批准人ID")
+    @Column
+    protected Long bsApproverId;
+
+    @ApiModelProperty(name = "approvedBy", hidden = true, value = "批准人--user")
+    @ManyToOne
+    @JoinColumn(name = "bsApproverId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser approvedBy;
+
+    /**
+     * 批准意见
+     */
+    @ApiModelProperty(name = "bsApprovedAdvice", value = "批准人意见")
+    @Column(length = 500)
+    protected String bsApprovedAdvice;
+
+    /**
+     * 批准状态（0:进行中, 1:同意, 2:拒绝）
+     */
+    @ApiModelProperty(name = "bsStatus", value = "结果（0:未完成, 1:同意, 2:拒绝）")
+    @Column
+    protected int bsStatus;
+
+    public Long getBsPrId() {
+        return bsPrId;
+    }
+
+    public void setBsPrId(Long bsPrId) {
+        this.bsPrId = bsPrId;
+    }
+
+    public Long getBsSuppId() {
+        return bsSuppId;
+    }
+
+    public void setBsSuppId(Long bsSuppId) {
+        this.bsSuppId = bsSuppId;
+    }
+
+    public int getBsOriginalRiskLevel() {
+        return bsOriginalRiskLevel;
+    }
+
+    public void setBsOriginalRiskLevel(int bsOriginalRiskLevel) {
+        this.bsOriginalRiskLevel = bsOriginalRiskLevel;
+    }
+
+    public int getBsNewRiskLevel() {
+        return bsNewRiskLevel;
+    }
+
+    public void setBsNewRiskLevel(int bsNewRiskLevel) {
+        this.bsNewRiskLevel = bsNewRiskLevel;
+    }
+
+    public Long getBsApproverId() {
+        return bsApproverId;
+    }
+
+    public void setBsApproverId(Long bsApproverId) {
+        this.bsApproverId = bsApproverId;
+    }
+
+    public SysUser getApprovedBy() {
+        return approvedBy;
+    }
+
+    public void setApprovedBy(SysUser approvedBy) {
+        this.approvedBy = approvedBy;
+    }
+
+    public String getBsApprovedAdvice() {
+        return bsApprovedAdvice;
+    }
+
+    public void setBsApprovedAdvice(String bsApprovedAdvice) {
+        this.bsApprovedAdvice = bsApprovedAdvice;
+    }
+
+    public int getBsStatus() {
+        return bsStatus;
+    }
+
+    public void setBsStatus(int bsStatus) {
+        this.bsStatus = bsStatus;
+    }
+}

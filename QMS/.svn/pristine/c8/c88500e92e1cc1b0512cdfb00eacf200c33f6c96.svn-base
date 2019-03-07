@@ -1,0 +1,706 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：出货检验报告核查
+    -->
+	<div class="productinspectconfirmapproved">
+		<Row :style="{marginBottom: '20px'}">
+			<center><h4 style="font-size: 16px;">{{$t('approved.CheckTheShipmentInspectionReport')}}</h4></center>
+		</Row>
+		<Row :style="{marginBottom: '20px'}">
+			<Card>
+				<p slot="title">
+                    <Icon type="cube" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.ProductInformation')}}
+               	</p>
+               	<div slot="extra">
+               		<p style="display: inline-block;">{{$t('approved.surveyor')}}：</p>
+               		<p style="display: inline-block;margin-left: 10px;">{{$t('approved.InspectionTime')}}：</p>
+					<el-tag v-if="!perms.edit" color="white" style="display:inline-block;font-size: 14px;margin-left: 10px;">
+						{{$t('approved.statusLabel')}}：{{$t('approved.status['+approvedItemRecord.bsStatus+']')}}
+					</el-tag>
+				</div>
+				
+        		<div id="topbody">				
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('product.name')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="productInfo.bsPrName" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('product.code')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="productInfo.bsPrCode" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.ERPNumber')}}：</div>
+        					<div class="topbody-input">
+        						<el-input readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.InspectionStandard')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsInspectStandard" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.TestLevel')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsInspectLevel" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.DateInProduced')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsProductDate" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.InspectionDate')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsInspectDate" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.ProductQuantity')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsProductNum" readonly></el-input>
+        					</div>
+        				</div>				
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.BoxNumber')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsBoxesNum" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.Customer')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsCustomer" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.ContractNumber')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsContractNo" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.BatchNumber')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsBatchNo" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.AQLLevel')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsAqlLevel" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.NumberReceivers')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsAcceptNum" readonly ></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.NotNumberReceivers')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsRejectNum" readonly></el-input>
+        					</div>
+        				</div>
+        				<div class="topbody-div">
+        					<div class="topbody-text">{{$t('approved.SamplingSize')}}：</div>
+        					<div class="topbody-input">
+        						<el-input v-model="shipmentInspectData.bsSamplesNum" readonly></el-input>
+        					</div>
+        				</div>
+        		</div>
+			</Card>
+		</Row>
+	<!--
+    	作者：offline
+    	时间：2018-02-05
+    	描述：文件审查
+ -->	
+		<Row :style="{marginBottom: '20px'}">
+ 			<Card>
+				<p slot="title">
+                    <Icon type="compose" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.DocumentReview')}}
+               	</p>
+ 		
+		<div id="documentbody" style="height: 320px;">
+            <el-row :gutter="10">
+              <el-col :span="4">
+                <p>{{$t('approved.RawMaterialManufacturerAndFactoryDate')}}:</p>
+            </el-col>
+            <el-col :span="16">              
+                <el-button type="success" plain size="small" v-if="shipmentInspectData.bsPrInfoFile" @click="downloadFile(shipmentInspectData.bsPrInfoFile)">
+                    <i class="el-icon-download el-icon--right" ></i>{{$t('approved.downloadfile')}}
+                </el-button> 
+                <el-tag class="ml15">{{$t('approved.InspectionStatus['+shipmentInspectData.bsIsPrInfo+']')}}</el-tag> 
+            </el-col>
+            </el-row>
+			 
+
+            <el-row :gutter="10">
+              <el-col :span="4">
+                <p>{{$t('approved.ingredients')}}:</p>
+            </el-col>
+            <el-col :span="16">             
+                  <el-button type="success" plain size="small" v-if="shipmentInspectData.bsPrCompositionFile" @click="downloadFile(shipmentInspectData.bsPrCompositionFile)">
+                    <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+                </el-button> 
+                <el-tag class="ml15">{{$t('approved.InspectionStatus['+shipmentInspectData.bsIsPrComposition+']')}}</el-tag> 
+            </el-col>
+            </el-row>  
+			
+
+            <el-row :gutter="10">
+              <el-col :span="4">
+               <p>{{$t('approved.RawMaterialsAndPerformanceData')}}:</p>
+            </el-col>
+            <el-col :span="16">               
+            
+            <el-button type="success" plain size="small" v-if="shipmentInspectData.bsPrPerformanceFile" @click="downloadFile(shipmentInspectData.bsPrPerformanceFile)">
+                <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+            </el-button> 
+            <el-tag class="ml15">{{$t('approved.InspectionStatus['+shipmentInspectData.bsIsPerformance+']')}}</el-tag>
+            </el-col>
+            </el-row>					
+		
+
+             <el-row :gutter="10">
+              <el-col :span="4">
+               <p>{{$t('approved.PerformanceTestEquipment')}}:</p>
+            </el-col>
+            <el-col :span="16">               
+             
+            <el-button type="success" plain size="small" v-if="shipmentInspectData.bsTestDeviceFile" @click="downloadFile(shipmentInspectData.bsTestDeviceFile)">
+                <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+            </el-button>
+           <el-tag class="ml15">{{$t('approved.InspectionStatus['+shipmentInspectData.bsIsTestDevice+']')}}</el-tag> 
+            </el-col>
+            </el-row>
+		
+
+            <el-row :gutter="10">
+              <el-col :span="4">
+               <p>{{$t('approved.PerformanceTestTime')}}:</p>
+            </el-col>
+            <el-col :span="16">               
+           
+            <el-button type="success" plain size="small" v-if="shipmentInspectData.bsTestTimeFile" @click="downloadFile(shipmentInspectData.bsTestTimeFile)">
+                <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+            </el-button>
+            <el-tag class="ml15">{{$t('approved.InspectionStatus['+shipmentInspectData.bsIsTestTime+']')}}</el-tag> 
+            </el-col>
+            </el-row>
+	
+
+            <el-row :gutter="10">
+              <el-col :span="4">
+              <p>{{$t('approved.PerformanceTestResults')}}:</p>
+            </el-col>
+            <el-col :span="16">            
+           
+            <el-button type="success" plain size="small" v-if="shipmentInspectData.bsTestResultFile" @click="downloadFile(shipmentInspectData.bsTestResultFile)">
+                <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+            </el-button> 
+             <el-tag class="ml15"> {{$t('approved.InspectionStatus['+shipmentInspectData.bsIsTestResult+']')}}</el-tag> 
+            </el-col>
+            </el-row>
+		</div>
+			</Card>
+		</Row>
+
+ 		
+<!--
+	作者：offline
+	时间：2018-03-12
+	描述：实际抽样检查表
+-->
+		<Row :style="{marginBottom: '20px'}">
+ 			<Card>
+				<p slot="title">
+                    <Icon type="navicon-round" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.ActualSamplingChecklist')}}
+               	</p>
+
+        		<div id="tablebody" v-if="sampleRegularRows!=undefined">
+              		<template>
+                        <Row type="flex">
+                            <Col span="2"></Col>
+                            <Col span="22">
+                                <Col span="2" style="font-size: 14px;text-align: center;" v-for="record in sampleData" :key="record.id">
+                                    样品{{sampleData.indexOf(record)+1}}
+                                </Col>
+                            </Col>
+                        </Row>
+                        <Row type = "flex" style="height: 50px;" v-for="item in sampleRegularRows" :key="item.id">
+                            <Col span="2" style="margin-top:25px;font-size: 14px;text-align: center;">{{item.bsName}}</Col>
+                            <Col span="22">
+                                <Col span="2" v-for="record in item.records">
+                                    <input style="width:80%;height:30px;margin-top:20px;text-align:center;margin-left:10%;border: none;border-bottom: 1px solid #DDDDDD;" readonly 
+                                    v-model="record.bsMeasureResult"></input>
+                                </Col>
+                            </Col>
+                        </Row>
+                    </template>
+              	</div>
+			</Card>
+		</Row>
+	<!--
+    	作者：offline
+    	时间：2018-02-05
+    	描述：包装检查
+    -->	
+    	<Row :style="{marginBottom: '20px'}">
+ 			<Card>
+				<p slot="title">
+                    <Icon type="xbox" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.PackingInspection')}}
+               	</p>
+    	
+    	<div id="packbody">
+        <el-row :gutter="10" style="margin-bottom:20px;">
+            <div class="elinput">
+                 <span class="font" >{{$t('approved.WayOfPacking')}}：</span>
+                 <el-input v-model="shipmentInspectData.bsPackWay" readonly ></el-input>                
+                 <span v-bind:class="{No:shipmentInspectData.bsIsPackWay==0,ok:shipmentInspectData.bsIsPackWay==1}" > {{$t('approved.InspectionStatus['+shipmentInspectData.bsIsPackWay+']')}}</span>
+            </div>          
+            <el-col :span="24">              
+                <div class="files">
+                    <el-button type="success" size="small" plain v-if="shipmentInspectData.bsPackWayFile" @click="downloadFile(shipmentInspectData.bsPackWayFile)">
+                    <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+                </el-button> 
+                </div>
+                
+            </el-col>
+        </el-row>
+
+        <el-row :gutter="10" style="margin-bottom:20px;">
+            <div class="elinput">
+                <span class="font" >{{$t('approved.WayOfSealing')}}：</span>
+                <el-input v-model="shipmentInspectData.bsSealWay" readonly></el-input>                
+                 <span v-bind:class="{No:shipmentInspectData.bsIsPackWay==0,ok:shipmentInspectData.bsIsPackWay==1}"> {{$t('approved.InspectionStatus['+shipmentInspectData.bsIsSealWay+']')}}</span>
+            </div>             
+            <el-col :span="24">          
+                <div class="files">
+                    <el-button type="success" size="small" plain v-if="shipmentInspectData.bsSealWayFile" @click="downloadFile(shipmentInspectData.bsSealWayFile)">
+                    <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+                </el-button> 
+                </div> 
+            </el-col>
+        </el-row>
+
+         <el-row :gutter="10" style="margin-bottom:20px;">
+            <div class="elinput">
+                <span class="font" >{{$t('approved.Label')}}：</span>
+                <el-input v-model="shipmentInspectData.bsPackTag" readonly></el-input>                
+                 <span v-bind:class="{No:shipmentInspectData.bsIsPackWay==0,ok:shipmentInspectData.bsIsPackWay==1}">{{$t('approved.InspectionStatus['+shipmentInspectData.bsIsPackTag+']')}}</span>
+            </div>
+            
+            <el-col :span="24">             
+                <div class="files">
+                    <el-button type="success" size="small" plain v-if="shipmentInspectData.bsPackTagFile" @click="downloadFile(shipmentInspectData.bsPackTagFile)">
+                    <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+                    </el-button>
+                </div>
+                 
+            </el-col>
+        </el-row>
+
+        <el-row :gutter="10" style="margin-bottom:20px;">
+            <div class="elinput">
+                <span class="font" >{{$t('approved.Packaging')}}：</span>
+                <el-input v-model="shipmentInspectData.bsPackAppearance" readonly></el-input>                 
+                 <span v-bind:class="{No:shipmentInspectData.bsIsPackWay==0,ok:shipmentInspectData.bsIsPackWay==1}">{{$t('approved.InspectionStatus['+shipmentInspectData.bsIsPackTag+']')}}</span>
+            </div>
+            
+            <el-col :span="24">            
+                <div class="files">
+                    <el-button type="success" size="small" plain v-if="shipmentInspectData.bsPackAppearanceFile" @click="downloadFile(shipmentInspectData.bsPackAppearanceFile)">
+                    <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+                </el-button>
+                </div>  
+            </el-col>
+        </el-row>
+
+        <el-row :gutter="10" style="margin-bottom:20px;">
+            <div class="elinput">
+                <span class="font" >{{$t('approved.NumberOfEachPallet')}}：</span>
+                <el-input v-model="shipmentInspectData.bsPackStackNum" readonly></el-input>                
+                <span v-bind:class="{No:shipmentInspectData.bsIsPackWay==0,ok:shipmentInspectData.bsIsPackWay==1}">{{$t('approved.InspectionStatus['+shipmentInspectData.bsIsPackStack+']')}}</span>
+            </div>            
+            <el-col :span="24">            
+               <div class="files">
+                   <el-button type="success" size="small" plain v-if="shipmentInspectData.bsPackStackFile" @click="downloadFile(shipmentInspectData.bsPackStackFile)">
+                        <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+                    </el-button> 
+               </div>      
+            </el-col>
+        </el-row>
+
+         <el-row :gutter="10" style="margin-bottom:20px;">
+            <div class="elinput">
+                 <span  class="font" >{{$t('approved.QuantityOfEachCarton')}}：</span>
+                 <el-input v-model="shipmentInspectData.bsPackBoxNum" readonly></el-input>                  
+                  <span v-bind:class="{No:shipmentInspectData.bsIsPackWay==0,ok:shipmentInspectData.bsIsPackWay==1}">{{$t('approved.InspectionStatus['+shipmentInspectData.bsIsPackBox+']')}}</span>
+            </div>            
+            <el-col :span="12">               
+                <div class="files">                    
+                    <el-button type="success" size="small" plain v-if="shipmentInspectData.bsPackBoxFile" @click="downloadFile(shipmentInspectData.bsPackBoxFile)">
+                        <i class="el-icon-download el-icon--right"></i>{{$t('approved.downloadfile')}}
+                    </el-button> 
+                </div>
+            </el-col>
+        </el-row>
+		</div>
+			</Card>
+		</Row>
+<!--
+	作者：offline
+	时间：2018-03-21
+	描述：其他附件
+-->	
+		<Row :style="{marginBottom: '20px'}">
+ 			<Card>
+				<p slot="title">
+                    <Icon type="pricetag" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.OtherAccessory')}}
+               	</p>
+    	
+    	<div id="otherbody">
+			 <otherattachments :fileList="approvedItemRecord.fileSet"></otherattachments>
+		</div>
+			</Card>
+		</Row>
+<!--
+	作者：offline
+	时间：2018-03-21
+	描述：检验结果
+-->
+		<Row :style="{marginBottom: '20px'}">
+ 			<Card>
+				<p slot="title">
+                    <Icon type="star" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.InspectionResult')}}
+               	</p>
+    	
+    	<div id="testbody">			
+			<p style="font-size: 14px;">{{$t('approved.WhetherTheTestResultsAreAcceptable')}}:<el-tag size="small" class="Result">{{$t('approved.comfirmResult['+shipmentInspectData.bsInspectResult+']')}}</el-tag></p>
+  			<div style="margin-top: 20px;">
+  				<p style="font-size: 14px;">{{$t('approved.InspectionInstruction')}}：</p>
+  				<el-input type="textarea" :autosize="{ minRows: 4}" style="width: 50%;" v-model="shipmentInspectData.bsInspectDesc" readonly>
+				</el-input>
+  			</div>
+  		</div>
+  			</Card>
+		</Row>
+<!--
+	作者：offline
+	时间：2018-03-21
+	描述：核查结果
+-->
+		<Row :style="{marginBottom: '20px'}">
+ 			<Card>
+				<p slot="title">
+                    <Icon type="star" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.VerificationResults')}}
+               	</p>		
+                <el-button slot="extra" type="primary" icon="el-icon-plus" style="padding: 7px 20px;" @click="showAddDialog" v-if="perms.edit">
+                    {{$t('approved.AddVerificationUser')}}
+                </el-button>        
+            
+  		        <div id="checkbody" v-for="item in confirmInfo">
+                    <p>{{$t('approved.WhetherTheTestResultsAreAcceptable')}}: </p>
+                    <div v-if="!item.enable">
+                        <p>{{$t('approved.comfirmResult['+item.bsResult+']')}}</p>
+                    </div>
+                    <div style="margin-top: 20px;" v-if="item.enable">
+                        <el-radio-group v-model="item.bsResult" size="medium">
+                            <el-radio label="1" border >{{$t('approved.comfirmResult[1]')}}</el-radio>
+                            <el-radio label="2" border >{{$t('approved.comfirmResult[2]')}}</el-radio>
+                            <el-radio label="3" border >{{$t('approved.comfirmResult[3]')}}</el-radio>
+                        </el-radio-group>
+                    </div>
+          			<div>
+          				<p style="font-size: 14px;">{{$t('approved.VerificationInstructions')}}：</p>
+          				<el-input type="textarea" :autosize="{ minRows: 4}" style="width: 50%;" v-model="item.bsDesc" :readonly="!item.enable">
+        				</el-input>
+          			</div>
+          			<div style="height: 100px;">
+          				<div style="margin-top: 20px;font-size: 14px;">{{$t('approved.CheckOne')}}: {{item.inspectBy.bsName}}</div>
+          				<div style="margin-top: 20px;font-size: 14px;">{{$t('approved.CheckOutTime')}}: {{item.bsModifiedTime}}</div>
+          			</div> 		
+        	  		<div>
+        				<el-button v-if="item.enable" type="primary" style="width: 12%;" @click="submitConfirmination(item)">{{$t('approved.SubmitVerificationResults')}}</el-button>
+        			</div>
+		        </div>
+			</Card>
+		</Row>
+
+        <approvedResultRecord :approvedData="approvedItemRecord"></approvedResultRecord>
+        <div id="bottom" v-if="perms.edit">
+            <ApprovedAction :approvedItemRecord="approvedItemRecord"></ApprovedAction>
+        </div>
+
+        <Modal v-model="modal_dialog" :title="$t('approved.AddVerificationUser')" @on-ok="addConfirmination">
+            <div class="modeform">
+                <el-form label-width="120px">
+                     <el-form-item :label="$t('approved.CheckOne')">
+                        <el-select style="width:300px;" v-model="selectedUser" value-key="id" placeholder="请选择">
+                            <el-option v-for="user in users" :key="user.id" :label="user.bsName"  :value="user"></el-option>
+                        </el-select>
+                    </el-form-item>
+                </el-form>
+            </div>
+        </Modal>
+	</div>
+</template>
+
+<script>
+import Cookies from 'js-cookie';
+import ApprovedAction from '../../components/approvedAction.vue';
+import otherattachments from '../../components/otherattachments.vue';
+import approvedResultRecord from '../../components/approvedResultRecord.vue';
+export default {
+    components: {     
+        ApprovedAction,
+        otherattachments,
+        approvedResultRecord
+    },
+    data() {
+        return {
+            sampleRegularRows:[],
+            sampleData:[1,2,3,4,5,6,7,8,9,10],
+            sampleRegularRecordData:[],
+            shipmentInspectData: {},
+            productInfo:{},
+            confirmInfo:[],
+            approvedItemRecord:{},
+            users:[],
+            selectedUser: {},
+            modal_dialog: false,
+            perms:{},
+            formQuery:{}
+        }
+    },
+    created(){
+        this.getInspectData();
+        this.getUsers();
+        this.productInfo = this.$store.getters.getProductData; 
+        this.approvedItemRecord = this.$store.getters.getItemRecordData;
+        this.selectedUser = this.approvedItemRecord.itemsBy.recorderSet[0].recorderBy;
+        if(this.approvedItemRecord.fileSet == undefined) this.approvedItemRecord.fileSet = [];
+        this.perms.edit = 
+            (this.approvedItemRecord.users.includes(Cookies.get('user'))||
+             this.$Util.hasPerm('EDIT')) && this.approvedItemRecord.bsStatus == 1;
+    },
+    methods: {
+        getUsers(){
+            this.api.user.getlist().then((res)=>{
+                this.users = res.data.rows;
+            });
+        },
+    	getInspectData(){
+            var params = {
+                bsPrId: this.productInfo.id,
+                bsFlowRecordId: this.$route.query.bsFlowRecordId,
+            };
+            this.api.shipmentInspect.getlist(params).then((res) => {
+                if(res.data.rows.length) {
+                    this.shipmentInspectData=res.data.rows[0];
+                    var status = this.approvedItemRecord.bsStatus;
+                    if(this.shipmentInspectData.recordSet){
+                        this.shipmentInspectData.recordSet.sort(function (r1,r2) {
+                            return r1.id>r2.id;
+                        });
+                        this.confirmInfo = this.shipmentInspectData.recordSet.map(function (info) {
+                            if(info.bsResult == undefined) info.bsResult = 0;
+                            info.bsResult = ''+info.bsResult;
+                            info.enable = (status == 1 && info.inspectBy.bsName==Cookies.get('user'));
+                            return info;
+                        });
+                    }
+                    
+                    this.getSampleRecordsData();
+                }
+            });
+         },
+    	getSampleInfoDataById(params){
+    		this.api.sampleinfo.getlist(params).then((res) => {
+    			this.sampleInfo=res.data.rows[0];
+    		});
+    	},
+    	getSampleRecordsData(){
+            this.api.sampleRegularRecord.getlist({bsShipmentInspectId:this.shipmentInspectData.id}).then((res) => {
+                //无样本数据
+                if(res.data.rows.length == 0){
+                    this.api.sampleRegular.getlist({bsPrId:this.productInfo.id}).then((res) => {
+                        this.sampleRegularRows=res.data.rows.map(function (row) {
+                            row.records = [];
+                            //默认10个样品
+                            for (var i=1; i <= 10; i++) {
+                                row.records.push({
+                                    bsSampleRegularIndex:i,
+                                    bsSampleRegularId:row.id
+                                });
+                            }
+                            return row;
+                        });
+                    });
+                }
+                else {
+                    var records = {};
+                    for (var i = 0; i < res.data.rows.length; i++) {
+                        var row = res.data.rows[i];
+                        var regular = Object.assign({},row.sampleRegularBy);
+                        if(records[regular.id] == undefined){
+                            records[regular.id] = regular;
+                            records[regular.id].records = [];
+                        }
+                        delete row.sampleRegularBy;
+                        records[regular.id].records.push(row);
+                    }
+                    this.sampleRegularRows = [];
+                    for(var key in records){
+                        this.sampleRegularRows.push(records[key]);
+                    }
+                    this.sampleRegularRows.sort(function (r1,r2) {
+                        return r1.id<r2.id;
+                    });
+                }
+            });
+        },
+        showSampleInfoSelector() {       
+            this.showSampleInfoSelectorModal = true; 
+        },
+        addSampleRegularData() {  
+            this.sampleRegularRows = this.sampleRegularRows.map(function (regular) {
+            	return {
+            		bsMeasureResult: '',
+            		bsRemark: '',
+            		bsName: regular.bsName,
+            		bsTool: regular.bsTool,
+            		bsUnit: regular.bsUnit,
+            		bsSampleRegularId: regular.id,
+            	};
+            });
+            this.showSampleRegularInputerModal = true; 
+        },
+        sampleInfoSelectorOK () {  
+            this.getSampleRegularData({bsSampleId:this.sampleInfo.id});  
+        },
+        sampleRegularInputerOK () {
+        	var regularRecordData = this.sampleRegularRows.map(function (modalData) {
+        			var result = {
+        				bsMeasureResult: modalData.bsMeasureResult,
+        				bsRemark: modalData.bsRemark,
+        				bsSampleRegularId: modalData.bsSampleRegularId,
+        			};
+        			if(modalData.id) result.id = modalData.id;
+        			return result;
+        		});
+        	var params = {};
+        	params.bsSampleId = this.sampleInfo.id;
+        	params.bsShipmentId = this.shipmentInspectData.id;
+        	params.sampleRegularRecordStr = JSON.stringify(regularRecordData);
+        	this.api.sampleRegular.addRecord(params).then((res) => {
+        		this.sampleRegularRecordData.push(res.data);
+    		});
+        },
+        sampleRegularInputerCancel () {
+            
+        },
+        addInspect(){
+        	var params = {
+        		bsPrId: this.productInfo.id,
+        		bsFlowRecordId: this.$route.query.bsFlowRecordId,
+        	};
+        	this.api.shipmentInspect.add(params).then((res) => {
+				this.shipmentInspectData=res.data;
+    		});
+        },
+        showAddDialog(){
+            this.modal_dialog = true;
+        },
+        addConfirmination(){
+        	var params = {
+        		bsShipmentId: this.shipmentInspectData.id,
+        		bsInspecter: this.selectedUser.id,
+        	};
+    		this.api.shipmentInspect.addRecord(params).then((res) => {
+				this.$Message.info("设置完成");
+                res.data.inspectBy = this.selectedUser;
+                res.data.bsResult=0;
+                this.sendTodo(this.selectedUser.id);
+                res.data.enable = (this.selectedUser.bsName==Cookies.get('user'));
+                this.confirmInfo.push(res.data);
+			});
+        },
+        submitConfirmination(info){
+        	var params = {
+        		bsShipmentId: this.shipmentInspectData.id,
+        		bsInspecter: info.inspectBy.id,
+        		bsDesc: info.bsDesc,
+                bsResult: info.bsResult,
+        		id: info.id
+        	};
+            this.finishTodo(info.inspectBy.id);
+    		this.api.shipmentInspect.editRecord(params).then((res) => {
+				this.$Message.info("提交完成");
+			});
+        },
+        approved(result){
+            var params = {
+                bsItemsId: this.approvedItemRecord.itemsBy.id,
+                bsItemsRecordId: this.approvedItemRecord.id,
+                bsResult: result
+            };
+            this.api.Audit.approved(params).then((res) => {
+                this.$Message.info("提交审核结果完成");
+                this.bsStatus = result;
+                this.perms.edit = false;
+            });
+        },
+		downloadFile(fileId){  
+            var params = {
+                fsFileId:fileId
+            };
+            this.api.fileQms.getfile(params).then((link) => {
+                link.click(); 
+            });
+        },
+        sendTodo(userId){
+            var params = {
+                bsUserId: userId,
+                bsRouter: "/qms/product/approved",
+                bsTitle : "[产品成品检验]出货检验报告核查"+"--"+this.productInfo.bsPrName,
+                bsType : 24,
+                bsReferId : this.approvedItemRecord.bsFlowRecordId
+            };
+            this.api.todo.add(params).then((res)=>{});
+        },
+        finishTodo(userId){
+            var params = {
+                bsUserId: userId,
+                bsType : 31,
+                bsReferId : this.approvedItemRecord.bsFlowRecordId
+            };
+            this.api.todo.close(params).then((res)=>{});
+        },
+    }
+}
+</script>
+
+<style>
+    @import '../../../../styles/productInspectComfirm.css';
+    @import '../../../../styles/productPublic.css';
+</style>

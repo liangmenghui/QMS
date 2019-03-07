@@ -1,0 +1,110 @@
+package com.unind.qms.web.basic.service.internal;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.qms.web.basic.dao.FeedbackRefundDao;
+import com.unind.qms.web.basic.entity.FeedbackRefund;
+import com.unind.qms.web.basic.service.FeedbackRefundService;
+import io.swagger.annotations.ApiResponse;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class FeedbackRefundImpl extends BaseOprService implements FeedbackRefundService {
+    @Autowired
+    private FeedbackRefundDao feedbackRefundDao;
+
+    @Override
+    @Transactional
+    public ApiResponseResult add(FeedbackRefund feedbackRefund) throws BusinessException {
+        if(feedbackRefund.getBsFeedbackId() == null){
+            return ApiResponseResult.failure("客诉ID为必填项！");
+        }
+        if(feedbackRefund.getBsPrId() == null){
+            return ApiResponseResult.failure("产品ID为必填项！");
+        }
+        feedbackRefund.setBsCreatedTime(new Date());
+        feedbackRefundDao.save(feedbackRefund);
+        return ApiResponseResult.success("新增成功！").data(feedbackRefund);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult edit(FeedbackRefund feedbackRefund) throws BusinessException {
+        if(feedbackRefund.getId() == null){
+            return ApiResponseResult.failure("记录ID为必填项！");
+        }
+        if(feedbackRefund.getBsFeedbackId() == null){
+            return ApiResponseResult.failure("客诉ID为必填项！");
+        }
+        if(feedbackRefund.getBsPrId() == null){
+            return ApiResponseResult.failure("产品ID为必填项！");
+        }
+        FeedbackRefund o = feedbackRefundDao.findOne(feedbackRefund.getId());
+        if(o == null){
+            return ApiResponseResult.failure("记录ID不存在或已被删除！");
+        }
+
+        o.setBsReportNo(feedbackRefund.getBsReportNo());
+        o.setBsNum(feedbackRefund.getBsNum());
+        o.setBsPrice(feedbackRefund.getBsPrice());
+        o.setBsSum(feedbackRefund.getBsSum());
+        o.setBsReason(feedbackRefund.getBsReason());
+        o.setBsModifiedTime(new Date());
+        feedbackRefundDao.save(o);
+        return ApiResponseResult.success("修改成功！").data(o);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        FeedbackRefund feedbackRefund = feedbackRefundDao.findOne(id);
+        if(feedbackRefund == null){
+            return ApiResponseResult.failure("记录ID不存在或已被删除！");
+        }
+        if(feedbackRefund.getId() <= 0){
+            return ApiResponseResult.failure("没有操作权限！");
+        }
+        feedbackRefund.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+        feedbackRefundDao.save(feedbackRefund);
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult getlist(Long id, Long bsFeedbackId, Long bsPrId, String bsReportNo, PageRequest pageRequest) throws BusinessException {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        if(id != null){
+            filters.add(new SearchFilter("id", SearchFilter.Operator.EQ, id));
+        }
+        if(bsFeedbackId != null){
+            filters.add(new SearchFilter("bsFeedbackId", SearchFilter.Operator.EQ, bsFeedbackId));
+        }
+        if(bsPrId != null){
+            filters.add(new SearchFilter("bsPrId", SearchFilter.Operator.EQ, bsPrId));
+        }
+        if(StringUtils.isNotEmpty(bsReportNo)){
+            filters.add(new SearchFilter("bsReportNo", SearchFilter.Operator.EQ, bsReportNo));
+        }
+        Specification<FeedbackRefund> spec = Specifications.where(super.and(filters, FeedbackRefund.class));
+        Page<FeedbackRefund> page = feedbackRefundDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+}

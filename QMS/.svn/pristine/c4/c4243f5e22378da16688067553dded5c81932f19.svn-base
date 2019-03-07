@@ -1,0 +1,250 @@
+package com.unind.qms.web.risk.entity;
+
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.fs.domain.file.FsFile;
+import com.unind.qms.web.product.entity.ProductInfo;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+
+/**
+ * 产品风险ppm的不良品数
+ * @author Shen
+ */
+@Entity
+@Table(name = ProductPpm.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class ProductPpm extends BaseEntity {
+
+    private static final long serialVersionUID = 1154151142960277043L;
+    public static final String TABLE_NAME = "t_product_ppm";
+
+    /**
+     * 产品ID
+     */
+    @ApiModelProperty(name = "bsPrId", value = "产品ID")
+    @Column
+    protected Long bsPrId;
+
+    @ApiModelProperty(name="productBy",hidden=true,value="产品记录")
+    @ManyToOne
+    @JoinColumn(name = "bsPrId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected ProductInfo productBy;
+
+    /**
+     * 年份
+     */
+    @ApiModelProperty(name = "bsYear", value = "年份")
+    @Column
+    protected int bsYear;
+
+    /**
+     * 一月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult1", value = "一月不良品数")
+    @Column
+    protected int bsMonthResult1;
+
+    /**
+     * 二月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult2", value = "二月不良品数")
+    @Column
+    protected int bsMonthResult2;
+
+    /**
+     * 三月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult3", value = "三月不良品数")
+    @Column
+    protected int bsMonthResult3;
+
+    /**
+     * 四月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult4", value = "四月不良品数")
+    @Column
+    protected int bsMonthResult4;
+
+    /**
+     * 五月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult5", value = "五月不良品数")
+    @Column
+    protected int bsMonthResult5;
+
+    /**
+     * 六月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult6", value = "六月不良品数")
+    @Column
+    protected int bsMonthResult6;
+
+    /**
+     * 七月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult7", value = "七月不良品数")
+    @Column
+    protected int bsMonthResult7;
+
+    /**
+     * 八月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult8", value = "八月不良品数")
+    @Column
+    protected int bsMonthResult8;
+
+    /**
+     * 九月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult9", value = "九月不良品数")
+    @Column
+    protected int bsMonthResult9;
+
+    /**
+     * 十月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult10", value = "十月不良品数")
+    @Column
+    protected int bsMonthResult10;
+
+    /**
+     * 十一月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult11", value = "十一月不良品数")
+    @Column
+    protected int bsMonthResult11;
+
+    /**
+     * 十二月不良品数
+     */
+    @ApiModelProperty(name = "bsMonthResult12", value = "十二月不良品数")
+    @Column
+    protected int bsMonthResult12;
+
+    public Long getBsPrId() {
+        return bsPrId;
+    }
+
+    public void setBsPrId(Long bsPrId) {
+        this.bsPrId = bsPrId;
+    }
+
+    public ProductInfo getProductBy() {
+        return productBy;
+    }
+
+    public void setProductBy(ProductInfo productBy) {
+        this.productBy = productBy;
+    }
+
+    public int getBsYear() {
+        return bsYear;
+    }
+
+    public void setBsYear(int bsYear) {
+        this.bsYear = bsYear;
+    }
+
+    public int getBsMonthResult1() {
+        return bsMonthResult1;
+    }
+
+    public void setBsMonthResult1(int bsMonthResult1) {
+        this.bsMonthResult1 = bsMonthResult1;
+    }
+
+    public int getBsMonthResult2() {
+        return bsMonthResult2;
+    }
+
+    public void setBsMonthResult2(int bsMonthResult2) {
+        this.bsMonthResult2 = bsMonthResult2;
+    }
+
+    public int getBsMonthResult3() {
+        return bsMonthResult3;
+    }
+
+    public void setBsMonthResult3(int bsMonthResult3) {
+        this.bsMonthResult3 = bsMonthResult3;
+    }
+
+    public int getBsMonthResult4() {
+        return bsMonthResult4;
+    }
+
+    public void setBsMonthResult4(int bsMonthResult4) {
+        this.bsMonthResult4 = bsMonthResult4;
+    }
+
+    public int getBsMonthResult5() {
+        return bsMonthResult5;
+    }
+
+    public void setBsMonthResult5(int bsMonthResult5) {
+        this.bsMonthResult5 = bsMonthResult5;
+    }
+
+    public int getBsMonthResult6() {
+        return bsMonthResult6;
+    }
+
+    public void setBsMonthResult6(int bsMonthResult6) {
+        this.bsMonthResult6 = bsMonthResult6;
+    }
+
+    public int getBsMonthResult7() {
+        return bsMonthResult7;
+    }
+
+    public void setBsMonthResult7(int bsMonthResult7) {
+        this.bsMonthResult7 = bsMonthResult7;
+    }
+
+    public int getBsMonthResult8() {
+        return bsMonthResult8;
+    }
+
+    public void setBsMonthResult8(int bsMonthResult8) {
+        this.bsMonthResult8 = bsMonthResult8;
+    }
+
+    public int getBsMonthResult9() {
+        return bsMonthResult9;
+    }
+
+    public void setBsMonthResult9(int bsMonthResult9) {
+        this.bsMonthResult9 = bsMonthResult9;
+    }
+
+    public int getBsMonthResult10() {
+        return bsMonthResult10;
+    }
+
+    public void setBsMonthResult10(int bsMonthResult10) {
+        this.bsMonthResult10 = bsMonthResult10;
+    }
+
+    public int getBsMonthResult11() {
+        return bsMonthResult11;
+    }
+
+    public void setBsMonthResult11(int bsMonthResult11) {
+        this.bsMonthResult11 = bsMonthResult11;
+    }
+
+    public int getBsMonthResult12() {
+        return bsMonthResult12;
+    }
+
+    public void setBsMonthResult12(int bsMonthResult12) {
+        this.bsMonthResult12 = bsMonthResult12;
+    }
+}

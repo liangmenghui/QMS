@@ -1,0 +1,311 @@
+<template>
+    <form>
+        <table class="formed" align="left" valign="left">
+            <tr>
+                <td colspan="4">
+                    <p>
+                        <u>1. Shipper 託運人及地址:</u>
+                    </p>
+                </td>
+                <td colspan="3">
+                    <p>
+                        <u>DHL GLOBAL FORWARDING (HONG KONG) LIMITED as agent only</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><input type="text" v-model="form.shipperName" /></td>
+                <td colspan="3">
+                    <span style="font-size:10px;margin-left:6px;">Office: 11/F, Trade Square, 681 Cheung Sha Wan Road, Kowloon, Hong Kong</span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" rowspan="4">
+                    <textarea rows="4" v-model="form.shipperAddress"></textarea>
+                </td>
+                <td colspan="3"><br/></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <p>辦公室: 香港九龍長沙灣道681號貿易廣場11樓</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <p>
+                        <u>4. Billing Party 付款單位:</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" rowspan="3">
+                    <textarea rows="3" v-model="form.billingParty"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>
+                        <u>Shipper No託運人號:</u>
+                    </p>
+                </td>
+                <td><input type="text" v-model="form.shipperNo" /></td>
+                <td>
+                    <p>
+                        <u>Fax 傳真:</u>
+                    </p>
+                </td>
+                <td><input type="text" v-model="form.shipperFax" /></td>
+            </tr>
+            <tr>
+                <td>
+                    <p>
+                        <u>Tel 電話:</u>
+                    </p>
+                </td>
+                <td><input type="text" v-model="form.shipperTel" /></td>
+                <td>
+                    <p>
+                        <u>托运人:</u>
+                    </p>
+                </td>
+                <td><input type="text" v-model="form.shipperContact" /></td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <p>
+                        <u>2. Consignee 收貨人及地址:</u>
+                    </p>
+                </td>
+                <td>
+                    <p>
+                        <u>Contact 聯絡人:</u>
+                    </p>
+                </td>
+                <td colspan="2">
+                    <input type="text" v-model="form.billingPartyContract" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><input type="text" v-model="form.consigneeName" /></td>
+                <td>
+                    <p>
+                        <u>Tel 電話:</u>
+                    </p>
+                </td>
+                <td colspan="2"><input type="text" v-model="form.billingPartyTel" /></td>
+            </tr>
+            <tr>
+                <td colspan="4" rowspan="4">
+                    <textarea rows="4" v-model="form.consigneeAddress"></textarea>
+                </td>
+                <td>
+                    <p>
+                        <u>Fax 傳真:</u>
+                    </p>
+                </td>
+                <td colspan="2"><input type="text" v-model="form.billingPartyFax" /></td>
+            </tr>
+            <tr>
+                <td rowspan="6"><br/></td>
+                <td rowspan="6"><br/></td>
+                <td rowspan="6"><br/></td>
+            </tr>
+            <tr></tr>
+            <tr></tr>
+            <tr>
+                <td>
+                    <p>
+                        <u>Tel 電話:</u>
+                    </p>
+                </td>
+                <td><input type="text" v-model="form.consigneeTel" /></td>
+                <td>
+                    <p>
+                        <u>Contact 聯絡人:</u>
+                    </p>
+                </td>
+                <td><input type="text" v-model="form.consigneeContact" /></td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <p>
+                        <u>3. Notify Party 並通知:</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><input type="text" v-model="form.notifyPartyName" /></td>
+            </tr>
+            <tr>
+                <td colspan="4" rowspan="4">
+                    <textarea rows="4" v-model="form.notifyPartyAddress"></textarea>
+                </td>
+                <td colspan="3"><br/></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p>
+                        <u>9. Delivery Terms 運貨條款:</u>
+                    </p>
+                </td>
+                <td>
+                    <input type="text" v-model="form.deliveryTerm" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3"><br/></td>
+            </tr>
+            <tr>
+                <td rowspan="2">
+                    <p>
+                        <u>10. Licence 出入口証:</u>
+                    </p>
+                </td>
+                <td colspan="2" rowspan="2"></td>
+            </tr>
+            <tr>
+                <td>
+                    <p>
+                        <u>Tel 電話:</u>
+                    </p>
+                </td>
+                <td><input type="text" v-model="form.notifyPartyTel" /></td>
+                <td>
+                    <p>
+                        <u>Contact 聯絡人:</u>
+                    </p>
+                </td>
+                <td><input type="text" v-model="form.deliveryContract" /></td>
+            </tr>
+        </table>
+    </form>
+</template>
+
+<script>
+import Vue from "vue";
+export default {
+  props: {
+    formData: {
+      type: [Number, Object, Array, String]
+    },
+    customer: {
+      type: [Number, String]
+    },
+    agent: {
+      type: [Number, String]
+    }
+  },
+  data() {
+    return {
+      form: {
+        shipperName: "",
+        shipperAddress: "",
+        billingParty: "",
+        shipperNo: "",
+        shipperFax: "",
+        shipperTel: "",
+        shipperContact: "",
+        billingPartyContract: "",
+        consigneeName: "",
+        billingPartyTel: "",
+        consigneeAddress: "",
+        billingPartyFax: "",
+        consigneeTel: "",
+        consigneeContact: "",
+        notifyPartyName: "",
+        notifyPartyAddress: "",
+        deliveryTerm: "",
+        notifyPartyTel: "",
+        deliveryContract: ""
+      }
+    };
+  }, //data
+  methods: {
+    getData() {
+        //校验  
+      this.$emit("on-commit", this.form);
+    }
+  }, //methods
+  computed: {}, //computed
+  watch: {
+    formData(value) {
+      let val = JSON.stringify(value);
+      if (!val) return;
+      this.form = JSON.parse(val);
+    }
+  }, //watch
+};
+</script>
+
+<style>
+table {
+  padding: 0;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0px;
+}
+
+.formed {
+  margin: 6px 10px;
+  border: 2px solid #000;
+  line-height: 1.6em;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+.formed > tr {
+  padding: 0px;
+}
+.formed > tr > td {
+  border: 0;
+  border-right: 1px solid #c1c1c3;
+  border-bottom: 1px dashed #c1c1c3;
+  padding: 0px;
+  width: 140px;
+  padding: 1px 1px;
+}
+
+.formed > tr:last-child > td {
+  border-bottom: 0;
+}
+.formed .sperator {
+  border-top: 2px solid #000;
+}
+
+.formed p > u {
+  margin: 3px 5px;
+  font-size: 12px;
+  font-weight: bold;
+  display: inline;
+  line-height: 14px;
+  text-decoration: none;
+}
+.formed input {
+  width: 100%;
+  border: 1px solid #c1c1c3;
+}
+.formed label {
+  margin-left: 30px;
+  position: relative;
+}
+.formed input[type="checkbox"] {
+  margin-left: 2px;
+  position: absolute;
+  left: -20px;
+  bottom: 1px;
+}
+
+.formed textarea {
+  resize: none;
+  width: 100%;
+  border: 1px solid #c1c1c3;
+}
+.f-blue {
+  background-color: #c0d9f1;
+}
+.f-white {
+  background-color: #fff;
+}
+.f-yellow {
+  background-color: #ff0;
+}
+</style>

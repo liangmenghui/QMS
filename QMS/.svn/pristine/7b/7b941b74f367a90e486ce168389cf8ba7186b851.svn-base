@@ -1,0 +1,37 @@
+package com.unind.qms.web.samplePlan.entity;
+
+import com.unind.base.domain.admin.BaseEntity;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+/**
+ * 样本代字
+ */
+@Entity
+@Table(name = SampleCode.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class SampleCode extends BaseEntity {
+    private static final long serialVersionUID = 5429346106817487901L;
+    public static final String TABLE_NAME = "t_sample_code";
+
+    /**
+     * 样本代字
+     */
+    @ApiModelProperty(name = "bsCode", value = "样品代字")
+    @Column(length = 25)
+    protected String bsCode;
+
+    public String getBsCode() {
+        return bsCode;
+    }
+
+    public void setBsCode(String bsCode) {
+        this.bsCode = bsCode;
+    }
+}

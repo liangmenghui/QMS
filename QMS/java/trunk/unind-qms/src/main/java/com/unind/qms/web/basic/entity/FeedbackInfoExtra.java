@@ -1,0 +1,269 @@
+package com.unind.qms.web.basic.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.unind.base.domain.admin.BaseEntity;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.util.Date;
+
+/**
+ * 客诉附加信息
+ */
+@Entity
+@Table(name = FeedbackInfoExtra.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class FeedbackInfoExtra extends BaseEntity {
+
+    private static final long serialVersionUID = 7151771262953316256L;
+    public static final String TABLE_NAME = "t_feedback_info_extra";
+
+    /**
+     * 客诉ID
+     */
+    @ApiModelProperty(name = "bsFeedbackId", required = true, value = "客诉ID")
+    @NotNull
+    @Column
+    protected Long bsFeedbackId;
+
+    @ApiModelProperty(name = "feedbackInfo", hidden = true, value = "客诉信息")
+    @ManyToOne
+    @JoinColumn(name = "bsFeedbackId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected FeedbackInfo feedbackInfo;
+
+    /**
+     * 供应商ID
+     */
+    @ApiModelProperty(name = "bsSuppId", required = true, value = "供应商ID")
+    @NotNull
+    @Column
+    protected Long bsSuppId;
+
+    /**
+     * 产品ID
+     */
+    @ApiModelProperty(name = "bsPrId", value = "产品ID")
+    @Column
+    protected Long bsPrId;
+
+    /**
+     * 供应商名称
+     */
+    @ApiModelProperty(name = "bsSuppCompanyName", value = "供应商名称")
+    @Column(length = 50)
+    protected String bsSuppCompanyName;
+
+    /**
+     * 供应商编号
+     */
+    @ApiModelProperty(name = "bsSuppCompanyCode", value = "供应商编号")
+    @Column(length = 50)
+    protected String bsSuppCompanyCode;
+
+    /**
+     * 供应商联系人名称
+     */
+    @ApiModelProperty(name = "bsSuppCompanyPerson", value = "供应商联系人名称")
+    @Column(length = 30)
+    protected String bsSuppCompanyPerson;
+
+    /**
+     * 供应商联系人邮箱
+     */
+    @ApiModelProperty(name = "bsSuppCompanyEmail", value = "供应商联系人邮箱")
+    @Column(length = 30)
+    protected String bsSuppCompanyEmail;
+
+    /**
+     * 供应商联系人电话
+     */
+    @ApiModelProperty(name = "bsSuppCompanyMobile", value = "供应商联系人电话")
+    @Column(length = 30)
+    protected String bsSuppCompanyMobile;
+
+    /**
+     * 产品编号
+     */
+    @ApiModelProperty(name = "bsPrCode", value = "产品编号")
+    @Column(length = 50)
+    protected String bsPrCode;
+
+    /**
+     * 批次号
+     */
+    @ApiModelProperty(name = "bsBatchNo", value = "批次号")
+    @Column(length = 80)
+    protected String bsBatchNo;
+
+    /**
+     * 产品名称
+     */
+    @ApiModelProperty(name = "bsPrName", value = "产品名称")
+    @Column(length = 50)
+    protected String bsPrName;
+
+    /**
+     * 产品数量
+     */
+    @ApiModelProperty(name = "bsPrNum", value = "产品数量")
+    @Column
+    protected String bsPrNum;
+
+    /**
+     * 投诉地点
+     */
+    @ApiModelProperty(name = "bsReportLocation", value = "投诉地点")
+    @Column(length = 100)
+    protected String bsReportLocation;
+
+    /**
+     * 生产地点
+     */
+    @ApiModelProperty(name = "bsProductLocation", value = "生产地点")
+    @Column(length = 100)
+    protected String bsProductLocation;
+
+    /**
+     * 生产日期
+     */
+    @ApiModelProperty(name = "bsProductDate", value = "生产日期")
+    @Column(length = 50)
+    protected String bsProductDate;
+
+    public Long getBsFeedbackId() {
+        return bsFeedbackId;
+    }
+
+    public void setBsFeedbackId(Long bsFeedbackId) {
+        this.bsFeedbackId = bsFeedbackId;
+    }
+
+    public FeedbackInfo getFeedbackInfo() {
+        return feedbackInfo;
+    }
+
+    @JsonBackReference
+    public void setFeedbackInfo(FeedbackInfo feedbackInfo) {
+        this.feedbackInfo = feedbackInfo;
+    }
+
+    public Long getBsSuppId() {
+        return bsSuppId;
+    }
+
+    public void setBsSuppId(Long bsSuppId) {
+        this.bsSuppId = bsSuppId;
+    }
+
+    public Long getBsPrId() {
+        return bsPrId;
+    }
+
+    public void setBsPrId(Long bsPrId) {
+        this.bsPrId = bsPrId;
+    }
+
+    public String getBsSuppCompanyName() {
+        return bsSuppCompanyName;
+    }
+
+    public void setBsSuppCompanyName(String bsSuppCompanyName) {
+        this.bsSuppCompanyName = bsSuppCompanyName;
+    }
+
+    public String getBsSuppCompanyCode() {
+        return bsSuppCompanyCode;
+    }
+
+    public void setBsSuppCompanyCode(String bsSuppCompanyCode) {
+        this.bsSuppCompanyCode = bsSuppCompanyCode;
+    }
+
+    public String getBsSuppCompanyPerson() {
+        return bsSuppCompanyPerson;
+    }
+
+    public void setBsSuppCompanyPerson(String bsSuppCompanyPerson) {
+        this.bsSuppCompanyPerson = bsSuppCompanyPerson;
+    }
+
+    public String getBsSuppCompanyEmail() {
+        return bsSuppCompanyEmail;
+    }
+
+    public void setBsSuppCompanyEmail(String bsSuppCompanyEmail) {
+        this.bsSuppCompanyEmail = bsSuppCompanyEmail;
+    }
+
+    public String getBsSuppCompanyMobile() {
+        return bsSuppCompanyMobile;
+    }
+
+    public void setBsSuppCompanyMobile(String bsSuppCompanyMobile) {
+        this.bsSuppCompanyMobile = bsSuppCompanyMobile;
+    }
+
+    public String getBsPrCode() {
+        return bsPrCode;
+    }
+
+    public void setBsPrCode(String bsPrCode) {
+        this.bsPrCode = bsPrCode;
+    }
+
+    public String getBsBatchNo() {
+        return bsBatchNo;
+    }
+
+    public void setBsBatchNo(String bsBatchNo) {
+        this.bsBatchNo = bsBatchNo;
+    }
+
+    public String getBsPrName() {
+        return bsPrName;
+    }
+
+    public void setBsPrName(String bsPrName) {
+        this.bsPrName = bsPrName;
+    }
+
+    public String getBsPrNum() {
+        return bsPrNum;
+    }
+
+    public void setBsPrNum(String bsPrNum) {
+        this.bsPrNum = bsPrNum;
+    }
+
+    public String getBsReportLocation() {
+        return bsReportLocation;
+    }
+
+    public void setBsReportLocation(String bsReportLocation) {
+        this.bsReportLocation = bsReportLocation;
+    }
+
+    public String getBsProductLocation() {
+        return bsProductLocation;
+    }
+
+    public void setBsProductLocation(String bsProductLocation) {
+        this.bsProductLocation = bsProductLocation;
+    }
+
+    public String getBsProductDate() {
+        return bsProductDate;
+    }
+
+    public void setBsProductDate(String bsProductDate) {
+        this.bsProductDate = bsProductDate;
+    }
+}

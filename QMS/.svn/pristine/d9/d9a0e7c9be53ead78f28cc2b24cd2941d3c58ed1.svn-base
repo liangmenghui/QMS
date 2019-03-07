@@ -1,0 +1,222 @@
+//官方地址： https://github.com/mzabriskie/axios
+//文档地址：https://www.kancloud.cn/yunye/axios/234845
+
+import Vue from 'vue'
+import Qs from 'qs'
+import { router } from '../router/index';
+import iconv from 'iconv-lite';
+import store from '@/vuex/store'
+
+var mLoading = undefined;
+var mLoadingStack = [];
+
+//统一loading动画,只保留一个
+function endLoading() {
+    if (mLoadingStack.length > 0) mLoadingStack.pop();
+    if (mLoadingStack.length == 0) {
+        let loading = mLoading;
+        mLoading = undefined;
+        if (loading !== undefined) setTimeout(() => { loading() }, 300);
+    }
+}
+
+function startLoading() {
+    if (mLoading == undefined) {
+        mLoading = Vue.$Message.loading({
+            content: '加载中...',
+            duration: 20
+        });
+    }
+    mLoadingStack.push(1);
+}
+
+function handleError(res, failure) {
+    if (!res.data.result && res.data.data == 90000) {
+        Vue.$Modal.confirm({
+            title: "",
+            content: "登录已失效，是否重新登录？",
+            onOk: function () {
+                store.commit('logout', this);
+                store.commit('clearAllTags');
+                sessionStorage.removeItem('user');
+                Vue.http({ url: '/logout',method: 'POST',headers: {"X-Requested-With": "XMLHttpRequest"}});
+                router.push("/login");
+            },
+            onCancel: function () {
+
+            }
+        });
+        return true;
+    }
+    if (failure != undefined && typeof (failure) == "function") {
+        return failure(res);
+    }
+    if (!res.data.result) {
+        Vue.$Message.error({
+            content: res.data.msg,
+            duration: 5
+        });
+        return true;
+    }
+    return false;
+}
+
+export default {
+    get: function (url, data, loading, failure) {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            if (progress == true) startLoading();
+            Vue.http({
+                url: url,
+                params: data
+            }).then((res) => {
+                if (progress == true) endLoading();
+                if (handleError(res)) {
+                    reject(res.data);
+                    return;
+                }
+                resolve(res.data)
+            }, (res) => {
+                if (progress == true) endLoading();
+                reject(res.data);
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+            })
+        })
+    },
+    post: function (url, data, loading, failure, contentType = 'application/x-www-form-urlencoded') {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            if (progress == true) startLoading();
+            Vue.http({
+                url: url,
+                method: 'POST',
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    'Content-Type': contentType
+                },
+                data: Qs.stringify(data)
+            }).then((res) => {
+                if (progress == true) endLoading();
+                if (handleError(res, failure)) {
+                    reject(res.data);
+                    return;
+                }
+
+                resolve(res.data)
+            }, (res) => {
+                if (progress == true) endLoading();
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+                reject(res.data);
+            })
+        })
+    },
+    postdata: function (url, data, loading, failure, contentType = 'application/json;charset=UTF-8') {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            if (progress == true) startLoading();
+            Vue.http({
+                url: url,
+                method: 'POST',
+                headers: {
+                    'Content-Type': contentType
+                },
+                data: data
+            }).then((res) => {
+                if (progress == true) endLoading();
+
+                if (handleError(res, failure)) {
+                    reject(res.data);
+                    return;
+                }
+
+                resolve(res.data)
+            }, (res) => {
+                if (progress == true) endLoading();
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+                reject(res.data);
+            })
+        })
+    },
+    upload: function (url, data, loading, failure) {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            if (progress == true) startLoading();
+
+            Vue.http({
+                url: url,
+                method: 'POST',
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    'Content-Type': 'multipart/form-data'
+                },
+                data: data
+            }).then((res) => {
+                if (progress == true) endLoading();
+
+                if (handleError(res, failure)) {
+                    reject(res.data);
+                    return;
+                }
+
+                resolve(res.data)
+            }, (res) => {
+                if (progress == true) endLoading();
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+                reject(res.data);
+            })
+        })
+    },
+    download: function (url, data, loading) {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            if (progress == true) startLoading();
+
+            Vue.http({
+                url: url,
+                method: 'GET',
+                params: data,
+                responseType: "blob"
+            }).then((res) => {
+                if (progress == true) endLoading();
+                if (res.headers['content-type'] === 'application/json;charset=UTF-8') {
+                    let reader = new FileReader();
+                    reader.readAsText(res.data);
+                    reader.onload = function () {
+                        resolve(JSON.parse(this.result));
+                    }
+                //} else if (res.headers['content-type'] === 'application/octet-stream') {
+				}else{
+                    let blob = res.data;
+                    let filename = decodeURIComponent((res.headers['content-disposition'] || '').split('filename=')[1]);
+                    let link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.innerHTML = filename;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    //link.click();
+                    resolve(link)
+                    document.body.removeChild(link);
+                }
+            }, (res) => {
+                if (progress == true) endLoading();
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+                reject(res.data);
+            })
+        })
+    },
+}

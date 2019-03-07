@@ -1,0 +1,189 @@
+package com.unind.qms.web.approved.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.base.domain.admin.user.SysUser;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.util.Set;
+
+/**
+ * @author chen
+ */
+@Entity
+@Table(name = ApprovedTermsScore.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class ApprovedTermsScore extends BaseEntity {
+    private static final long serialVersionUID = 7151771262953316256L;
+    public static final String TABLE_NAME = "t_approved_terms_score";
+
+    /**
+     * 审核项目记录ID
+     */
+    @ApiModelProperty(name="bsItemsRecordId",required=true,value="审核项目记录ID")
+    @NotNull
+    @Column
+    protected Long bsItemsRecordId;
+
+    @ApiModelProperty(name="approvedItemsRecord",hidden=true,value="审核项目记录")
+    @ManyToOne
+    @JoinColumn(name = "bsItemsRecordId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected ApprovedItemsRecord approvedItemsRecord;
+
+    /**
+     * 审核条款ID
+     */
+    @ApiModelProperty(name="bsTermsId",required=true,value="审核条款ID")
+    @NotNull
+    @Column
+    protected Long bsTermsId;
+
+    @ApiModelProperty(name="approvedTerms",hidden=true,value="条款")
+    @ManyToOne
+    @JoinColumn(name = "bsTermsId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected ApprovedTerms approvedTerms;
+
+    /**
+     * 评分
+     */
+    @ApiModelProperty(name="bsScore",required=true,value="评分")
+    @NotNull
+    @Column
+    protected int bsScore;
+
+    /**
+     * 说明
+     */
+    @ApiModelProperty(name="bsDesc",value="说明")
+    @Column(length = 250)
+    protected String bsDesc;
+
+    /**
+     * 文件集合
+     */
+    @OneToMany(mappedBy = "approvedTermsScore")
+    protected Set<ApprovedTermsScoreFile> fileSet;
+
+    /**
+     * 创建人
+     */
+    @ApiModelProperty(name="pkCreatedBy",hidden=true,value="创建人")
+    @Column
+    protected Long pkCreatedBy;
+    /**
+     * 修改人
+     */
+    @ApiModelProperty(name="pkModifiedBy",hidden=true,value="修改人")
+    @Column
+    protected Long pkModifiedBy;
+
+    @ApiModelProperty(name="createdBy",hidden=true,value="创建人--user")
+    @ManyToOne
+    @JoinColumn(name = "pkCreatedBy", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser createdBy;
+
+    @ApiModelProperty(name="modifiedBy",hidden=true,value="修改人--user")
+    @ManyToOne
+    @JoinColumn(name = "pkModifiedBy", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser modifiedBy;
+
+    public Long getBsItemsRecordId() {
+        return bsItemsRecordId;
+    }
+
+    public void setBsItemsRecordId(Long bsItemsRecordId) {
+        this.bsItemsRecordId = bsItemsRecordId;
+    }
+
+    public ApprovedItemsRecord getApprovedItemsRecord() {
+        return approvedItemsRecord;
+    }
+
+    @JsonBackReference
+    public void setApprovedItemsRecord(ApprovedItemsRecord approvedItemsRecord) {
+        this.approvedItemsRecord = approvedItemsRecord;
+    }
+
+    public Long getBsTermsId() {
+        return bsTermsId;
+    }
+
+    public void setBsTermsId(Long bsTermsId) {
+        this.bsTermsId = bsTermsId;
+    }
+
+    public ApprovedTerms getApprovedTerms() {
+        return approvedTerms;
+    }
+
+    public void setApprovedTerms(ApprovedTerms approvedTerms) {
+        this.approvedTerms = approvedTerms;
+    }
+
+    public int getBsScore() {
+        return bsScore;
+    }
+
+    public void setBsScore(int bsScore) {
+        this.bsScore = bsScore;
+    }
+
+    public String getBsDesc() {
+        return bsDesc;
+    }
+
+    public void setBsDesc(String bsDesc) {
+        this.bsDesc = bsDesc;
+    }
+
+    public Set<ApprovedTermsScoreFile> getFileSet() {
+        return fileSet;
+    }
+
+    public void setFileSet(Set<ApprovedTermsScoreFile> fileSet) {
+        this.fileSet = fileSet;
+    }
+
+    public Long getPkCreatedBy() {
+        return pkCreatedBy;
+    }
+
+    public void setPkCreatedBy(Long pkCreatedBy) {
+        this.pkCreatedBy = pkCreatedBy;
+    }
+
+    public Long getPkModifiedBy() {
+        return pkModifiedBy;
+    }
+
+    public void setPkModifiedBy(Long pkModifiedBy) {
+        this.pkModifiedBy = pkModifiedBy;
+    }
+
+    public SysUser getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(SysUser createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public SysUser getModifiedBy() {
+        return modifiedBy;
+    }
+
+    public void setModifiedBy(SysUser modifiedBy) {
+        this.modifiedBy = modifiedBy;
+    }
+}

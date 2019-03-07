@@ -1,0 +1,210 @@
+//官方地址： https://github.com/mzabriskie/axios
+//文档地址：https://www.kancloud.cn/yunye/axios/234845
+
+import Vue from 'vue'
+import Qs from 'qs'
+import { router } from '../router/index';
+import iconv from 'iconv-lite';
+
+
+
+function handleError(res) {
+    if (!res.data.result && res.data.data == 90000) {
+        Vue.$Modal.confirm({
+            title: "",
+            content: "登录已失效，是否重新登录？",
+            onOk: function () {
+                router.push("/login");
+            },
+            onCancel: function () {
+
+            }
+        });
+        return true;
+    }
+    if (!res.data.result) {
+        console.log("============= ERROR =============");
+        console.log(res.config.url);
+        console.log(res.data.msg);
+        console.log("=================================");
+        Vue.$Message.error({
+            content: res.data.msg,
+            duration: 5
+        });
+        return true;
+    }
+    return false;
+}
+
+export default {
+    get: function (url, data, loading) {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            var message;
+            if (progress == true) {
+                message = Vue.$Message.loading({
+                    content: '请稍候...',
+                    duration: 10
+                })
+            }
+
+            Vue.http({
+                url: url,
+                params: data
+            }).then((res) => {
+                if (message !== undefined) setTimeout(() => { message() }, 300)
+                if (handleError(res)) return;
+
+                resolve(res.data)
+            }, (res) => {
+                if (message !== undefined) message();
+                reject(res.data);
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+            })
+        })
+    },
+    post: function (url, data, loading, contentType = 'application/x-www-form-urlencoded') {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            var message;
+            if (progress) {
+                message = Vue.$Message.loading({
+                    content: '请稍候...',
+                    duration: 10
+                })
+            }
+            Vue.http({
+                url: url,
+                method: 'POST',
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    'Content-Type': contentType
+                },
+                data: Qs.stringify(data)
+            }).then((res) => {
+                if (message !== undefined) setTimeout(() => { message() }, 300)
+
+                //TODO: 请求失败可在这进行统一处理
+                if (handleError(res)) return;
+
+                resolve(res.data)
+            }, (res) => {
+                if (message !== undefined) message();
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+                reject(res.data);
+            })
+        })
+    },
+    postdata: function (url, data, loading, contentType = 'application/json;charset=UTF-8') {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            var message;
+            if (progress) {
+                message = Vue.$Message.loading({
+                    content: '请稍候...',
+                    duration: 10
+                })
+            }
+            Vue.http({
+                url: url,
+                method: 'POST',
+                headers: {
+                    'Content-Type': contentType
+                },
+                data: data
+            }).then((res) => {
+                if (message !== undefined) setTimeout(() => { message() }, 300)
+
+                //TODO: 请求失败可在这进行统一处理
+
+                if (handleError(res)) return;
+
+                resolve(res.data)
+            }, (res) => {
+                if (message !== undefined) message();
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+                reject(res.data);
+            })
+        })
+    },
+    upload: function (url, data, loading) {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            var message;
+            if (progress) {
+                message = Vue.$Message.loading({
+                    content: '请稍候...',
+                    duration: 10
+                })
+            }
+
+            Vue.http({
+                url: url,
+                method: 'POST',
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    'Content-Type': 'multipart/form-data'
+                },
+                data: data
+            }).then((res) => {
+                if (message !== undefined) setTimeout(() => { message() }, 300);
+
+                if (handleError(res)) return;
+
+                resolve(res.data)
+            }, (res) => {
+                if (message !== undefined) message();
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+                reject(res.data);
+            })
+        })
+    },
+    download: function (url, data, loading) {
+        let progress = arguments[2] === undefined ? true : arguments[2];
+        return new Promise(function (resolve, reject) {
+            var message;
+            if (progress) {
+                message = Vue.$Message.loading({
+                    content: '请稍候...',
+                    duration: 10
+                })
+            }
+
+            Vue.http({
+                url: url,
+                method: 'GET',
+                params: data,
+                responseType: "blob"
+            }).then((res) => {
+                if (message !== undefined) setTimeout(() => { message() }, 300);
+
+                let blob = res.data;
+                let filename = decodeURIComponent((res.headers['content-disposition'] || '').split('filename=')[1]);
+                let result = document.createElement('a');
+                result.href = window.URL.createObjectURL(blob);
+                result.download = filename;
+                resolve(result)
+            }, (res) => {
+                if (message !== undefined) message();
+                Vue.$Message.error({
+                    content: res.message,
+                    duration: 5
+                });
+                reject(res.data);
+            })
+        })
+    },
+
+}

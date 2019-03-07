@@ -1,0 +1,297 @@
+<template>
+    <form>
+        <table class="formed" align="left" valign="left">
+            <tr>
+                <td colspan="8" align=center style="font-weight:700;height:30px">
+                    <p>JTI Logistics Co., Ltd.</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" align=center style="font-weight:700;height:30px">
+                    <p>货运委托书</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <P>下列各项内容必须用英文填写</P>
+                </td>
+                <td colspan="4">
+                    <nobr>
+                        公司编号NO.:<input v-model='form.bsCompanyNo'>
+                    </nobr>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <nobr>
+                        起运港:<input style='width:90%' v-model='form.bsLoading'>
+                    </nobr>
+                </td>
+                <td colspan="3">
+                    <nobr>
+                        目的港:<input style='width:92%' v-model='form.bsDestination'>
+                    </nobr>
+                </td>
+                <td colspan="2">
+                    <nobr>
+                        Via:<input v-model='form.bsVia'>
+                    </nobr>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <p>Port of Loading</p>
+                </td>
+                <td colspan="3">
+                    <p>Final Destination</p>
+                </td>
+                <td colspan="2">
+                    <p></p>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" align=center style="font-weight:600;width:25%">
+                    <p>标记及号码 </p>
+                    <p>Mark & numbers </p>
+                </td>
+                <td colspan="2" align=center style="font-weight:600">
+                    <p>件数 </p>
+                    <p>Pkgs </p>
+                </td>
+                <td colspan="2" align=center>
+                    <p>中英文货名 Descritpion of goods</p>
+                    <p>(In Chinese & English)</p>
+                </td>
+                <td colspan="1" align=center style="font-weight:600">
+                    <p>毛重</p>
+                    <p>G.W. (kgs)</p>
+                </td>
+                <td colspan="1" align=center style="font-weight:600">
+                    <P>体积(CBM)</P>
+                    <p>Dimension</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input v-model="form.bsMarks">
+                </td>
+                <td colspan="2">
+                    <input v-model="form.bsQuantity">
+                </td>
+                <td colspan="2">
+                    <input v-model="form.bsDescription">
+                </td>
+                <td colspan="1">
+                    <input v-model="bsWeight">
+                </td>
+                <td colspan="1">
+                    <input v-model='bsMeasurement'>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" align=center>
+                    <p>提 单 项 目 要 求 ITEMS IN BILL OF LADING</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <p>发货人 Shipper:</p>
+                </td>
+                <td colspan="2">
+                    <p>货好时间</p>
+                </td>
+                <td colspan="2">
+                    <textarea v-model='form.bsGoodsTime' rows="2"> </textarea>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <textarea rows="5" v-model='form.bsShipper'></textarea>
+                </td>
+                <td colspan="2">
+                    <p>出货条款</p>
+                    <br> <br> <br>
+                </td>
+                <td colspan="2">
+                    <textarea rows="2" v-model='form.bsGoodsT'> </textarea>
+                    <br> <br> <br>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <p>收货人 Consignee:</p>
+                </td>
+                <td colspan="4">
+                    <p>声明事项 Remark:</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <textarea rows="5" v-model='form.bsConsignee'></textarea>
+                </td>
+                <td colspan="4">
+                    <textarea rows="5" v-model='form.bsRemark'></textarea>
+                </td>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <p>通知人 Notify Party:</p>
+                </td>
+                <td colspan="2">
+                    <p></p>
+                </td>
+                <td colspan="2">
+
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <textarea rows="5" v-model='form.bsNotity'></textarea>
+                </td>
+                <td colspan="1">
+                    联系人 ATTN:<input v-model='form.bsContact'>
+                </td>
+                <td colspan="1">
+                    电话:<input v-model='form.bsTel'>
+                </td>
+                <td colspan="1">
+                    传真:<input v-model='form.bsFax'>
+                </td>
+                <td colspan="1">
+                    E-mail:<input v-model='form.bsEmail'>
+                </td>
+            </tr>
+        </table>
+    </form>
+</template>
+
+<script>
+import Vue from "vue";
+export default {
+  props: {
+    customer: {
+      type: String
+    },
+    agent: {
+      type: String
+    },
+    cabinets: {
+      type: Array
+    }
+  }, //props
+  data() {
+    return {
+      receipts: [{ name: "", desc: "请选择" }],
+      deliveries: [{ name: "", desc: "请选择" }],
+      contentData: "",
+      form: {
+        bsCompanyNo: "",
+        bsLoading: "",
+        bsDestination: "",
+        bsVia: "",
+        bsGoodsT: "",
+        bsGoodsTime: "",
+        bsRemark: "",
+        bsTel: "",
+        bsFax: "",
+        bsContact: "",
+        bsEmail: "",
+        bsShipper: "",
+        bsConsignee: "",
+        bsNotify: "",
+        bsLoading: "",
+        bsDestination: "",
+        bsMarks: "",
+        bsQuantity: "",
+        bsDescription: "",
+        bsWeight: "",
+        bsMeasurement: ""
+      }
+    };
+  }, //data
+  methods: {} //methods
+};
+</script>
+
+<style>
+table {
+  padding: 0;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0px;
+  width: 90%;
+}
+.td2 {
+  font-weight: bold;
+}
+.formed {
+  margin: 6px 10px;
+  border: 2px solid #000;
+  line-height: 1.6em;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+.formed tr {
+  padding: 0px;
+}
+.formed tr td {
+  border: 0;
+  border-right: 1px solid #c1c1c3;
+  border-bottom: 1px dashed #c1c1c3;
+  padding: 0px;
+  padding: 1px 1px;
+}
+
+.formed > tr:last-child > td {
+  border-bottom: 0;
+}
+.formed .sperator {
+  border-top: 2px solid #000;
+}
+
+.formed p > u {
+  margin: 3px 5px;
+  font-size: 12px;
+  display: inline;
+  line-height: 12px;
+  text-decoration: none;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.formed input,
+select {
+  width: 100%;
+  border: 1px solid #c1c1c3;
+}
+.formed input {
+  background-color: #f8f9fa;
+  width: 96%;
+}
+.formed label {
+  margin-left: 30px;
+  position: relative;
+}
+.formed input[type="checkbox"] {
+  margin-left: 2px;
+  position: absolute;
+  left: -20px;
+  bottom: 1px;
+}
+
+.formed textarea {
+  resize: none;
+  width: 100%;
+  border: 1px solid #c1c1c3;
+  background-color: #e1e2e3;
+}
+.f-blue {
+  background-color: #c0d9f1;
+}
+.f-white {
+  background-color: #fff;
+}
+.f-yellow {
+  background-color: #ff0;
+}
+</style>

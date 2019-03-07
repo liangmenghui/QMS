@@ -1,0 +1,108 @@
+<style scoped>
+        .expand-row{
+            margin-bottom: 16px;
+        }
+    </style>
+    <template>
+        <div >
+            <Row class="expand-row">
+                <!-- <Col span="8">
+                    <span class="expand-key">cdCustomerItemNum: </span>
+                    <span class="expand-value">{{ x.cdCustomerItemNum }}</span>
+                </Col>
+                <Col span="8">
+                    <span class="expand-key">cdQtyY: </span>
+                    <span class="expand-value">{{ x.cdQtyY }}</span>
+                </Col> 
+                <Col span="8">
+                    <span class="expand-key">bsDockName: </span>
+                    <span class="expand-value">{{ row.cdSendDate }}</span>
+                </Col>
+                -->
+            </Row>
+        
+           <Row>
+                <i-col span="24">
+                    <Table :data="datagrid.data.rows" border :columns="datagrid.columns" stripe style="height:auto;"></Table>
+                    <div style="margin: 10px;overflow: hidden">
+                    </div>
+                </i-col>
+           </Row>
+        </div>
+    </template>
+    <script>
+    export default {
+            props: {
+                row:Object
+            },
+            created(){
+                console.log('==============================>'+this.row);
+                this.formQuery.cdSendDate=this.row.cdSendDate;
+                this.formQuery.cdCabinetModel=this.row.cdCabinetModel;
+                this.formQuery.cdTransCode=this.row.cdTransCode;
+                this.getData();
+         },
+
+     data(){
+          return {
+              cdBoxNumSum:0,
+              cdSendNum:0,
+              formQuery:{
+              cdSendDate:'',
+              cdCabinetModel:'',
+              cdTransCode:''
+              },
+                    
+             datagrid:{
+                    queryParams:{
+                    page:1,
+                    rows:15,
+                    pkParent:-1
+                },
+            pagination: [15, 50, 100],
+            data: {rows:[],total:0,rows1:[]},
+            columns: [
+                    {
+                        title: '物料编号',
+                        key: 'cdItemNo'
+                    },  
+                    {
+                        title: '客户料号',
+                        key: 'cdCustomerItemNum'
+                    },
+                    {
+                        title: '柜子型号',
+                        key: 'cdCabinetModel'
+                    },
+                    {
+                        title:'柜子装的物料的托数',
+                        key: 'cdBoxNum'
+                    },
+                    {
+                        title:'柜子装的物料的数量',
+                        key: 'cdSendNum'
+                    },            
+                ]
+             }   
+            }
+         },
+
+        methods:{
+            //获取列表
+         getData(){
+                this.api.lmp.preplan.selectby(this.formQuery).then((res) =>{
+                if(res.result){
+                    this.$Message.success('查询成功');
+                    for(let i=0;i<res.data.rows.length;i++){
+                        this.cdBoxNumSum+=Number(res.data.rows[i].cdBoxNum);
+                        this.cdSendNum+=Number(res.data.rows[i].cdSendNum);              
+                    }
+                    res.data.rows.push({'cdItemNo':'总数','cdCustomerItemNum':'--','cdCabinetModel':'--','cdBoxNum':this.cdBoxNumSum,'cdSendNum':this.cdSendNum});
+                    this.datagrid.data.rows = res.data.rows.slice(this.start,this.end);
+                    this.datagrid.data.total=res.data.total;
+                  }
+               })
+             }
+           }
+        };
+    </script>

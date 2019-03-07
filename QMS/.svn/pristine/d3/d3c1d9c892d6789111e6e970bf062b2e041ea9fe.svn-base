@@ -1,0 +1,16 @@
+import httpService from '@/libs/service'
+
+export default {
+    getListByFolder: function (folderId, data) {
+        return httpService.get('/fs/doc/release/getList/' + folderId, data);
+    },
+    download: function (id) {
+        window.open('/admin/fs/doc/release/download/' + id)
+        //return httpService.get("/fs/doc/release/download/" + id, {});
+
+    },
+    downloadOrigin: function (id) {
+        window.open('/admin/fs/doc/release/download-origin/' + id)
+        //return httpService.get("/fs/doc/release/download-origin/" + id, {});
+    }
+}

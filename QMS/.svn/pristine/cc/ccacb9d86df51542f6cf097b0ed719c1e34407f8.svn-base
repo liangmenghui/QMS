@@ -1,0 +1,12 @@
+import httpService from '@/libs/service'
+
+export default {
+   
+    delete: function (data) {
+        return httpService.post('/shipmentInspectFile/delete', data)
+    },
+    add: function (data) {
+        return httpService.upload('/shipmentInspectFile/add', data)
+    }
+}
+

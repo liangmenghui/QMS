@@ -1,0 +1,142 @@
+package com.unind.qms.web.supplier.service.internal;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.fs.dao.file.FsFileDao;
+import com.unind.fs.domain.file.FsFile;
+import com.unind.qms.web.supplier.dao.CustomerApprovedFileDao;
+import com.unind.qms.web.supplier.dao.CustomerApprovedRecordDao;
+import com.unind.qms.web.supplier.entity.CustomerApprovedFile;
+import com.unind.qms.web.supplier.entity.CustomerApprovedRecord;
+import com.unind.qms.web.supplier.service.CustomerApprovedRecordService;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * 客户审核记录
+ * @author Shen
+ */
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class CustomerApprovedRecordImpl extends BaseOprService implements CustomerApprovedRecordService {
+
+    @Autowired
+    private CustomerApprovedRecordDao customerApprovedRecordDao;
+    @Autowired
+    private CustomerApprovedFileDao customerApprovedFileDao;
+    @Autowired
+    private FsFileDao fsFileDao;
+
+    @Override
+    @Transactional
+    public ApiResponseResult add(CustomerApprovedRecord customerApprovedRecord, String fileIdStr) throws BusinessException {
+        if(customerApprovedRecord == null || customerApprovedRecord.getBsSuppId() == null){
+            return ApiResponseResult.failure("供应商ID不能为空！");
+        }
+        //1.添加客户审核记录信息
+        customerApprovedRecord.setBsCreatedTime(new Date());
+        customerApprovedRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+        customerApprovedRecordDao.save(customerApprovedRecord);
+//        //2.添加客户审核关联文件
+//        if(StringUtils.isNotEmpty(fileIdStr)){
+//            String[] fileIdArr = fileIdStr.split(",");
+//            if(fileIdArr.length > 0){
+//                for(String fileId : fileIdArr){
+//                    CustomerApprovedFile customerApprovedFile = new CustomerApprovedFile();
+//                    customerApprovedFile.setBsCustomerApprovedId(customerApprovedRecord.getId());
+//                    customerApprovedFile.setFsFileId(Long.valueOf(fileId));
+//                    customerApprovedFile.setBsCreatedTime(new Date());
+//                    customerApprovedFileDao.save(customerApprovedFile);
+//                }
+//            }
+//        }
+
+        return ApiResponseResult.success("添加成功！").data(customerApprovedRecord);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult edit(CustomerApprovedRecord customerApprovedRecord) throws BusinessException {
+        if(customerApprovedRecord == null || customerApprovedRecord.getId() == null){
+            return ApiResponseResult.failure("记录ID为必填项！");
+        }
+        CustomerApprovedRecord o = customerApprovedRecordDao.findOne(customerApprovedRecord.getId());
+        if(o == null){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+
+        o.setBsResult(customerApprovedRecord.getBsResult());
+        o.setBsDesc(customerApprovedRecord.getBsDesc());
+        o.setBsCusName(customerApprovedRecord.getBsCusName());
+        o.setBsResponsible(customerApprovedRecord.getBsResponsible());
+        o.setBsModifiedTime(new Date());
+        o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+        customerApprovedRecordDao.save(o);
+        return ApiResponseResult.success("修改成功！").data(o);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        CustomerApprovedRecord o = customerApprovedRecordDao.findOne(id);
+        if(o == null){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        if(o.getId() <= 0){
+            return ApiResponseResult.failure("没有操作权限！");
+        }
+        //1.删除记录
+        o.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+        customerApprovedRecordDao.save(o);
+
+        //2.删除关联表信息
+        List<CustomerApprovedFile> customerApprovedFileList = customerApprovedFileDao.findByBsIsDelAndAndBsCustomerApprovedId(BooleanStateEnum.FALSE.intValue(), o.getId());
+        if(customerApprovedFileList.size() > 0){
+            for(int i = 0; i < customerApprovedFileList.size(); i++){
+                CustomerApprovedFile customerApprovedFile = customerApprovedFileList.get(i);
+                if(customerApprovedFile != null){
+                    customerApprovedFileDao.delete(customerApprovedFile);
+
+                    //3.删除文件表信息
+                    FsFile fsFile = fsFileDao.findOne(customerApprovedFile.getFsFileId());
+                    if(fsFile != null){
+                        fsFile.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+                        fsFileDao.save(fsFile);
+                    }
+                }
+            }
+        }
+
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult getlist(Long id, Long bsSuppId, PageRequest pageRequest) throws BusinessException {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        if(id != null){
+            filters.add(new SearchFilter("id", SearchFilter.Operator.EQ, id));
+        }
+        if(bsSuppId != null){
+            filters.add(new SearchFilter("bsSuppId", SearchFilter.Operator.EQ, bsSuppId));
+        }
+        Specifications<CustomerApprovedRecord> spec = Specifications.where(super.and(filters, CustomerApprovedRecord.class));
+        Page<CustomerApprovedRecord> page = customerApprovedRecordDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+}

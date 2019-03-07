@@ -1,0 +1,19 @@
+package com.unind.qms.web.approved.dao;
+
+import com.unind.qms.web.approved.entity.ApprovedFlow;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+/**
+ * 
+ * @author chen
+ *
+ */
+public interface ApprovedFlowDao extends CrudRepository<ApprovedFlow, Long>, JpaSpecificationExecutor<ApprovedFlow> {
+
+	public int countByBsName(String bsName);
+
+	public List<ApprovedFlow> findByBsName(String bsName);
+}

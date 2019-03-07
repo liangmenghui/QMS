@@ -1,0 +1,63 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-02
+    	描述：试订单检验报告
+    -->
+	<div style="height: 1000px;">
+		<div style="height: 60px;margin-top: 20px;font-size: 16px;"><center><h4>试订单检验报告</h4></center></div>
+		<Col :md="6"><div style="width: 18%;height: 1px;"></div></Col>
+		<Col :md="16">		
+		<div style="margin-left: 10%;">
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 80px;">产品编号：</div>
+				<div style="float: left;"><el-input v-model="input1" style="width: 300px" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 80px;">产品名称：</div>
+				<div style="float: left;"><el-input v-model="input2" style="width: 300px" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 80px;">产品类型：</div>
+				<div style="float: left;"><el-input v-model="input3" style="width: 300px" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 80px;">产品型号：</div>
+				<div style="float: left;"><el-input v-model="input4" style="width: 300px" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 80px;">供应商：</div>
+				<div style="float: left;"><el-input v-model="input5" style="width: 300px" placeholder="请输入内容"></el-input></div>
+			</div>
+		</div>
+		<div style="margin-top: 50px;">
+			<h6 style="font-size: 15px;">检验情况</h6>
+			<el-input
+  			type="textarea"
+  			autosize
+  			placeholder="请输入内容"
+  			v-model="textarea1"
+  			style="width: 70%;">
+			</el-input>
+		</div>	
+		</Col>	
+	</div>
+</template>
+
+<script>
+	export default {
+  data() {
+    return {
+      input1: '',
+      input2: '',
+      input3: '',
+      input4: '',
+      input5: '',
+      textarea1: '',
+    }
+  }
+}
+</script>
+
+<style>
+</style>

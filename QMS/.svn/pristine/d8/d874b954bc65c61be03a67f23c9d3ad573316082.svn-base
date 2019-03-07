@@ -1,0 +1,209 @@
+package com.unind.qms.web.risk.service.internal;
+
+import com.fasterxml.jackson.databind.ser.Serializers;
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.qms.enumeration.BasicEnumConstants;
+import com.unind.qms.web.basic.entity.FeedbackInfo;
+import com.unind.qms.web.product.dao.ProductExtraDao;
+import com.unind.qms.web.product.dao.ProductInfoDao;
+import com.unind.qms.web.product.entity.ProductExtra;
+import com.unind.qms.web.product.entity.ProductInfo;
+import com.unind.qms.web.risk.dao.ProductRiskDao;
+import com.unind.qms.web.risk.dao.RiskLevelRecordDao;
+import com.unind.qms.web.risk.dao.SupplierRiskDao;
+import com.unind.qms.web.risk.entity.ProductRisk;
+import com.unind.qms.web.risk.entity.RiskLevelRecord;
+import com.unind.qms.web.risk.entity.SupplierRisk;
+import com.unind.qms.web.risk.service.RiskLevelRecordService;
+import com.unind.qms.web.supplier.dao.SupplierInfoDao;
+import com.unind.qms.web.supplier.entity.SupplierInfo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * 风险管理记录
+ * @author Shen
+ */
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class RiskLevelRecordImpl extends BaseOprService implements RiskLevelRecordService {
+
+    @Autowired
+    private RiskLevelRecordDao riskLevelRecordDao;
+    @Autowired
+    private ProductInfoDao productInfoDao;
+    @Autowired
+    private SupplierInfoDao supplierInfoDao;
+    @Autowired
+    private ProductRiskDao productRiskDao;
+    @Autowired
+    private SupplierRiskDao supplierRiskDao;
+    @Autowired
+    private ProductExtraDao productExtraDao;
+
+    @Override
+    @Transactional
+    public ApiResponseResult add(RiskLevelRecord riskLevelRecord) throws BusinessException {
+        if(null == riskLevelRecord.getBsPrId() && null == riskLevelRecord.getBsSuppId()){
+            return ApiResponseResult.failure("产品ID与供应商ID不能同时为空");
+        }
+        if(null == riskLevelRecord.getBsApplicantId()){
+            return ApiResponseResult.failure("申请人ID为必填项");
+        }
+        if(riskLevelRecord.getBsType() != BasicEnumConstants.TODO_SUPP_RISK && riskLevelRecord.getBsType() != BasicEnumConstants.TODO_PR_RISK){
+            return ApiResponseResult.failure("类型必须为供应商风险管理或者产品风险管理");
+        }
+        //添加批准人
+        riskLevelRecord.setBsApproverId(SessionContextUtils.getCurrentUser().getId());
+        //添加创建时间
+        riskLevelRecord.setBsCreatedTime(new Date());
+        riskLevelRecordDao.save(riskLevelRecord);
+        return ApiResponseResult.success("新增成功！").data(riskLevelRecord);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult edit(RiskLevelRecord riskLevelRecord) throws BusinessException {
+        if(null == riskLevelRecord.getId()){
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        if(null == riskLevelRecord.getBsPrId() && null == riskLevelRecord.getBsSuppId()){
+            return ApiResponseResult.failure("产品ID与供应商ID不能同时为空");
+        }
+        if(null == riskLevelRecord.getBsApplicantId() && null == riskLevelRecord.getBsApproverId()){
+            return ApiResponseResult.failure("申请人ID与批准人ID为必填项");
+        }
+        if(riskLevelRecord.getBsType() != BasicEnumConstants.TODO_SUPP_RISK || riskLevelRecord.getBsType() != BasicEnumConstants.TODO_PR_RISK){
+            return ApiResponseResult.failure("类型必须为供应商风险管理或者产品风险管理");
+        }
+        RiskLevelRecord o = riskLevelRecordDao.findOne(riskLevelRecord.getId());
+        if(null == o){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        o.setBsAdvice(riskLevelRecord.getBsAdvice());
+        riskLevelRecordDao.save(o);
+        return ApiResponseResult.success("修改成功！").data(o);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        if(null == id){
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        RiskLevelRecord riskLevelRecord = riskLevelRecordDao.findOne(id);
+        if(null == riskLevelRecord){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        riskLevelRecord.setBsIsDel((BooleanStateEnum.TRUE.intValue()));
+        riskLevelRecordDao.save(riskLevelRecord);
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    /**
+     * 获取风险管理记录
+     * @param bsType 类型
+     * @param bsPrSuppId 产品或者供应商ID
+     * @param pageRequest 分页
+     * @return
+     * @throws BusinessException
+     */
+    @Override
+    @Transactional
+    public ApiResponseResult getlist(Integer bsType, Long bsPrSuppId, PageRequest pageRequest) throws BusinessException {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+        if(bsType != null){
+            filters.add(new SearchFilter("bsType", SearchFilter.Operator.EQ, bsType));
+            if(bsPrSuppId != null && bsType == BasicEnumConstants.TODO_SUPP_RISK){
+                filters.add(new SearchFilter("bsSuppId", SearchFilter.Operator.EQ,bsPrSuppId));
+            }
+            if(bsPrSuppId != null && bsType == BasicEnumConstants.TODO_PR_RISK){
+                filters.add(new SearchFilter("bsPrId", SearchFilter.Operator.EQ,bsPrSuppId));
+            }
+        }
+        Specification<RiskLevelRecord> spec = Specifications.where(super.and(filters, RiskLevelRecord.class));
+        Page<RiskLevelRecord> page = riskLevelRecordDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+
+    /**
+     * 客诉相关的供应商和产品直升高风险
+     * @param feedbackInfo
+     * @return
+     * @throws Exception
+     */
+    @Override
+    @Transactional
+    public ApiResponseResult updateRisk(FeedbackInfo feedbackInfo) throws Exception{
+        //1.修改供应商风险信息表
+        List<SearchFilter> filtersSupp = new ArrayList<SearchFilter>();
+        filtersSupp.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        filtersSupp.add(new SearchFilter("bsSuppId", SearchFilter.Operator.EQ, feedbackInfo.getBsSuppId()));
+        Specifications<SupplierRisk> specSupp = Specifications.where(super.and(filtersSupp, SupplierRisk.class));
+        SupplierRisk supplierRisk = supplierRiskDao.findOne(specSupp);
+        if(supplierRisk != null){
+            supplierRisk.setBsFeedbackType(5);
+            supplierRisk.setBsRiskLevel(5);
+            supplierRisk.setBsModifiedTime(new Date());
+            supplierRisk.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+            supplierRiskDao.save(supplierRisk);
+            //2.修改供应商信息表
+            SupplierInfo supplierInfo = supplierInfoDao.findOne(feedbackInfo.getBsSuppId());
+            if(supplierInfo != null){
+                supplierInfo.setBsRiskLevelSys(5);
+                supplierInfo.setBsRiskTimeSys(new Date());
+                supplierInfoDao.save(supplierInfo);
+            }
+        }
+        //3.修改产品风险信息表
+        if(feedbackInfo.getBsPrId() != null){
+            List<SearchFilter> filtersPro = new ArrayList<SearchFilter>();
+            filtersPro.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+            filtersPro.add(new SearchFilter("bsPrId", SearchFilter.Operator.EQ, feedbackInfo.getBsPrId()));
+            Specifications<ProductRisk> specPro = Specifications.where(super.and(filtersPro, ProductRisk.class));
+            ProductRisk productRisk = productRiskDao.findOne(specPro);
+            if(productRisk != null){
+                productRisk.setBsFeedbackType(5);
+                productRisk.setBsRiskLevel(5);
+                productRisk.setBsModifiedTime(new Date());
+                productRisk.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+                productRiskDao.save(productRisk);
+                //4.修改产品信息详情表
+                List<ProductExtra> productExtraList = productExtraDao.findAllByBsIsDelAndBsPrId(BooleanStateEnum.FALSE.intValue(), feedbackInfo.getBsPrId());
+                if(productExtraList.size() > 0){
+                    ProductExtra productExtra = productExtraList.get(0);
+                    if(productExtra != null){
+                        productExtra.setBsRiskLevelSys(5);
+                        productExtra.setBsRiskTimeSys(new Date());
+                        productExtraDao.save(productExtra);
+                    }
+                }
+//                ProductInfo productInfo = productInfoDao.findOne(feedbackInfo.getBsPrId());
+//                if(productInfo != null){
+//                    productInfo.setBsRiskLevelSys(5);
+//                    productInfo.setBsRiskTimeSys(new Date());
+//                    productInfoDao.save(productInfo);
+//                }
+            }
+        }
+        return ApiResponseResult.success("客诉相关的供应商和产品直升高风险完成！");
+    }
+}

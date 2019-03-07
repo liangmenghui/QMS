@@ -1,0 +1,164 @@
+package com.unind.qms.web.samplePlan.service.internal;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.qms.web.samplePlan.dao.SampleLevelCodeNumDao;
+import com.unind.qms.web.samplePlan.dao.SampleLevelRiskDao;
+import com.unind.qms.web.samplePlan.dao.SampleLevelTotalCodeDao;
+import com.unind.qms.web.samplePlan.dao.SampleTotalDao;
+import com.unind.qms.web.samplePlan.entity.SampleLevelCodeNum;
+import com.unind.qms.web.samplePlan.entity.SampleLevelRisk;
+import com.unind.qms.web.samplePlan.entity.SampleLevelTotalCode;
+import com.unind.qms.web.samplePlan.entity.SampleTotal;
+import com.unind.qms.web.samplePlan.service.SampleLevelCodeNumService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 检验水平——样本代字——抽样数关系
+ */
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class SampleLevelCodeNumImpl extends BaseOprService implements SampleLevelCodeNumService {
+    @Autowired
+    private SampleLevelCodeNumDao sampleLevelCodeNumDao;
+    @Autowired
+    private SampleLevelRiskDao sampleLevelRiskDao;
+    @Autowired
+    private SampleTotalDao sampleTotalDao;
+    @Autowired
+    private SampleLevelTotalCodeDao sampleLevelTotalCodeDao;
+
+    @Override
+    @Transactional
+    public ApiResponseResult add(SampleLevelCodeNum sampleLevelCodeNum) throws BusinessException {
+        if(sampleLevelCodeNum == null){
+            return ApiResponseResult.failure("不能为空");
+        }
+        sampleLevelCodeNum.setBsCreatedTime(new Date());
+        sampleLevelCodeNumDao.save(sampleLevelCodeNum);
+        return ApiResponseResult.success("新增成功！").data(sampleLevelCodeNum);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult edit(SampleLevelCodeNum sampleLevelCodeNum) throws BusinessException {
+        if(sampleLevelCodeNum == null || sampleLevelCodeNum.getId() == null){
+            return ApiResponseResult.failure("记录ID为必填项！");
+        }
+        SampleLevelCodeNum o = sampleLevelCodeNumDao.findOne(sampleLevelCodeNum.getId());
+        if(o == null){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+
+        o.setBsCodeId(sampleLevelCodeNum.getBsCodeId());
+        o.setBsVerificationLevelId(sampleLevelCodeNum.getBsVerificationLevelId());
+        o.setBsNum(sampleLevelCodeNum.getBsNum());
+        o.setBsModifiedTime(new Date());
+        sampleLevelCodeNumDao.save(sampleLevelCodeNum);
+        return ApiResponseResult.success("修改成功！").data(o);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        SampleLevelCodeNum o = sampleLevelCodeNumDao.findOne(id);
+        if(o == null){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        o.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+        sampleLevelCodeNumDao.save(o);
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult getlist(Long bsLevelId, Long bsCodeId, PageRequest pageRequest) throws BusinessException {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+        if(bsLevelId != null){
+            filters.add(new SearchFilter("bsVerificationLevelId", SearchFilter.Operator.EQ, bsLevelId));
+        }
+        if(bsCodeId != null){
+            filters.add(new SearchFilter("bsCodeId", SearchFilter.Operator.EQ, bsCodeId));
+        }
+        Specification<SampleLevelCodeNum> spec = Specifications.where(super.and(filters, SampleLevelCodeNum.class));
+        Page<SampleLevelCodeNum> page = sampleLevelCodeNumDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+
+    /**
+     * 根据风险等级和批量获取抽样数
+     * @param bsRiskLevel
+     * @param bsTotal
+     * @return
+     * @throws BusinessException
+     */
+    @Override
+    @Transactional
+    public ApiResponseResult getSampleNumber(Integer bsRiskLevel, Integer bsTotal) throws BusinessException{
+        if(bsRiskLevel == null){
+            return ApiResponseResult.failure("风险等级不能为空！");
+        }
+        if(bsTotal == null){
+            return ApiResponseResult.failure("批量不能为空！");
+        }
+        Long levelId = null;  //检验水平ID
+        Long totalId = null;  //批量ID
+        Long codeId = null;  //样本代字ID
+        Integer number = 0;  //抽样数
+        SampleLevelCodeNum sampleLevelCodeNum = new SampleLevelCodeNum();
+
+        //1.获取检验水平
+        List<SampleLevelRisk> sampleLevelRiskList = sampleLevelRiskDao.findByBsIsDelAndAndBsRiskLevel(BooleanStateEnum.FALSE.intValue(), bsRiskLevel);
+        if(sampleLevelRiskList.size() > 0){
+            levelId = sampleLevelRiskList.get(0).getBsVerificationLevelId();
+        }
+
+        //2.获取批量范围
+        List<SampleTotal> sampleTotalList = sampleTotalDao.findByBsIsDel(BooleanStateEnum.FALSE.intValue());
+        if(sampleTotalList.size() > 0){
+            List<SampleTotal> list = new ArrayList<SampleTotal>();
+            if(bsTotal >= 30721){
+                list =  sampleTotalList.stream().filter(s -> s.getBsLowerLimit() == 30721).collect(Collectors.toList());
+            }
+            if(bsTotal >= 2 && bsTotal <30721){
+                list = sampleTotalList.stream().filter(s -> s.getBsLowerLimit() <= bsTotal && s.getBsUpperLimit() >= bsTotal).collect(Collectors.toList());
+            }
+            if(list.size() > 0){
+                totalId = list.get(0).getId();
+            }
+        }
+
+        //3.获取样本代字
+        List<SampleLevelTotalCode> sampleLevelTotalCodeList = sampleLevelTotalCodeDao.findByBsIsDelAndBsVerificationLevelIdAndBsTotalId(BooleanStateEnum.FALSE.intValue(), levelId, totalId);
+        if(sampleLevelTotalCodeList.size() > 0){
+            codeId = sampleLevelTotalCodeList.get(0).getBsCodeId();
+        }
+
+        //4.获取抽样数
+        List<SampleLevelCodeNum> sampleLevelCodeNumList = sampleLevelCodeNumDao.findByBsIsDelAndBsVerificationLevelIdAndBsCodeId(BooleanStateEnum.FALSE.intValue(), levelId, codeId);
+        if(sampleLevelCodeNumList.size() > 0){
+            sampleLevelCodeNum = sampleLevelCodeNumList.get(0);
+        }else{
+            return ApiResponseResult.failure("获取抽样数失败！");
+        }
+
+        return ApiResponseResult.success("获取抽样数成功！").data(sampleLevelCodeNum);
+    }
+}

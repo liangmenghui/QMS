@@ -1,0 +1,151 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-02
+    	描述：新建审核
+    -->
+	<div class="layout-content" style="padding:15px;">
+        <div class="createtitle"><span class="el-icon-circle-plus-outline"></span>
+           {{$t('product.NewAudit')}}
+        </div>
+		<div class="ivu-col-span-10" style="margin:4%">			
+            <el-form ref="form" :model="form" label-width="100px">
+                    <el-form-item :label="bsCodeLabel" prop="bsSuppCode">
+                        <el-input readonly style="width:380px" v-model="bsCode"></el-input>
+                    </el-form-item>
+                <el-form-item :label="bsNameLabel" prop="bsSuppChieseName">
+                    <el-input readonly style="width:380px" v-model="bsName"></el-input>
+                </el-form-item>
+                <el-form-item :label="$t('approved.flow')">			    
+                    <el-select v-model="selectedFlow" value-key="id" :placeholder="$t('choose')" style="width:380px">
+                        <el-option v-for="item in flowdata" :key="item.id" :label="item.bsName" :value="item">
+                        <span style="float: left">{{ item.bsName }}</span>
+                        <span style="float: right; color: #8492a6; font-size: 13px">{{ item.approvedBy.bsName }}</span>
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                <i-button type="success" long class="CreateBtn" icon="plus-round"  @click="createApporvedRecord()">{{$t('approved.create')}}</i-button>
+            </el-form> 
+        </div>	 
+    </div>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+            form:{
+            },
+            bsCode:"",
+            bsName:"",
+            selectedFlow:{},
+            flowdata:[], 
+            bsCodeLabel:"",
+            bsNameLabel:"",
+            params:{},
+            todoInfo:{}
+
+            
+        }
+    },
+    created(){
+
+        this.todoInfo=this.$store.getters.getTodoData;
+      
+        var params = this.$route.query;
+        this.params = params;
+        if(params.supplier != undefined) {
+            this.form.bsSuppId = params.supplier;
+            this.bsCodeLabel = this.$t('supplier.code');
+            this.bsNameLabel = this.$t('supplier.name');
+        }
+        else if(params.product != undefined) {
+            this.form.bsPrId = params.product;
+            this.bsCodeLabel = this.$t('product.code');
+            this.bsNameLabel = this.$t('product.name');
+        }
+        this.getData();
+        this.getInfo();
+    },
+    methods: {         
+        getData(type){  
+            var form = this.form;
+            this.api.ApprovedFlow.getlist().then((res) => { 
+            
+                this.flowdata = [];
+                for(var i = 0;i<res.data.rows.length;i++){
+                    var row = res.data.rows[i];
+                    if(form.bsPrId != undefined && row.bsType <= 20){
+                        //成品检验需要有对应的订单才能够创建
+                     /*   if(row.bsType == 12 && this.params.bsOrderId==undefined) continue;
+                        this.flowdata.push(row);*/
+
+                        //成品检验
+                        if(this.todoInfo.bsExtend!=undefined&&this.todoInfo.bsType==25){
+                            if(row.bsType == 12){
+                                this.flowdata.push(row);
+                            }
+                        }else{
+                            this.flowdata.push(row);
+                        }
+                    }
+                    if(form.bsSuppId != undefined && row.bsType > 20)
+                        this.flowdata.push(row);
+                }
+            });
+        },
+        getInfo(){
+            if(this.form.bsPrId != undefined) {
+                this.api.productinfo.getlist({id:this.form.bsPrId}).then((res) => {
+                    this.bsCode = res.data.rows[0].bsPrCode;
+                    this.bsName = res.data.rows[0].bsPrName;
+                });
+            }
+            if(this.form.bsSuppId != undefined) {
+                this.api.supplierinfo.getlist({id:this.form.bsSuppId}).then((res) => {
+                    this.bsCode = res.data.rows[0].bsSuppChieseName;
+                    this.bsName = res.data.rows[0].bsSuppCode;
+                });
+            }
+        },
+        createApporvedRecord(){
+            this.form.bsFlowId = this.selectedFlow.id;
+            this.form.bsType = this.selectedFlow.bsType;         
+
+            this.api.approvedFlowRecord.add(this.form).then((res) => {   
+            
+                this.$router.push({path: "approved",query:{bsFlowRecordId:res.data.id}});
+                this.$Message.info(this.$t('approved.create-success'));
+
+                 if(this.todoInfo.bsType==25){
+                     var params={
+                        bsOrderId:this.todoInfo.bsExtend,
+                        bsFlowRecordId:res.data.id
+                     }                   
+                 this.api.shipmentInspect.add(params).then((res) => {   
+                }); 
+            }
+        });
+
+            
+        }, 
+    }
+}      
+</script>
+
+<style>
+hr{
+  border: none;
+  height: 1px;
+  background-color: #DDDDDD;
+}
+.createtitle{
+    padding-left:5%;height: 50px;font-size: 16px;font-family: "Microsoft YaHei";
+    background: #f2f7fb;line-height: 50px;
+}
+.createtitle .el-icon-circle-plus-outline{color:#2196f3!important; font-size: 16px;}
+.CreateBtn{margin-left: 100px;margin-top:80px; max-width: 368px;}
+.layout-content{min-height: 500px; background: #fff}
+
+
+</style>

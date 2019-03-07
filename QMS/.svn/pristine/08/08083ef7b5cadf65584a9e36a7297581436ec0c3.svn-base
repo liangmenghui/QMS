@@ -1,0 +1,1261 @@
+package com.unind.qms.provider;
+
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BusinessException;
+import com.unind.qms.enumeration.BasicEnumConstants;
+import com.unind.qms.web.basic.dao.FeedbackHandlerDao;
+import com.unind.qms.web.basic.dao.FeedbackInfoDao;
+import com.unind.qms.web.basic.entity.FeedbackHandler;
+import com.unind.qms.web.basic.entity.FeedbackInfo;
+import com.unind.qms.web.supplier.dao.SupplierInfoDao;
+import com.unind.qms.web.supplier.entity.SupplierInfo;
+import org.apache.poi.POIXMLDocumentPart;
+import org.apache.poi.hssf.usermodel.DVConstraint;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.ss.util.RegionUtil;
+import org.apache.poi.xssf.usermodel.*;
+import org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing.CTMarker;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTDataValidation;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.impl.CTDataValidationsImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+@Component
+public class ExcelFeedbackService {
+    @Autowired
+    private FeedbackInfoDao feedbackInfoDao;
+    @Autowired
+    private FeedbackHandlerDao feedbackHandlerDao;
+    @Autowired
+    private SupplierInfoDao supplierInfoDao;
+
+    //导出客诉报告
+    public void exportFeedbackReport(Long bsFeedbackId, HttpServletResponse response) throws BusinessException{
+        try {
+            String templatePath = "E:" + File.separator + "Report of feedback.xlsx";
+            String importPath = "E:" + File.separator + "Feedback report.xlsx";
+            InputStream inputStream = new FileInputStream(templatePath);
+            //OutputStream outputStream = new FileOutputStream(importPath);
+            OutputStream outputStream = response.getOutputStream();
+
+            XSSFWorkbook workbook = null;   //创建一个工作簿
+            workbook = new XSSFWorkbook(inputStream);
+            Sheet sheet = workbook.getSheetAt(0);
+            Sheet toSheet = workbook.createSheet("8D Worksheet");  //创建另外一个sheet
+
+            CreationHelper creationHelper = workbook.getCreationHelper();
+            int addRows = 0;  //增加的行数
+
+            //复制Excel模板 开始
+            int startRow = 0;
+            int endRow = 15;
+            int position = 0;
+            //获取sheet所有单元格样式
+            List<CellRangeAddress> oldRanges = new ArrayList<>();
+            sheet.getNumMergedRegions();
+            for(int i = 0; i < sheet.getNumMergedRegions(); i ++){
+                oldRanges.add(sheet.getMergedRegion(i));
+            }
+            //拷贝合并的单元格
+            for(CellRangeAddress oldRange : oldRanges){
+                CellRangeAddress newRange = new CellRangeAddress(oldRange.getFirstRow(), oldRange.getLastRow(),
+                        oldRange.getFirstColumn(), oldRange.getLastColumn());
+                if(oldRange.getFirstRow() >= startRow && oldRange.getLastRow() <= endRow){
+                    int targetRowFrom = oldRange.getFirstRow() - startRow + position;
+                    int targetRowTo = oldRange.getLastRow() - startRow + position;
+                    oldRange.setFirstRow(targetRowFrom);
+                    oldRange.setLastRow(targetRowTo);
+                    toSheet.addMergedRegion(oldRange);
+                    //sheet.addMergedRegion(newRange);
+                }
+            }
+            //设置列宽
+            for(int i = startRow; i <= endRow; i++){
+                XSSFRow fromRow =  ((XSSFSheet) sheet).getRow(i);
+                if (fromRow != null) {
+                    for (int j = fromRow.getLastCellNum(); j >= fromRow.getFirstCellNum(); j--) {
+                        toSheet.setColumnWidth(j, sheet.getColumnWidth(j));
+                        toSheet.setColumnHidden(j, false);
+                    }
+                    break;
+                }
+            }
+            //拷贝行并填充数据
+            for(int i = startRow; i <= endRow; i++){
+                XSSFRow fromRow = (XSSFRow) sheet.getRow(i);
+                if (fromRow == null) {
+                    continue;
+                }
+                XSSFRow toRow = ((XSSFSheet) toSheet).createRow(i - startRow + position);
+                toRow.setHeight(fromRow.getHeight());
+                for(int j = fromRow.getFirstCellNum(); j <= fromRow.getPhysicalNumberOfCells(); j++){
+                    XSSFCell fromCell = fromRow.getCell(j);
+                    if(fromCell == null){
+                        continue;
+                    }
+                    XSSFCell toCell = toRow.createCell(j);
+                    toCell.setCellStyle(fromCell.getCellStyle());
+                    int cType = fromCell.getCellType();
+                    toCell.setCellType(cType);
+                    switch (cType) {
+                        case XSSFCell.CELL_TYPE_BOOLEAN:
+                            toCell.setCellValue(fromCell.getBooleanCellValue());
+                            break;
+                        case XSSFCell.CELL_TYPE_ERROR:
+                            toCell.setCellErrorValue(fromCell.getErrorCellValue());
+                            break;
+                        case XSSFCell.CELL_TYPE_FORMULA:
+                            toCell.setCellFormula(parseFormula(fromCell.getCellFormula()));
+                            break;
+                        case XSSFCell.CELL_TYPE_NUMERIC:
+                            toCell.setCellValue(fromCell.getNumericCellValue());
+                            break;
+                        case XSSFCell.CELL_TYPE_STRING:
+                            toCell.setCellValue(fromCell.getRichStringCellValue());
+                            break;
+                    }
+                }
+            }
+            //获取图片
+            Map<String, PictureData> sheetIndexPicMap;
+            sheetIndexPicMap = getSheetPictrues07(0, (XSSFSheet) sheet, workbook);
+            if(sheetIndexPicMap.size() > 0){
+                XSSFDrawing drawing = (XSSFDrawing) toSheet.createDrawingPatriarch();
+                XSSFClientAnchor author = new XSSFClientAnchor(0, 0, 0, 0, 0, 0, 2, 2);
+                Picture picture = drawing.createPicture(author, workbook.addPicture(sheetIndexPicMap.get("0_0_0").getData(), XSSFWorkbook.PICTURE_TYPE_PNG));
+                picture.resize(0.69);  //缩放（比例）
+            }
+            //复制Excel模板 end
+
+            //填写基本信息
+            //1.客诉基本信息
+            FeedbackInfo feedbackInfo = feedbackInfoDao.findOne((long) 8266);
+            if(feedbackInfo != null) {
+                Long suppId = feedbackInfo.getBsSuppId();  //供应商ID
+                String suppName = feedbackInfo.getBsSuppCompanyName();   //供应商名称
+                String suppAddress = "";                               //供应商地址
+                String suppContact = feedbackInfo.getBsSuppCompanyPerson();  //供应商联系人名称
+                String suppPhone = feedbackInfo.getBsSuppCompanyMobile();  //供应商联系人电话
+                String suppEmail = feedbackInfo.getBsSuppCompanyEmail();  //供应商联系人邮箱
+                SupplierInfo supplierInfo = supplierInfoDao.findOne(suppId);
+                if (supplierInfo != null) {
+                    suppAddress = supplierInfo.getBsSuppAddress();
+                }
+                String title = feedbackInfo.getBsTitle();   //标题
+                String prName = feedbackInfo.getBsPrName();  //产品名称
+                String prNum = feedbackInfo.getBsPrNum();   //产品数量
+                String reportLocation = feedbackInfo.getBsReportLocation();  //投诉地点
+                String problemDes = feedbackInfo.getBsProblemDes();  //问题描述
+                String productLocation = feedbackInfo.getBsProductLocation();  //生产地点
+                Date productDate = feedbackInfo.getBsProductDate();  //生产日期
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                String productDateStr = simpleDateFormat.format(productDate);
+
+                toSheet.getRow(6).getCell(2).setCellValue(suppName + "\n" + suppAddress);
+                toSheet.getRow(7).getCell(2).setCellValue(suppContact);
+                toSheet.getRow(7).getCell(7).setCellValue(suppPhone);
+                toSheet.getRow(8).getCell(2).setCellValue(suppEmail);  //邮箱加超链接
+                XSSFHyperlink hyperlink = (XSSFHyperlink) creationHelper.createHyperlink(XSSFHyperlink.LINK_EMAIL);
+                hyperlink.setAddress("mailto:" + suppEmail);
+                toSheet.getRow(8).getCell(2).setHyperlink(hyperlink);
+                toSheet.getRow(11).getCell(0).setCellValue(title);
+                toSheet.getRow(11).getCell(5).setCellValue(prName);
+                toSheet.getRow(11).getCell(8).setCellValue(prNum + " pcs " + reportLocation);
+                toSheet.getRow(13).getCell(0).setCellValue(problemDes);
+                toSheet.getRow(13).getCell(5).setCellValue(productLocation);
+                toSheet.getRow(13).getCell(8).setCellValue(productDateStr);
+
+                //2.客诉处理人员相关信息
+                //2.1处理人员 开始
+                List<FeedbackHandler> feedbackHandlerList = feedbackHandlerDao.findByBsIsDelAndBsFeedbackIdAndBsType(BooleanStateEnum.FALSE.intValue(), (long) 8266, BasicEnumConstants.FEEDBACK_HANDLER1);
+                if(feedbackHandlerList.size() >= 0){  //此判断仅区分不同模块
+                    //初始行数为13行（人数少于10时创建13行，多于10时增加行数）
+                    if(feedbackHandlerList.size() <= 10){
+                        //创建行
+                        for(int i = 0 + 16; i <= 13 + 16; i++){
+                            Row createRow = toSheet.createRow(i);
+                            for(int j = 0;j < 10; j++){
+                                createRow.createCell(j);
+                            }
+                        }
+                        //设置行高
+                        toSheet.getRow(28).setHeightInPoints((float) 21.8);
+
+                        //添加样式与数据
+                        //第1部分
+                        Cell cell1 = toSheet.getRow(16).getCell(0);
+                        cell1.setCellType(sheet.getRow(16).getCell(0).getCellType());
+                        cell1.setCellValue(sheet.getRow(16).getCell(0).getNumericCellValue());
+                        cell1.setCellStyle(sheet.getRow(16).getCell(0).getCellStyle());
+
+                        Cell cell2 = toSheet.getRow(16).getCell(1);
+                        cell2.setCellType(sheet.getRow(16).getCell(1).getCellType());
+                        cell2.setCellValue(sheet.getRow(16).getCell(1).getStringCellValue());
+                        cell2.setCellStyle(sheet.getRow(16).getCell(1).getCellStyle());
+
+                        Cell cell3 = toSheet.getRow(17).getCell(1);
+                        cell3.setCellType(sheet.getRow(17).getCell(1).getCellType());
+                        cell3.setCellValue(sheet.getRow(17).getCell(1).getStringCellValue());
+                        cell3.setCellStyle(sheet.getRow(17).getCell(1).getCellStyle());
+
+                        Cell cell4 = toSheet.getRow(17).getCell(3);
+                        cell4.setCellType(sheet.getRow(17).getCell(3).getCellType());
+                        cell4.setCellValue(sheet.getRow(17).getCell(3).getStringCellValue());
+                        cell4.setCellStyle(sheet.getRow(17).getCell(3).getCellStyle());
+
+                        Cell cell5 = toSheet.getRow(17).getCell(4);
+                        cell5.setCellType(sheet.getRow(17).getCell(4).getCellType());
+                        cell5.setCellValue(sheet.getRow(17).getCell(4).getStringCellValue());
+                        cell5.setCellStyle(sheet.getRow(17).getCell(4).getCellStyle());
+
+                        //处理人员
+                        for(int i = 0;i < 10; i++){
+                            toSheet.getRow(18 + i).getCell(1).setCellType(sheet.getRow(18).getCell(1).getCellType());
+                            toSheet.getRow(18 + i).getCell(1).setCellStyle(sheet.getRow(18).getCell(1).getCellStyle());
+                        }
+
+                        for(int i = 0;i < 10; i++){
+                            toSheet.getRow(18 + i).getCell(3).setCellType(sheet.getRow(18).getCell(3).getCellType());
+                            toSheet.getRow(18 + i).getCell(3).setCellStyle(sheet.getRow(18).getCell(3).getCellStyle());
+                        }
+
+                        for(int i = 0;i < 10; i++){
+                            toSheet.getRow(18 + i).getCell(4).setCellType(sheet.getRow(18).getCell(4).getCellType());
+                            toSheet.getRow(18 + i).getCell(4).setCellStyle(sheet.getRow(18).getCell(4).getCellStyle());
+                        }
+
+                        for (int i = 0; i < feedbackHandlerList.size(); i++){
+                            //当处理人ID存在时，取ID对应的用户为处理人；否则获取当前处理人信息。
+                            String personName = feedbackHandlerList.get(i).getBsHandlerName();  //处理人员名称
+                            String personEamil = feedbackHandlerList.get(i).getBsHandlerEmail();  //处理人员邮箱
+                            if(feedbackHandlerList.get(i).getBsHandlerId() != null && feedbackHandlerList.get(i).getHandlerBy() != null){
+                                personName = feedbackHandlerList.get(i).getHandlerBy().getBsName();
+                                personEamil = feedbackHandlerList.get(i).getHandlerBy().getBsEmail();
+                            }
+
+                            toSheet.getRow(18 + i).getCell(1).setCellValue(personName);
+                            toSheet.getRow(18 + i).getCell(4).setCellValue(personEamil); //邮箱加超链接
+                            XSSFHyperlink hyperlink2 = (XSSFHyperlink) creationHelper.createHyperlink(XSSFHyperlink.LINK_EMAIL);
+                            hyperlink2.setAddress("mailto:" + personEamil);
+                            toSheet.getRow(18 + i).getCell(4).setHyperlink(hyperlink2);
+                        }
+
+                        Cell cell9 = toSheet.getRow(28).getCell(1);
+                        cell9.setCellType(sheet.getRow(28).getCell(1).getCellType());
+                        cell9.setCellValue(sheet.getRow(28).getCell(1).getStringCellValue());
+                        cell9.setCellStyle(sheet.getRow(28).getCell(1).getCellStyle());
+
+                        Cell cell10 = toSheet.getRow(16).getCell(5);
+                        cell10.setCellType(sheet.getRow(16).getCell(5).getCellType());
+                        cell10.setCellValue(sheet.getRow(16).getCell(5).getNumericCellValue());
+                        cell10.setCellStyle(sheet.getRow(16).getCell(5).getCellStyle());
+
+                        Cell cell11 = toSheet.getRow(16).getCell(6);
+                        cell11.setCellType(sheet.getRow(16).getCell(6).getCellType());
+                        cell11.setCellValue(sheet.getRow(16).getCell(6).getStringCellValue());
+                        cell11.setCellStyle(sheet.getRow(16).getCell(6).getCellStyle());
+
+                        Cell cell12 = toSheet.getRow(17).getCell(6);
+                        cell12.setCellType(sheet.getRow(17).getCell(6).getCellType());
+                        cell12.setCellStyle(sheet.getRow(17).getCell(6).getCellStyle());
+
+                        //2.2原因分析
+                        List<FeedbackHandler> feedbackHandlerList2 = feedbackHandlerDao.findByBsIsDelAndBsFeedbackIdAndBsType(BooleanStateEnum.FALSE.intValue(), (long) 8266, BasicEnumConstants.FEEDBACK_HANDLER2);
+                        if(feedbackHandlerList2.size() >= 0){
+                            String totalReason = "";
+                            for(int i = 0; i < feedbackHandlerList2.size(); i++){
+                                String personName = feedbackHandlerList2.get(i).getBsHandlerName();   //处理人员名称
+                                if(feedbackHandlerList2.get(i).getBsHandlerId() != null && feedbackHandlerList2.get(i).getHandlerBy() != null){
+                                    personName = feedbackHandlerList2.get(i).getHandlerBy().getBsName();
+                                }
+                                String personDate = simpleDateFormat.format(feedbackHandlerList2.get(i).getBsCreatedTime());  //处理时间
+                                String personDesc = feedbackHandlerList2.get(i).getBsDesc();   //描述信息
+                                totalReason = totalReason + (personDate + " " + personName + " 反馈：" + personDesc + "\n");
+                            }
+                            toSheet.getRow(17).getCell(6).setCellValue(totalReason);
+                        }
+
+                        //合并单元格（注意顺序,从后往前合并，这样保证下标不乱），并设置合并单元格的边框
+                        //region1
+                        CellRangeAddress region1 = new CellRangeAddress(17,28,6,9);
+                        toSheet.addMergedRegion(region1);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_MEDIUM, region1, toSheet, workbook);
+                        RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        RegionUtil.setBorderLeft(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        //region2
+                        CellRangeAddress region2 = new CellRangeAddress(16,16,6,9);
+                        toSheet.addMergedRegion(region2);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_MEDIUM, region2, toSheet, workbook);
+                        //region3
+                        CellRangeAddress region3 = new CellRangeAddress(16,28,5,5);
+                        toSheet.addMergedRegion(region3);
+                        //region4
+                        CellRangeAddress region4 = new CellRangeAddress(28, 28, 1, 4);
+                        toSheet.addMergedRegion(region4);
+                        RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                        RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                        //region5
+                        for(int k = 10; k >= 0; k--){
+                            CellRangeAddress region5 = new CellRangeAddress(17 + k, 17 + k, 1,2);
+                            toSheet.addMergedRegion(region5);
+                            RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region5, toSheet, workbook);
+                            RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region5, toSheet, workbook);
+                        }
+                        //region6
+                        CellRangeAddress region6 = new CellRangeAddress(16 , 16, 1, 4);
+                        toSheet.addMergedRegion(region6);
+                        //region7
+                        CellRangeAddress region7 = new CellRangeAddress(16 , 28, 0, 0);
+                        toSheet.addMergedRegion(region7);
+                    }else{
+                        //创建行
+                        int addRowsPerson = feedbackHandlerList.size() - 10;   //本模块增加行数
+
+                        for(int i = 0 + 16; i <= 13 + 16 + addRowsPerson; i++){
+                            Row createRow = toSheet.createRow(i);
+                            for(int j = 0;j < 10; j++){
+                                createRow.createCell(j);
+                            }
+                        }
+                        //行高
+                        toSheet.getRow(28 + addRowsPerson).setHeightInPoints((float) 21.8);
+
+                        //添加样式与数据
+                        //第1部分
+                        Cell cell1 = toSheet.getRow(16).getCell(0);
+                        cell1.setCellType(sheet.getRow(16).getCell(0).getCellType());
+                        cell1.setCellValue(sheet.getRow(16).getCell(0).getNumericCellValue());
+                        cell1.setCellStyle(sheet.getRow(16).getCell(0).getCellStyle());
+
+                        Cell cell2 = toSheet.getRow(16).getCell(1);
+                        cell2.setCellType(sheet.getRow(16).getCell(1).getCellType());
+                        cell2.setCellValue(sheet.getRow(16).getCell(1).getStringCellValue());
+                        cell2.setCellStyle(sheet.getRow(16).getCell(1).getCellStyle());
+
+                        Cell cell3 = toSheet.getRow(17).getCell(1);
+                        cell3.setCellType(sheet.getRow(17).getCell(1).getCellType());
+                        cell3.setCellValue(sheet.getRow(17).getCell(1).getStringCellValue());
+                        cell3.setCellStyle(sheet.getRow(17).getCell(1).getCellStyle());
+
+                        Cell cell4 = toSheet.getRow(17).getCell(3);
+                        cell4.setCellType(sheet.getRow(17).getCell(3).getCellType());
+                        cell4.setCellValue(sheet.getRow(17).getCell(3).getStringCellValue());
+                        cell4.setCellStyle(sheet.getRow(17).getCell(3).getCellStyle());
+
+                        Cell cell5 = toSheet.getRow(17).getCell(4);
+                        cell5.setCellType(sheet.getRow(17).getCell(4).getCellType());
+                        cell5.setCellValue(sheet.getRow(17).getCell(4).getStringCellValue());
+                        cell5.setCellStyle(sheet.getRow(17).getCell(4).getCellStyle());
+
+                        //处理人员
+                        for(int i = 0;i < feedbackHandlerList.size(); i++){
+                            toSheet.getRow(18 + i).getCell(1).setCellType(sheet.getRow(18).getCell(1).getCellType());
+                            toSheet.getRow(18 + i).getCell(1).setCellStyle(sheet.getRow(18).getCell(1).getCellStyle());
+                        }
+
+                        for(int i = 0;i < feedbackHandlerList.size(); i++){
+                            toSheet.getRow(18 + i).getCell(3).setCellType(sheet.getRow(18).getCell(3).getCellType());
+                            toSheet.getRow(18 + i).getCell(3).setCellStyle(sheet.getRow(18).getCell(3).getCellStyle());
+                        }
+
+                        for(int i = 0;i < feedbackHandlerList.size(); i++){
+                            toSheet.getRow(18 + i).getCell(4).setCellType(sheet.getRow(18).getCell(4).getCellType());
+                            toSheet.getRow(18 + i).getCell(4).setCellStyle(sheet.getRow(18).getCell(4).getCellStyle());
+                        }
+
+                        for (int i = 0; i < feedbackHandlerList.size(); i++){
+                            String personName = feedbackHandlerList.get(i).getBsHandlerName();  //处理人员名称
+                            String personEamil = feedbackHandlerList.get(i).getBsHandlerEmail();  //处理人员邮箱
+                            if(feedbackHandlerList.get(i).getBsHandlerId() != null && feedbackHandlerList.get(i).getHandlerBy() != null){
+                                personName = feedbackHandlerList.get(i).getHandlerBy().getBsName();
+                                personEamil = feedbackHandlerList.get(i).getHandlerBy().getBsEmail();
+                            }
+
+                            toSheet.getRow(18 + i).getCell(1).setCellValue(personName);
+                            toSheet.getRow(18 + i).getCell(4).setCellValue(personEamil); //邮箱加超链接
+                            XSSFHyperlink hyperlink2 = (XSSFHyperlink) creationHelper.createHyperlink(XSSFHyperlink.LINK_EMAIL);
+                            hyperlink2.setAddress("mailto:" + personEamil);
+                            toSheet.getRow(18 + i).getCell(4).setHyperlink(hyperlink2);
+                        }
+
+                        Cell cell9 = toSheet.getRow(28 + addRowsPerson).getCell(1);
+                        cell9.setCellType(sheet.getRow(28).getCell(1).getCellType());
+                        cell9.setCellValue(sheet.getRow(28).getCell(1).getStringCellValue());
+                        cell9.setCellStyle(sheet.getRow(28).getCell(1).getCellStyle());
+
+                        Cell cell10 = toSheet.getRow(16).getCell(5);
+                        cell10.setCellType(sheet.getRow(16).getCell(5).getCellType());
+                        cell10.setCellValue(sheet.getRow(16).getCell(5).getNumericCellValue());
+                        cell10.setCellStyle(sheet.getRow(16).getCell(5).getCellStyle());
+
+                        Cell cell11 = toSheet.getRow(16).getCell(6);
+                        cell11.setCellType(sheet.getRow(16).getCell(6).getCellType());
+                        cell11.setCellValue(sheet.getRow(16).getCell(6).getStringCellValue());
+                        cell11.setCellStyle(sheet.getRow(16).getCell(6).getCellStyle());
+                        cell9.getCellStyle().setBorderRight((short)1);
+
+                        Cell cell12 = toSheet.getRow(17).getCell(6);
+                        cell12.setCellType(sheet.getRow(17).getCell(6).getCellType());
+                        cell12.setCellStyle(sheet.getRow(17).getCell(6).getCellStyle());
+
+                        //2.2原因分析
+                        List<FeedbackHandler> feedbackHandlerList2 = feedbackHandlerDao.findByBsIsDelAndBsFeedbackIdAndBsType(BooleanStateEnum.FALSE.intValue(), (long) 8266, BasicEnumConstants.FEEDBACK_HANDLER2);
+                        if(feedbackHandlerList2.size() >= 0){
+                            String totalReason = "";
+                            for(int i = 0; i < feedbackHandlerList2.size(); i++){
+                                String personName = feedbackHandlerList2.get(i).getBsHandlerName();   //处理人员名称
+                                if(feedbackHandlerList2.get(i).getBsHandlerId() != null && feedbackHandlerList.get(i).getHandlerBy() != null){
+                                    personName = feedbackHandlerList.get(i).getHandlerBy().getBsName();
+                                }
+                                String personDate = simpleDateFormat.format(feedbackHandlerList2.get(i).getBsCreatedTime());  //处理时间
+                                String personDesc = feedbackHandlerList2.get(i).getBsDesc();   //描述信息
+                                totalReason = totalReason + (personDate + " " + personName + " 反馈：" + personDesc + "\n");
+                            }
+                            toSheet.getRow(17).getCell(6).setCellValue(totalReason);
+                        }
+                        //合并单元格（注意顺序,从后往前合并，这样保证下标不乱），并设置合并单元格的边框
+                        //region1
+                        CellRangeAddress region1 = new CellRangeAddress(17,28 + addRowsPerson,6,9);
+                        toSheet.addMergedRegion(region1);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_MEDIUM, region1, toSheet, workbook);
+                        RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        RegionUtil.setBorderLeft(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        //region2
+                        CellRangeAddress region2 = new CellRangeAddress(16,16,6,9);
+                        toSheet.addMergedRegion(region2);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_MEDIUM, region2, toSheet, workbook);
+                        //region3
+                        CellRangeAddress region3 = new CellRangeAddress(16,28 + addRowsPerson,5,5);
+                        toSheet.addMergedRegion(region3);
+                        //region4
+                        CellRangeAddress region4 = new CellRangeAddress(28 + addRowsPerson, 28 + addRowsPerson, 1, 4);
+                        toSheet.addMergedRegion(region4);
+                        RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                        RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                        //region5
+                        for(int k = feedbackHandlerList.size(); k >= 0; k--){
+                            CellRangeAddress region5 = new CellRangeAddress(17 + k, 17 + k, 1,2);
+                            toSheet.addMergedRegion(region5);
+                            RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region5, toSheet, workbook);
+                            RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region5, toSheet, workbook);
+                        }
+                        //region6
+                        CellRangeAddress region6 = new CellRangeAddress(16 , 16, 1, 4);
+                        toSheet.addMergedRegion(region6);
+                        //region7
+                        CellRangeAddress region7 = new CellRangeAddress(16 , 28 + addRowsPerson, 0, 0);
+                        toSheet.addMergedRegion(region7);
+
+                        addRows = addRows + addRowsPerson;                     //总增加行数
+                    }
+                }
+                //2.1处理人员 结束
+
+                //2.3临时措施 开始
+                List<FeedbackHandler> feedbackHandlerList3 = feedbackHandlerDao.findByBsIsDelAndBsFeedbackIdAndBsType(BooleanStateEnum.FALSE.intValue(), (long) 8266, BasicEnumConstants.FEEDBACK_HANDLER3);
+                if(feedbackHandlerList3.size() >= 0){
+                    //创建行
+                    int addRowsPerson = feedbackHandlerList3.size() <= 0 ? 0 : feedbackHandlerList3.size() - 1;   //本模块增加行数，最小为0
+
+                    for(int i = 29 + addRows; i <= 30 + addRows + addRowsPerson; i++){
+                        Row createRow = toSheet.createRow(i);
+                        for(int j = 0;j < 10; j++){
+                            createRow.createCell(j);
+                        }
+                    }
+                    //设置行高
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(30 + addRows + i).setHeightInPoints(70);
+                    }
+
+                    //添加样式与数据
+                    //第3部分
+                    Cell cell1 = toSheet.getRow(29 + addRows).getCell(0);
+                    cell1.setCellType(sheet.getRow(29).getCell(0).getCellType());
+                    cell1.setCellValue(sheet.getRow(29).getCell(0).getNumericCellValue());
+                    cell1.setCellStyle(sheet.getRow(29).getCell(0).getCellStyle());
+
+                    Cell cell2 = toSheet.getRow(29 + addRows).getCell(1);
+                    cell2.setCellType(sheet.getRow(29).getCell(1).getCellType());
+                    cell2.setCellValue(sheet.getRow(29).getCell(1).getStringCellValue());
+                    cell2.setCellStyle(sheet.getRow(29).getCell(1).getCellStyle());
+
+                    Cell cell3 = toSheet.getRow(29 + addRows).getCell(8);
+                    cell3.setCellType(sheet.getRow(29).getCell(8).getCellType());
+                    cell3.setCellValue(sheet.getRow(29).getCell(8).getStringCellValue());
+                    cell3.setCellStyle(sheet.getRow(29).getCell(8).getCellStyle());
+
+                    Cell cell4 = toSheet.getRow(29 + addRows).getCell(9);
+                    cell4.setCellType(sheet.getRow(29).getCell(9).getCellType());
+                    cell4.setCellValue(sheet.getRow(29).getCell(9).getStringCellValue());
+                    cell4.setCellStyle(sheet.getRow(29).getCell(9).getCellStyle());
+
+                    //临时措施内容
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(30 + addRows + i).getCell(1).setCellType(sheet.getRow(30).getCell(1).getCellType());
+                        toSheet.getRow(30 + addRows + i).getCell(1).setCellStyle(sheet.getRow(30).getCell(1).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(30 + addRows + i).getCell(8).setCellType(sheet.getRow(30).getCell(8).getCellType());
+                        toSheet.getRow(30 + addRows + i).getCell(8).setCellStyle(sheet.getRow(30).getCell(8).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(30 + addRows + i).getCell(9).setCellType(sheet.getRow(30).getCell(9).getCellType());
+                        toSheet.getRow(30 + addRows + i).getCell(9).setCellStyle(sheet.getRow(30).getCell(9).getCellStyle());
+                    }
+
+                    for(int i = 0; i < feedbackHandlerList3.size(); i++){
+                        String personName = feedbackHandlerList3.get(i).getBsHandlerName();   //处理人员名称
+                        if(feedbackHandlerList3.get(i).getBsHandlerId() != null && feedbackHandlerList3.get(i).getHandlerBy() != null){
+                            personName = feedbackHandlerList3.get(i).getHandlerBy().getBsName();
+                        }
+                        String personDate = simpleDateFormat.format(feedbackHandlerList3.get(i).getBsCreatedTime());   //处理时间
+                        String personDesc = feedbackHandlerList3.get(i).getBsDesc();   //描述信息
+
+                        toSheet.getRow(30 + addRows + i).getCell(1).setCellValue(personDesc);
+                        toSheet.getRow(30 + addRows + i).getCell(8).setCellValue(personName);
+                        toSheet.getRow(30 + addRows + i).getCell(9).setCellValue(personDate);
+                    }
+
+                    //合并单元格（注意顺序,从后往前合并，这样保证下标不乱），并设置合并单元格的边框
+                    //region1
+                    for(int k = addRowsPerson; k >= 0; k--){
+                        CellRangeAddress region1 = new CellRangeAddress(30 + addRows + k, 30 + addRows + k, 1, 7);
+                        toSheet.addMergedRegion(region1);
+                        RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                    }
+                    //region2
+                    CellRangeAddress region2 = new CellRangeAddress(29 + addRows, 29 + addRows, 1, 7);
+                    toSheet.addMergedRegion(region2);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    //region3
+                    CellRangeAddress region3 = new CellRangeAddress(29 + addRows, 30 + addRows + addRowsPerson, 0, 0);
+                    toSheet.addMergedRegion(region3);
+
+                    addRows = addRows + addRowsPerson;                     //总增加行数
+                }
+                //2.3临时措施 结束
+
+                //2.4根本原因分析 开始
+                List<FeedbackHandler> feedbackHandlerList4 = feedbackHandlerDao.findByBsIsDelAndBsFeedbackIdAndBsType(BooleanStateEnum.FALSE.intValue(), (long) 8266, BasicEnumConstants.FEEDBACK_HANDLER4);
+                if(feedbackHandlerList4.size() >= 0){
+                    //创建行
+                    int addRowsPerson = feedbackHandlerList4.size() <= 0 ? 0 : feedbackHandlerList4.size() - 1;    //本模块增加的行数，最小为0
+
+                    for(int i = 31 + addRows; i <= 36 + addRows + addRowsPerson; i++){
+                        Row createRow = toSheet.createRow(i);
+                        for(int j = 0;j < 10; j++){
+                            createRow.createCell(j);
+                        }
+                    }
+                    //设置行高
+                    toSheet.getRow(32 + addRows).setHeightInPoints(6);
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(34 + addRows + i).setHeightInPoints(70);
+                    }
+
+                    //添加样式与数据
+                    //第4部分
+                    Cell cell1 = toSheet.getRow(31 + addRows).getCell(0);
+                    cell1.setCellType(sheet.getRow(31).getCell(0).getCellType());
+                    cell1.setCellValue(sheet.getRow(31).getCell(0).getNumericCellValue());
+                    cell1.setCellStyle(sheet.getRow(31).getCell(0).getCellStyle());
+                    //32行
+                    Cell cell2 = toSheet.getRow(31 + addRows).getCell(1);
+                    cell2.setCellType(sheet.getRow(31).getCell(1).getCellType());
+                    cell2.setCellValue(sheet.getRow(31).getCell(1).getStringCellValue());
+                    cell2.setCellStyle(sheet.getRow(31).getCell(1).getCellStyle());
+
+                    Cell cell3 = toSheet.getRow(31 + addRows).getCell(8);
+                    cell3.setCellType(sheet.getRow(31).getCell(8).getCellType());
+                    cell3.setCellValue(sheet.getRow(31).getCell(8).getStringCellValue());
+                    cell3.setCellStyle(sheet.getRow(31).getCell(8).getCellStyle());
+
+                    Cell cell4 = toSheet.getRow(31 + addRows).getCell(9);
+                    cell4.setCellType(sheet.getRow(31).getCell(9).getCellType());
+                    cell4.setCellValue(sheet.getRow(31).getCell(9).getStringCellValue());
+                    cell4.setCellStyle(sheet.getRow(31).getCell(9).getCellStyle());
+                    //33行
+                    Cell cell5 = toSheet.getRow(32 + addRows).getCell(1);
+                    cell5.setCellType(sheet.getRow(32).getCell(1).getCellType());
+                    cell5.setCellValue(sheet.getRow(32).getCell(1).getStringCellValue());
+                    cell5.setCellStyle(sheet.getRow(32).getCell(1).getCellStyle());
+
+                    Cell cell6 = toSheet.getRow(32 + addRows).getCell(8);
+                    cell6.setCellType(sheet.getRow(32).getCell(8).getCellType());
+                    cell6.setCellValue(sheet.getRow(32).getCell(8).getStringCellValue());
+                    cell6.setCellStyle(sheet.getRow(32).getCell(8).getCellStyle());
+
+                    Cell cell7 = toSheet.getRow(32 + addRows).getCell(9);
+                    cell7.setCellType(sheet.getRow(32).getCell(9).getCellType());
+                    cell7.setCellValue(sheet.getRow(32).getCell(9).getStringCellValue());
+                    cell7.setCellStyle(sheet.getRow(32).getCell(9).getCellStyle());
+                    //34行
+                    Cell cell8 = toSheet.getRow(33 + addRows).getCell(1);
+                    cell8.setCellType(sheet.getRow(33).getCell(1).getCellType());
+                    cell8.setCellValue(sheet.getRow(33).getCell(1).getStringCellValue());
+                    cell8.setCellStyle(sheet.getRow(33).getCell(1).getCellStyle());
+
+                    Cell cell9 = toSheet.getRow(33 + addRows).getCell(8);
+                    cell9.setCellType(sheet.getRow(33).getCell(8).getCellType());
+                    cell9.setCellValue(sheet.getRow(33).getCell(8).getStringCellValue());
+                    cell9.setCellStyle(sheet.getRow(33).getCell(8).getCellStyle());
+
+                    Cell cell10 = toSheet.getRow(33 + addRows).getCell(9);
+                    cell10.setCellType(sheet.getRow(33).getCell(9).getCellType());
+                    cell10.setCellValue(sheet.getRow(33).getCell(9).getStringCellValue());
+                    cell10.setCellStyle(sheet.getRow(33).getCell(9).getCellStyle());
+                    //35行
+                    //根本原因分析内容
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(34 + addRows + i).getCell(1).setCellType(sheet.getRow(34).getCell(1).getCellType());
+                        toSheet.getRow(34 + addRows + i).getCell(1).setCellStyle(sheet.getRow(34).getCell(1).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(34 + addRows + i).getCell(8).setCellType(sheet.getRow(34).getCell(8).getCellType());
+                        toSheet.getRow(34 + addRows + i).getCell(8).setCellStyle(sheet.getRow(34).getCell(8).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(34 + addRows + i).getCell(9).setCellType(sheet.getRow(34).getCell(9).getCellType());
+                        toSheet.getRow(34 + addRows + i).getCell(9).setCellStyle(sheet.getRow(34).getCell(9).getCellStyle());
+                    }
+
+                    for(int i = 0; i < feedbackHandlerList4.size(); i++){
+                        String personName = feedbackHandlerList4.get(i).getBsHandlerName();   //处理人员名称
+                        if(feedbackHandlerList4.get(i).getBsHandlerId() != null && feedbackHandlerList4.get(i).getHandlerBy() != null){
+                            personName = feedbackHandlerList4.get(i).getHandlerBy().getBsName();
+                        }
+                        String personDate = simpleDateFormat.format(feedbackHandlerList4.get(i).getBsCreatedTime());   //处理时间
+                        String personDesc = feedbackHandlerList4.get(i).getBsDesc();   //描述信息
+
+                        toSheet.getRow(34 + addRows + i).getCell(1).getCellStyle().setVerticalAlignment(XSSFCellStyle.VERTICAL_TOP);
+                        toSheet.getRow(34 + addRows + i).getCell(1).setCellValue(personDesc);
+                        toSheet.getRow(34 + addRows + i).getCell(8).setCellValue(personName);
+                        toSheet.getRow(34 + addRows + i).getCell(9).setCellValue(personDate);
+                    }
+                    //36行
+                    Cell cell14 = toSheet.getRow(35 + addRows + addRowsPerson).getCell(1);
+                    cell14.setCellType(sheet.getRow(35).getCell(1).getCellType());
+                    cell14.setCellValue(sheet.getRow(35).getCell(1).getStringCellValue());
+                    cell14.setCellStyle(sheet.getRow(35).getCell(1).getCellStyle());
+
+                    Cell cell15 = toSheet.getRow(35 + addRows + addRowsPerson).getCell(8);
+                    cell15.setCellType(sheet.getRow(35).getCell(8).getCellType());
+                    cell15.setCellValue(sheet.getRow(35).getCell(8).getStringCellValue());
+                    cell15.setCellStyle(sheet.getRow(35).getCell(8).getCellStyle());
+
+                    Cell cell16 = toSheet.getRow(35 + addRows + addRowsPerson).getCell(9);
+                    cell16.setCellType(sheet.getRow(35).getCell(9).getCellType());
+                    cell16.setCellValue(sheet.getRow(35).getCell(9).getStringCellValue());
+                    cell16.setCellStyle(sheet.getRow(35).getCell(9).getCellStyle());
+                    //37行
+                    Cell cell17 = toSheet.getRow(36 + addRows + addRowsPerson).getCell(1);
+                    cell17.setCellType(sheet.getRow(36).getCell(1).getCellType());
+                    cell17.setCellValue(sheet.getRow(36).getCell(1).getStringCellValue());
+                    cell17.setCellStyle(sheet.getRow(36).getCell(1).getCellStyle());
+
+                    Cell cell18 = toSheet.getRow(36 + addRows + addRowsPerson).getCell(8);
+                    cell18.setCellType(sheet.getRow(36).getCell(8).getCellType());
+                    cell18.setCellValue(sheet.getRow(36).getCell(8).getStringCellValue());
+                    cell18.setCellStyle(sheet.getRow(36).getCell(8).getCellStyle());
+
+                    Cell cell19 = toSheet.getRow(36 + addRows + addRowsPerson).getCell(9);
+                    cell19.setCellType(sheet.getRow(36).getCell(9).getCellType());
+                    cell19.setCellValue(sheet.getRow(36).getCell(9).getStringCellValue());
+                    cell19.setCellStyle(sheet.getRow(36).getCell(9).getCellStyle());
+
+                    //合并单元格
+                    //region1
+                    CellRangeAddress region1 = new CellRangeAddress(36 + addRows + addRowsPerson, 36 + addRows + addRowsPerson, 1, 7);
+                    toSheet.addMergedRegion(region1);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                    RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                    //region2
+                    CellRangeAddress region2 = new CellRangeAddress(35 + addRows + addRowsPerson, 35 + addRows + addRowsPerson, 1, 7);
+                    toSheet.addMergedRegion(region2);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    //region3
+                    for(int k = addRowsPerson; k >= 0; k--){
+                        CellRangeAddress region3 = new CellRangeAddress(34 + addRows + k, 34 + addRows + k, 1, 7);
+                        toSheet.addMergedRegion(region3);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                        RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                    }
+                    //region4
+                    CellRangeAddress region4 = new CellRangeAddress(33 + addRows, 33 + addRows, 1, 7);
+                    toSheet.addMergedRegion(region4);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                    //region5
+                    CellRangeAddress region5 = new CellRangeAddress(32 + addRows, 32 + addRows, 1, 7);
+                    toSheet.addMergedRegion(region5);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region5, toSheet, workbook);
+                    //region6
+                    CellRangeAddress region6 = new CellRangeAddress(31 + addRows, 31 + addRows, 1, 7);
+                    toSheet.addMergedRegion(region6);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region6, toSheet, workbook);
+                    //region7
+                    CellRangeAddress region7 = new CellRangeAddress(31 + addRows, 36 + addRows + addRowsPerson, 0, 0);
+                    toSheet.addMergedRegion(region7);
+
+                    addRows = addRows + addRowsPerson;                     //总增加行数
+                }
+                //2.4根本原因分析 结束
+
+                //2.5选择的永久的纠正措施 开始
+                List<FeedbackHandler> feedbackHandlerList5 = feedbackHandlerDao.findByBsIsDelAndBsFeedbackIdAndBsType(BooleanStateEnum.FALSE.intValue(), (long) 8266, BasicEnumConstants.FEEDBACK_HANDLER5);
+                if(feedbackHandlerList5.size() >= 0){
+                    //创建行
+                    int addRowsPerson = feedbackHandlerList5.size() <= 0 ? 0 : feedbackHandlerList5.size() - 1;    //本模块增加的行数，最小为0
+
+                    for(int i = 37 + addRows; i <= 39 + addRows + addRowsPerson; i++){
+                        Row createRow = toSheet.createRow(i);
+                        for(int j = 0;j < 10; j++){
+                            createRow.createCell(j);
+                        }
+                    }
+                    //设置行高
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(38 + addRows + i).setHeightInPoints(70);
+                    }
+
+                    //添加样式与数据
+                    //第5部分
+                    Cell cell1 = toSheet.getRow(37 + addRows).getCell(0);
+                    cell1.setCellType(sheet.getRow(37).getCell(0).getCellType());
+                    cell1.setCellValue(sheet.getRow(37).getCell(0).getNumericCellValue());
+                    cell1.setCellStyle(sheet.getRow(37).getCell(0).getCellStyle());
+
+                    Cell cell2 = toSheet.getRow(37 + addRows).getCell(1);
+                    cell2.setCellType(sheet.getRow(37).getCell(1).getCellType());
+                    cell2.setCellValue(sheet.getRow(37).getCell(1).getStringCellValue());
+                    cell2.setCellStyle(sheet.getRow(37).getCell(1).getCellStyle());
+
+                    Cell cell3 = toSheet.getRow(37 + addRows).getCell(8);
+                    cell3.setCellType(sheet.getRow(37).getCell(8).getCellType());
+                    cell3.setCellValue(sheet.getRow(37).getCell(8).getStringCellValue());
+                    cell3.setCellStyle(sheet.getRow(37).getCell(8).getCellStyle());
+
+                    Cell cell4 = toSheet.getRow(37 + addRows).getCell(9);
+                    cell4.setCellType(sheet.getRow(37).getCell(9).getCellType());
+                    cell4.setCellValue(sheet.getRow(37).getCell(9).getStringCellValue());
+                    cell4.setCellStyle(sheet.getRow(37).getCell(9).getCellStyle());
+
+                    //选择的永久的纠正措施内容
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(38 + addRows + i).getCell(1).setCellType(sheet.getRow(38).getCell(1).getCellType());
+                        toSheet.getRow(38 + addRows + i).getCell(1).setCellStyle(sheet.getRow(38).getCell(1).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(38 + addRows + i).getCell(8).setCellType(sheet.getRow(38).getCell(8).getCellType());
+                        toSheet.getRow(38 + addRows + i).getCell(8).setCellStyle(sheet.getRow(38).getCell(8).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(38 + addRows + i).getCell(9).setCellType(sheet.getRow(38).getCell(9).getCellType());
+                        toSheet.getRow(38 + addRows + i).getCell(9).setCellStyle(sheet.getRow(38).getCell(9).getCellStyle());
+                    }
+
+                    for(int i = 0; i < feedbackHandlerList5.size(); i++){
+                        String personName = feedbackHandlerList5.get(i).getBsHandlerName();   //处理人员名称
+                        if(feedbackHandlerList5.get(i).getBsHandlerId() != null && feedbackHandlerList5.get(i).getHandlerBy() != null){
+                            personName = feedbackHandlerList5.get(i).getHandlerBy().getBsName();
+                        }
+                        String personDate = simpleDateFormat.format(feedbackHandlerList5.get(i).getBsCreatedTime());   //处理时间
+                        String personDesc = feedbackHandlerList5.get(i).getBsDesc();   //描述信息
+
+                        toSheet.getRow(38 + addRows + i).getCell(1).setCellValue(personDesc);
+                        toSheet.getRow(38 + addRows + i).getCell(8).setCellValue(personName);
+                        toSheet.getRow(38 + addRows + i).getCell(9).setCellValue(personDate);
+                    }
+
+                    Cell cell8 = toSheet.getRow(39 + addRows + addRowsPerson).getCell(1);
+                    cell8.setCellType(sheet.getRow(39).getCell(1).getCellType());
+                    cell8.setCellValue(sheet.getRow(39).getCell(1).getStringCellValue());
+                    cell8.setCellStyle(sheet.getRow(39).getCell(1).getCellStyle());
+
+                    Cell cell9 = toSheet.getRow(39 + addRows + addRowsPerson).getCell(8);
+                    cell9.setCellType(sheet.getRow(39).getCell(8).getCellType());
+                    cell9.setCellValue(sheet.getRow(39).getCell(8).getStringCellValue());
+                    cell9.setCellStyle(sheet.getRow(39).getCell(8).getCellStyle());
+
+                    Cell cell10 = toSheet.getRow(39 + addRows + addRowsPerson).getCell(9);
+                    cell10.setCellType(sheet.getRow(39).getCell(9).getCellType());
+                    cell10.setCellValue(sheet.getRow(39).getCell(9).getStringCellValue());
+                    cell10.setCellStyle(sheet.getRow(39).getCell(9).getCellStyle());
+
+                    //合并单元格
+                    //region1
+                    CellRangeAddress region1 = new CellRangeAddress(39 + addRows + addRowsPerson, 39 + addRows + addRowsPerson, 8, 9);
+                    toSheet.addMergedRegion(region1);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_MEDIUM, region1, toSheet, workbook);
+                    RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                    //region2
+                    CellRangeAddress region2 = new CellRangeAddress(39 + addRows + addRowsPerson, 39 + addRows + addRowsPerson, 1, 7);
+                    toSheet.addMergedRegion(region2);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    //region3
+                    for(int k = addRowsPerson; k >= 0; k--){
+                        CellRangeAddress region3 = new CellRangeAddress(38 + addRows + k, 38 + addRows + k, 1, 7);
+                        toSheet.addMergedRegion(region3);
+                        RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                        RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                    }
+                    //region4
+                    CellRangeAddress region4 = new CellRangeAddress(37 + addRows, 37 + addRows, 1, 7);
+                    toSheet.addMergedRegion(region4);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                    //region5
+                    CellRangeAddress region5 = new CellRangeAddress(37 + addRows, 39 + addRows + addRowsPerson, 0, 0);
+                    toSheet.addMergedRegion(region5);
+
+                    addRows = addRows + addRowsPerson;                     //总增加行数
+                }
+                //2.5选择的永久的纠正措施 结束
+
+                //2.6执行的永久的纠正措施 开始
+                List<FeedbackHandler> feedbackHandlerList6 = feedbackHandlerDao.findByBsIsDelAndBsFeedbackIdAndBsType(BooleanStateEnum.FALSE.intValue(), (long) 8266, BasicEnumConstants.FEEDBACK_HANDLER6);
+                if(feedbackHandlerList6.size() >= 0){
+                    //创建行
+                    int addRowsPerson = feedbackHandlerList6.size() <= 0 ? 0 : feedbackHandlerList6.size() - 1;   //本模块增加的行数，最小为0
+
+                    for(int i = 40 + addRows; i <= 41 + addRows + addRowsPerson; i++){
+                        Row createRow = toSheet.createRow(i);
+                        for(int j = 0;j < 10; j++){
+                            createRow.createCell(j);
+                        }
+                    }
+                    //设置行高
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(41 + addRows + i).setHeightInPoints(70);
+                    }
+
+                    //添加样式与数据
+                    //第6部分
+                    Cell cell1 = toSheet.getRow(40 + addRows).getCell(0);
+                    cell1.setCellType(sheet.getRow(40).getCell(0).getCellType());
+                    cell1.setCellValue(sheet.getRow(40).getCell(0).getNumericCellValue());
+                    cell1.setCellStyle(sheet.getRow(40).getCell(0).getCellStyle());
+
+                    Cell cell2 = toSheet.getRow(40 + addRows).getCell(1);
+                    cell2.setCellType(sheet.getRow(40).getCell(1).getCellType());
+                    cell2.setCellValue(sheet.getRow(40).getCell(1).getStringCellValue());
+                    cell2.setCellStyle(sheet.getRow(40).getCell(1).getCellStyle());
+
+                    Cell cell3 = toSheet.getRow(40 + addRows).getCell(8);
+                    cell3.setCellType(sheet.getRow(40).getCell(8).getCellType());
+                    cell3.setCellValue(sheet.getRow(40).getCell(8).getStringCellValue());
+                    cell3.setCellStyle(sheet.getRow(40).getCell(8).getCellStyle());
+
+                    Cell cell4 = toSheet.getRow(40 + addRows).getCell(9);
+                    cell4.setCellType(sheet.getRow(40).getCell(9).getCellType());
+                    cell4.setCellValue(sheet.getRow(40).getCell(9).getStringCellValue());
+                    cell4.setCellStyle(sheet.getRow(40).getCell(9).getCellStyle());
+
+
+                    //执行的的永久的纠正措施内容
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(41 + addRows + i).getCell(1).setCellType(sheet.getRow(41).getCell(1).getCellType());
+                        toSheet.getRow(41 + addRows + i).getCell(1).setCellStyle(sheet.getRow(41).getCell(1).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(41 + addRows + i).getCell(8).setCellType(sheet.getRow(41).getCell(8).getCellType());
+                        toSheet.getRow(41 + addRows + i).getCell(8).setCellStyle(sheet.getRow(41).getCell(8).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(41 + addRows + i).getCell(9).setCellType(sheet.getRow(41).getCell(9).getCellType());
+                        toSheet.getRow(41 + addRows + i).getCell(9).setCellStyle(sheet.getRow(41).getCell(9).getCellStyle());
+                    }
+
+                    for(int i = 0; i < feedbackHandlerList6.size(); i++ ){
+                        String personName = feedbackHandlerList6.get(i).getBsHandlerName();   //处理人员名称
+                        if(feedbackHandlerList6.get(i).getBsHandlerId() != null && feedbackHandlerList6.get(i).getHandlerBy() != null){
+                            personName = feedbackHandlerList6.get(i).getHandlerBy().getBsName();
+                        }
+                        String personDate = simpleDateFormat.format(feedbackHandlerList6.get(i).getBsCreatedTime());   //处理时间
+                        String personDesc = feedbackHandlerList6.get(i).getBsDesc();   //描述信息
+
+                        toSheet.getRow(41 + addRows + i).getCell(1).setCellValue(personDesc);
+                        toSheet.getRow(41 + addRows + i).getCell(8).setCellValue(personName);
+                        toSheet.getRow(41 + addRows + i).getCell(9).setCellValue(personDate);
+                    }
+
+                    //合并单元格
+                    //region1
+                    for(int k = addRowsPerson; k >= 0; k--){
+                        CellRangeAddress region1 = new CellRangeAddress(41 + addRows + k, 41 + addRows + k, 1, 7);
+                        toSheet.addMergedRegion(region1);
+                        RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                    }
+                    //region2
+                    CellRangeAddress region2 = new CellRangeAddress(40 + addRows, 40 + addRows, 1, 7);
+                    toSheet.addMergedRegion(region2);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    //region3
+                    CellRangeAddress region3 = new CellRangeAddress(40 + addRows, 41 + addRows + addRowsPerson, 0, 0);
+                    toSheet.addMergedRegion(region3);
+
+                    addRows = addRows + addRowsPerson;                     //总增加行数
+                }
+                //2.6执行的永久的纠正措施 结束
+
+                //2.7预防行动 开始
+                List<FeedbackHandler> feedbackHandlerList7 = feedbackHandlerDao.findByBsIsDelAndBsFeedbackIdAndBsType(BooleanStateEnum.FALSE.intValue(), (long) 8266, BasicEnumConstants.FEEDBACK_HANDLER7);
+                if(feedbackHandlerList7.size() >= 0){
+                    //创建行
+                    int addRowsPerson = feedbackHandlerList7.size() <= 0 ? 0 : feedbackHandlerList7.size() - 1;   //本模块增加的行数，最小为0
+
+                    for(int i = 42 + addRows; i <= 44 + addRows + addRowsPerson; i++){
+                        Row createRow = toSheet.createRow(i);
+                        for(int j = 0;j < 10; j++){
+                            createRow.createCell(j);
+                        }
+                    }
+                    //设置行高
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(44 + addRows + i).setHeightInPoints((float) 29.3);
+                    }
+
+                    //添加样式与数据
+                    //第7部分
+                    Cell cell1 = toSheet.getRow(42 + addRows).getCell(0);
+                    cell1.setCellType(sheet.getRow(42).getCell(0).getCellType());
+                    cell1.setCellValue(sheet.getRow(42).getCell(0).getNumericCellValue());
+                    cell1.setCellStyle(sheet.getRow(42).getCell(0).getCellStyle());
+                    //43行
+                    Cell cell2 = toSheet.getRow(42 + addRows).getCell(1);
+                    cell2.setCellType(sheet.getRow(42).getCell(1).getCellType());
+                    cell2.setCellValue(sheet.getRow(42).getCell(1).getStringCellValue());
+                    cell2.setCellStyle(sheet.getRow(42).getCell(1).getCellStyle());
+
+                    Cell cell3 = toSheet.getRow(42 + addRows).getCell(6);
+                    cell3.setCellType(sheet.getRow(42).getCell(6).getCellType());
+                    cell3.setCellValue(sheet.getRow(42).getCell(6).getStringCellValue());
+                    cell3.setCellStyle(sheet.getRow(42).getCell(6).getCellStyle());
+
+                    Cell cell4 = toSheet.getRow(42 + addRows).getCell(7);
+                    cell4.setCellType(sheet.getRow(42).getCell(7).getCellType());
+                    cell4.setCellValue(sheet.getRow(42).getCell(7).getNumericCellValue());
+                    cell4.setCellStyle(sheet.getRow(42).getCell(7).getCellStyle());
+
+                    Cell cell5 = toSheet.getRow(42 + addRows).getCell(8);
+                    cell5.setCellType(sheet.getRow(42).getCell(8).getCellType());
+                    cell5.setCellValue(sheet.getRow(42).getCell(8).getStringCellValue());
+                    cell5.setCellStyle(sheet.getRow(42).getCell(8).getCellStyle());
+
+                    Cell cell6 = toSheet.getRow(42 + addRows).getCell(9);
+                    cell6.setCellType(sheet.getRow(42).getCell(9).getCellType());
+                    cell6.setCellValue(sheet.getRow(42).getCell(9).getStringCellValue());
+                    cell6.setCellStyle(sheet.getRow(42).getCell(9).getCellStyle());
+                    //44行
+                    Cell cell7 = toSheet.getRow(43 + addRows).getCell(1);
+                    cell7.setCellType(sheet.getRow(43).getCell(1).getCellType());
+                    cell7.setCellValue(sheet.getRow(43).getCell(1).getStringCellValue());
+                    cell7.setCellStyle(sheet.getRow(43).getCell(1).getCellStyle());
+
+                    Cell cell8 = toSheet.getRow(43 + addRows).getCell(6);
+                    cell8.setCellType(sheet.getRow(43).getCell(6).getCellType());
+                    cell8.setCellValue(sheet.getRow(43).getCell(6).getStringCellValue());
+                    cell8.setCellStyle(sheet.getRow(43).getCell(6).getCellStyle());
+
+                    Cell cell9 = toSheet.getRow(43 + addRows).getCell(8);
+                    cell9.setCellType(sheet.getRow(43).getCell(8).getCellType());
+                    cell9.setCellValue(sheet.getRow(43).getCell(8).getStringCellValue());
+                    cell9.setCellStyle(sheet.getRow(43).getCell(8).getCellStyle());
+
+                    Cell cell10 = toSheet.getRow(43 + addRows).getCell(9);
+                    cell10.setCellType(sheet.getRow(43).getCell(9).getCellType());
+                    cell10.setCellValue(sheet.getRow(43).getCell(9).getStringCellValue());
+                    cell10.setCellStyle(sheet.getRow(43).getCell(9).getCellStyle());
+
+                    //预防行动内容
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(44 + addRows + i).getCell(1).setCellType(sheet.getRow(44).getCell(1).getCellType());
+                        toSheet.getRow(44 + addRows + i).getCell(1).setCellStyle(sheet.getRow(44).getCell(1).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(44 + addRows + i).getCell(8).setCellType(sheet.getRow(44).getCell(8).getCellType());
+                        toSheet.getRow(44 + addRows + i).getCell(8).setCellStyle(sheet.getRow(44).getCell(8).getCellStyle());
+                    }
+
+                    for(int i = 0; i < addRowsPerson + 1; i++){
+                        toSheet.getRow(44 + addRows + i).getCell(9).setCellType(sheet.getRow(44).getCell(9).getCellType());
+                        toSheet.getRow(44 + addRows + i).getCell(9).setCellStyle(sheet.getRow(44).getCell(9).getCellStyle());
+                    }
+
+                    for(int i = 0; i < feedbackHandlerList7.size(); i++ ){
+                        String personName = feedbackHandlerList7.get(i).getBsHandlerName();   //处理人员名称
+                        if(feedbackHandlerList7.get(i).getBsHandlerId() != null && feedbackHandlerList7.get(i).getHandlerBy() != null){
+                            personName = feedbackHandlerList7.get(i).getHandlerBy().getBsName();
+                        }
+                        String personDate = simpleDateFormat.format(feedbackHandlerList7.get(i).getBsCreatedTime());   //处理时间
+                        String personDesc = feedbackHandlerList7.get(i).getBsDesc();   //描述信息
+
+                        toSheet.getRow(44 + addRows + i).getCell(1).setCellValue(personDesc);
+                        toSheet.getRow(44 + addRows + i).getCell(8).setCellValue(personName);
+                        toSheet.getRow(44 + addRows + i).getCell(9).setCellValue(personDate);
+                    }
+                    //合并单元格
+                    //region1
+                    for(int k = addRowsPerson; k >= 0; k--){
+                        CellRangeAddress region1 = new CellRangeAddress(44 + addRows + k, 44 + addRows + k, 1, 7);
+                        toSheet.addMergedRegion(region1);
+                        RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                        RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                    }
+                    //region2
+                    CellRangeAddress region2 = new CellRangeAddress(43 + addRows, 43 + addRows, 6, 7);
+                    toSheet.addMergedRegion(region2);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                    //region3
+                    CellRangeAddress region3 = new CellRangeAddress(43 + addRows, 43 + addRows, 1, 5);
+                    toSheet.addMergedRegion(region3);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                    RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                    //region4
+                    CellRangeAddress region4 = new CellRangeAddress(42 + addRows, 42 + addRows, 1, 5);
+                    toSheet.addMergedRegion(region4);
+                    RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                    RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                    RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                    //region5
+                    CellRangeAddress region5 = new CellRangeAddress(42 + addRows, 44 + addRows + addRowsPerson, 0, 0);
+                    toSheet.addMergedRegion(region5);
+
+                    addRows = addRows + addRowsPerson;                     //总增加行数
+                }
+                //2.7预防行动 结束
+
+                //2.8 开始
+                //创建行
+                for(int i = 45 + addRows; i <= 49 + addRows; i++){
+                    Row createRow = toSheet.createRow(i);
+                        for(int j = 0;j < 10; j++){
+                            createRow.createCell(j);
+                        }
+                }
+                //设置行高
+                toSheet.getRow(46 + addRows).setHeightInPoints((float) 30.8);
+                toSheet.getRow(47 + addRows).setHeightInPoints((float) 5.2);
+                toSheet.getRow(48 + addRows).setHeightInPoints((float) 20.3);
+                toSheet.getRow(49 + addRows).setHeightInPoints((float) 20.3);
+
+                //添加样式与数据
+                //第8部分
+                Cell cell1 = toSheet.getRow(45 + addRows).getCell(0);
+                cell1.setCellType(sheet.getRow(45).getCell(0).getCellType());
+                cell1.setCellValue(sheet.getRow(45).getCell(0).getNumericCellValue());
+                cell1.setCellStyle(sheet.getRow(45).getCell(0).getCellStyle());
+                //46行
+                Cell cell2 = toSheet.getRow(45 + addRows).getCell(1);
+                cell2.setCellType(sheet.getRow(45).getCell(1).getCellType());
+                cell2.setCellValue(sheet.getRow(45).getCell(1).getStringCellValue());
+                cell2.setCellStyle(sheet.getRow(45).getCell(1).getCellStyle());
+
+                Cell cell3 = toSheet.getRow(45 + addRows).getCell(8);
+                cell3.setCellType(sheet.getRow(45).getCell(8).getCellType());
+                cell3.setCellValue(sheet.getRow(45).getCell(8).getStringCellValue());
+                cell3.setCellStyle(sheet.getRow(45).getCell(8).getCellStyle());
+
+                Cell cell4 = toSheet.getRow(45 + addRows).getCell(9);
+                cell4.setCellType(sheet.getRow(45).getCell(9).getCellType());
+                cell4.setCellValue(sheet.getRow(45).getCell(9).getStringCellValue());
+                cell4.setCellStyle(sheet.getRow(45).getCell(9).getCellStyle());
+                //47行
+                Cell cell5 = toSheet.getRow(46 + addRows).getCell(1);
+                cell5.setCellType(sheet.getRow(46).getCell(1).getCellType());
+                cell5.setCellStyle(sheet.getRow(46).getCell(1).getCellStyle());
+
+                Cell cell6 = toSheet.getRow(46 + addRows).getCell(8);
+                cell6.setCellType(sheet.getRow(46).getCell(8).getCellType());
+                cell6.setCellStyle(sheet.getRow(46).getCell(8).getCellStyle());
+
+                Cell cell7 = toSheet.getRow(46 + addRows).getCell(9);
+                cell7.setCellType(sheet.getRow(46).getCell(9).getCellType());
+                cell7.setCellStyle(sheet.getRow(46).getCell(9).getCellStyle());
+                //48行
+                for(int i = 0; i < 10; i++){
+                    Cell cell = toSheet.getRow(47 + addRows).getCell(i);
+                    cell.getCellStyle().setBorderRight(XSSFCellStyle.BORDER_THIN);
+                    cell.getCellStyle().setBorderLeft(XSSFCellStyle.BORDER_THIN);
+                    cell.getCellStyle().setRightBorderColor((short) 0x9);
+                    cell.getCellStyle().setLeftBorderColor((short) 0x9);
+                }
+                //49行
+                for(int i = 0; i < 5; i++){
+                    Cell cell8 = toSheet.getRow(48 + addRows).getCell(i);
+                    cell8.setCellType(sheet.getRow(48).getCell(i).getCellType());
+                    cell8.setCellValue(sheet.getRow(48).getCell(i).getStringCellValue());
+                    cell8.setCellStyle(sheet.getRow(48).getCell(i).getCellStyle());
+                }
+
+                Cell cell9 = toSheet.getRow(49 + addRows).getCell(0);
+                cell9.setCellType(sheet.getRow(49).getCell(0).getCellType());
+                cell9.setCellValue(sheet.getRow(49).getCell(0).getStringCellValue());
+                cell9.setCellStyle(sheet.getRow(49).getCell(0).getCellStyle());
+
+                Cell cell10 = toSheet.getRow(49 + addRows).getCell(1);
+                cell10.setCellType(sheet.getRow(49).getCell(1).getCellType());
+                cell10.setCellValue(sheet.getRow(49).getCell(1).getStringCellValue());
+                cell10.setCellStyle(sheet.getRow(49).getCell(1).getCellStyle());
+
+                Cell cell11 = toSheet.getRow(49 + addRows).getCell(3);
+                cell11.setCellType(sheet.getRow(49).getCell(3).getCellType());
+                cell11.setCellValue(sheet.getRow(49).getCell(3).getStringCellValue());
+                cell11.setCellStyle(sheet.getRow(49).getCell(3).getCellStyle());
+
+                Cell cell12 = toSheet.getRow(49 + addRows).getCell(4);
+                cell12.setCellType(sheet.getRow(49).getCell(4).getCellType());
+                cell12.setCellValue(sheet.getRow(49).getCell(4).getStringCellValue());
+                cell12.setCellStyle(sheet.getRow(49).getCell(4).getCellStyle());
+
+                ////合并单元格
+                //region1
+                CellRangeAddress region1 = new CellRangeAddress(49 + addRows, 49 + addRows, 4, 9);
+                toSheet.addMergedRegion(region1);
+                RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region1, toSheet, workbook);
+                RegionUtil.setBorderRight(XSSFCellStyle.BORDER_MEDIUM, region1, toSheet, workbook);
+                RegionUtil.setRightBorderColor(0x8, region1, toSheet, workbook);
+                RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_MEDIUM, region1, toSheet, workbook);
+                //region2
+                CellRangeAddress region2 = new CellRangeAddress(49 + addRows, 49 + addRows, 1, 2);
+                toSheet.addMergedRegion(region2);
+                RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region2, toSheet, workbook);
+                RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_MEDIUM, region2, toSheet, workbook);
+                //region3
+                CellRangeAddress region3 = new CellRangeAddress(48 + addRows, 48 + addRows, 4, 9);
+                toSheet.addMergedRegion(region3);
+                RegionUtil.setBorderTop(XSSFCellStyle.BORDER_MEDIUM, region3, toSheet, workbook);
+                RegionUtil.setBorderRight(XSSFCellStyle.BORDER_MEDIUM, region3, toSheet, workbook);
+                RegionUtil.setRightBorderColor(0x8, region3, toSheet, workbook);
+                RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region3, toSheet, workbook);
+                //region4
+                CellRangeAddress region4 = new CellRangeAddress(48 + addRows, 48 + addRows, 0, 1);
+                toSheet.addMergedRegion(region4);
+                RegionUtil.setBorderTop(XSSFCellStyle.BORDER_MEDIUM, region4, toSheet, workbook);
+                RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_THIN, region4, toSheet, workbook);
+                //region5
+                CellRangeAddress region5 = new CellRangeAddress(46 + addRows, 46 + addRows, 1, 7);
+                toSheet.addMergedRegion(region5);
+                RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region5, toSheet, workbook);
+                RegionUtil.setRightBorderColor(0x8, region5, toSheet, workbook);
+                RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_MEDIUM, region5, toSheet, workbook);
+                //region6
+                CellRangeAddress region6 = new CellRangeAddress(45 + addRows, 45 + addRows, 1, 7);
+                toSheet.addMergedRegion(region6);
+                RegionUtil.setBorderRight(XSSFCellStyle.BORDER_THIN, region6, toSheet, workbook);
+                RegionUtil.setRightBorderColor(0x8, region6, toSheet, workbook);
+                RegionUtil.setBorderTop(XSSFCellStyle.BORDER_THIN, region6, toSheet, workbook);
+                //region7
+                CellRangeAddress region7 = new CellRangeAddress(45 + addRows, 46 + addRows, 0, 0);
+                toSheet.addMergedRegion(region7);
+                RegionUtil.setBorderBottom(XSSFCellStyle.BORDER_MEDIUM, region7, toSheet, workbook);
+                //2.8 结束
+            }
+
+            workbook.removeSheetAt(0);
+            response.reset();
+            response.setContentType("multipart/form-data;charset=utf-8");
+            response.setCharacterEncoding("utf-8");
+            response.setHeader("Content-disposition", "attachment; filename=Feedback report.xlsx");
+            workbook.write(outputStream);
+            outputStream.flush();
+            outputStream.close();
+            inputStream.close();
+            System.out.println("导出完成！");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String parseFormula(String pPOIFormula) {
+        final String cstReplaceString = "ATTR(semiVolatile)"; //$NON-NLS-1$
+        StringBuffer result;
+        int index;
+
+        result = new StringBuffer();
+        index = pPOIFormula.indexOf(cstReplaceString);
+        if (index >= 0) {
+            result.append(pPOIFormula.substring(0, index));
+            result.append(pPOIFormula.substring(index + cstReplaceString.length()));
+        } else {
+            result.append(pPOIFormula);
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * 获取Excel2007图片
+     * @param sheetNum 当前sheet编号
+     * @param sheet 当前sheet对象
+     * @param workbook 工作簿对象
+     * @return Map key:图片单元格索引（0_1_1）String，value:图片流PictureData
+     */
+    public static Map<String, PictureData> getSheetPictrues07(int sheetNum,
+                                                              XSSFSheet sheet, XSSFWorkbook workbook) {
+        Map<String, PictureData> sheetIndexPicMap = new HashMap<String, PictureData>();
+
+        if(sheet.getRelations().size() > 0){
+            for (POIXMLDocumentPart dr : sheet.getRelations()) {
+                if (dr instanceof XSSFDrawing) {
+                    XSSFDrawing drawing = (XSSFDrawing) dr;
+                    List<XSSFShape> shapes = drawing.getShapes();
+                    if(shapes.size() > 0){
+                        for (XSSFShape shape : shapes) {
+                            if(shape instanceof XSSFPicture){
+                                XSSFPicture pic = (XSSFPicture) shape;
+                                XSSFClientAnchor anchor = pic.getPreferredSize();
+                                CTMarker ctMarker = anchor.getFrom();
+                                String picIndex = String.valueOf(sheetNum) + "_"
+                                        + ctMarker.getRow() + "_" + ctMarker.getCol();
+                                sheetIndexPicMap.put(picIndex, pic.getPictureData());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return sheetIndexPicMap;
+    }
+
+}

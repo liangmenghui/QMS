@@ -1,0 +1,201 @@
+<template>
+  <div>
+    <Row>
+      <i-col span=24>
+        <div v-if="mutliAgent == true">
+          <div style="padding: 0 0 24px;line-height:32px;font-size:12px;">
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">客户:</p>
+              <Select v-model="form.customer" style="width:200px">
+                <Option v-for="item in customers" :value="item.customer" :key="item.customer">{{item.desc}}</Option>
+              </Select>
+            </div>
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">货代:</p>
+              <i-select v-model="form.agent" style="width:200px">
+                <Option v-for="item in agents" :value="item.agent" :key="item.agent">{{item.desc}}</option>
+              </i-select>
+            </div>
+          </div>
+        </div>
+        <div v-if="mutliAgent == false">
+          <div style="padding:0 0 24px;line-height:32px;font-size:12px;">
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">客户:</p>
+              <p style="width:200px;display:inline;">{{form.customer}}</p>
+            </div>
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">货代:</p>
+              <p style="width:200px;display:inline;">{{form.agent}}</p>
+            </div>
+          </div>
+        </div>
+      </i-col>
+    </Row>
+    <Row>
+      <i-col span="24">
+        <component @validate="handleValidate" @contextData="handleContextData" :cabinets="cabinets" :customer="form.customer" :agent="form.agent" :is="currentContextView"></component>
+      </i-col>
+    </Row>
+    <Row>
+      <i-col span="24">
+        <div style="height:86px;padding-top:24px;background-color:#f1f2f3;">
+          <Button type="success" @click="handleSubmit" size="large" style="float:right;margin-right:60px;">保存</Button>
+        </div>
+      </i-col>
+    </Row>
+  </div>
+</template>
+<script>
+export default {
+  props: {
+    cabinets: {
+      type: [Object, Array],
+      required: true
+    }
+  }, //props
+  data() {
+    return {
+      currentContextView: "",
+      mutliAgent: false,
+      initializeState: false,
+      validateResult: true, //校验结果
+      context: "", //内容数据
+      customers: [{ customer: "", desc: "请选择客户" }],
+      agents: [{ agent: "", desc: "请选择货代" }],
+      form: {
+        customer: "",
+        agent: ""
+      }
+    };
+  }, //data
+  methods: {
+    handleSubmit: function() {},
+    initCustomer: function() {
+      this.api.lmp.booking.getCustomerByPlan(this.cabinets).then(res => {
+        if (!res.result) {
+          return;
+        }
+
+        let list = [{ customer: "", desc: "请选择客户" }];
+        this.form.customer = "";
+
+        res.data.forEach(element => {
+          list.push({
+            customer: element.bsAccountNumber,
+            desc: element.bsAccountNumber
+          });
+        });
+
+        this.customers = list;
+        if (this.customers.length > 1) {
+          this.form.customer = this.customers[1].customer;
+        }
+        //初始化货代
+        this.initAgent();
+      });
+    }, //getCustomer
+    initAgent: function() {
+      this.api.lmp.booking.getAgentByPlan(this.cabinets).then(res => {
+        if (!res.result) {
+          return;
+        }
+
+        if (res.data.length == 0) {
+          this.$Message.error("找不到对应的货代信息。");
+          this.modalHidden();
+          return;
+        }
+
+        let list = [{ agent: "", name, url: "", desc: "请选择货代" }];
+        this.form.agent = "";
+
+        res.data.forEach(element => {
+          list.push({
+            agent: element.bsProvider,
+            desc: element.bsProvider
+          });
+        });
+
+        this.agents = list;
+        if (this.agents.length == 2) {
+          this.form.agent = this.agents[1].agent;
+          this.mutliAgent = false;
+        } else if (this.agents.length > 2) {
+          this.mutliAgent = true;
+        }
+        //初始化完成显示页面
+        this.initializeState = true;
+      });
+    }, //getAgent
+    loadPageView: function() {
+      this.api.lmp.booking
+        .getContextByPlan({
+          customer: this.form.customer,
+          agent: this.form.agent
+        })
+        .then(res => {
+          if (res.result) {
+            let component = res.data;
+            if (
+              component === undefined ||
+              component.length == 0 ||
+              component === null
+            ) {
+              this.$Message.error("获取页面错误。");
+              return;
+            }
+
+            this.currentContextView = res.data;
+          }
+        });
+    }, //loadPageView
+    init: function() {
+      this.initializeState = false;
+      //获取对应的货代 以及显示的数据 每个初始化项完成之后，都需要对初始化状态做更改.
+      this.initCustomer();
+    }, //modalDisplay
+    modalHidden: function() {
+      this.$emit("close");
+    },
+    handleValidate: function(result, message) {
+      if (typeof result == "boolean") {
+        if (result === false) {
+          if (message != undefined && message != null)
+            this.$Message.error(message);
+          this.validateResult = result;
+        }
+      }
+      //非boolean类型 不处理
+    }, //handleValidate
+    handleContextData: function(contextData) {
+      this.context = contextData;
+    } //handleContextData
+  },
+  watch: {
+    initializeState() {
+      if (this.initializeState == true) {
+        //当所有初始化成功之后才算初始化完成
+        this.$emit("initializeClosing");
+      }
+    },
+    pageView() {
+      if (
+        this.form.customer === undefined ||
+        this.form.customer.length == 0 ||
+        this.form.agent === undefined ||
+        this.form.agent.length == 0
+      ) {
+        return;
+      }
+
+      this.loadPageView();
+    }
+  }, //watch
+  computed: {
+    pageView() {
+      return { customer: this.form.customer, agent: this.form.agent };
+    }
+  } //computed
+};
+</script>

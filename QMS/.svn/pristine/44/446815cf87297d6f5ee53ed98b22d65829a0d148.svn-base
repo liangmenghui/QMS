@@ -1,0 +1,314 @@
+<template>
+    <div>
+        <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                    <Form-item prop="itemNum">
+                        <Input type="text" v-model="formQuery.itemNum" placeholder="物料编码" />
+                    </Form-item>
+                    <Form-item prop="customerItemNum">
+                        <Input type="text" v-model="formQuery.customerItemNum" placeholder="客户部件" />
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="handleSubmit('formQuery')">查 询</Button>
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="runErpPoPlan()">
+                            <span v-if="!loading">需求拉取</span>
+                        </Button>
+                    </Form-item>
+                    <Form-item>
+                        <!-- <Button type="primary" :loading="loading2" @click="runCabinetsPlan()"> -->
+                        <Button type="primary" :loading="loading2" @click="showTransCode()">
+                            <span v-if="!loading2">自动拼柜</span>
+                            <span v-else>Loading...</span>
+                        </Button>
+                    </Form-item>
+                </Form>
+            </i-col>
+        </Row>
+        <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe height="700"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" :current="1" placement="top" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" @on-page-size-change="changePageSize" show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+        </i-col>
+         <Modal v-model="dialog.modal_dialog" :mask-closable="false" :closable="false" title="" >
+                <div slot="footer">
+                    <Button type="text" size="large" @click="cabinetsPlanCancel()">取消</Button>
+                    <Button type="primary" size="large" @click="runCabinetsPlan()">确定</Button>
+                </div>
+                <Row>
+                    <i-col span="24">
+                        <Form class="query_area" ref="dialog.formQuery" :model="dialog.formQuery" inline>
+                            <Form-item prop="bsTransportCode">
+                                <Input type="text" v-model="dialog.formQuery.bsTransportCode" placeholder="运输路线代码" />
+                            </Form-item>
+                            <Form-item prop="bsTransportName">
+                                <Input type="text" v-model="dialog.formQuery.bsTransportName" placeholder="运输路线名称" />
+                            </Form-item>
+                            <Form-item>
+                                <Button type="primary" @click="queryTransCode('dialog.formQuery')">查 询</Button>
+                            </Form-item>
+                        </Form>
+                        <Table :data="dialog.datagrid.data.rows" @on-select-cancel="cancelSelect" @on-select="saveIdBySelect" @on-select-all="saveIdBySelectAll" highlight-row :columns="dialog.datagrid.columns" stripe height="500"></Table>
+                        <div style="margin: 10px;overflow: hidden">
+                        <div style="float: right;">
+                            <Page :total="dialog.datagrid.data.total" :current="1" placement="top"  :page-size="dialog.datagrid.queryParams.rows" :page-size-opts="dialog.datagrid.pagination" @on-change="dialogChangePage" @on-page-size-change="dialogChangePageSize" show-total show-elevator show-sizer></Page>
+                        </div>
+                    </div>
+                    </i-col>
+                </Row>
+        </Modal>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            loading2 : false,
+            formQuery: {
+                itemNum: '',
+                customerItemNum: ''
+            },
+            selectData:[],
+            dialog: {
+                modal_dialog: false,
+                formQuery: {
+                    bsTransportCode: '',
+                    bsTransportName: ''
+                },
+                datagrid:{
+                    queryParams:{
+                        page:1,
+                        rows:50,
+                    },
+                    pagination: [20, 50, 100],
+                    data: {rows:[],total:0},
+                    columns:[
+                    {
+                        type: 'selection',
+                        width: 80,
+                        align: 'center'
+                    },
+                    {
+                        title: '运输代码',
+                        key: 'bsTransportCode'
+                    },
+                    {
+                        title: '运输名称',
+                        key: 'bsTransportName'
+                    }
+                    ]
+                },
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:25,
+                },
+                pagination: [25, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title: '物料编码',
+                        key: 'itemNum'
+                    },
+                    {
+                        title: '物料描述',
+                        key: 'itemDesc'
+                    },
+                    {
+                        title: '客户部件',
+                        key: 'customerItemNum'
+                    },
+                    {
+                        title: '客户编码',
+                        key: 'customerNum'
+                    },
+                    {
+                        title: '运输周期',
+                        key: 'pTime'
+                    },
+                    {
+                        title: '需求日期',
+                        key: 'tDate'
+                    },
+                    {
+                        title: '星期',
+                        key: 'week',
+                        render: (h, params) => {
+                            if(params.row.week==0) {
+                                return h('span', '星期日');
+                            }else if(params.row.week==1) {
+                                return h('span', '星期一');
+                            }else if(params.row.week==2) {
+                                return h('span', '星期二');
+                            }else if(params.row.week==3) {
+                                return h('span', '星期三');
+                            }else if(params.row.week==4) {
+                                return h('span', '星期四');
+                            }else if(params.row.week==5) {
+                                return h('span', '星期五');
+                            }else if(params.row.week==6) {
+                                return h('span', '星期六');
+                            }else {
+                                return h('span', 'Unknown');
+                            }
+                        }
+                    },
+                    {
+                        title: '客户需求',
+                        key: 'qtyX'
+                    },
+                    {
+                        title: '发货日期',
+                        key: 'sDate'
+                    },
+                    {
+                        title: '发货柜号',
+                        key: 'packNo'
+                    },
+                    {
+                        title: '待入库',
+                        key: 'qtyY'
+                    },
+                    {
+                        title: '预计库存',
+                        key: 'qtyM'
+                    },
+                    {
+                        title: 'PO发放数',
+                        key: 'qtyMrp'
+                    },
+                    {
+                        title: 'PR建议数',
+                        key: 'qtyPr'
+                    }
+                ]
+            },
+        }
+    },
+    created(){
+        this.getData();
+    },
+    methods: {
+        handleSubmit(name) {
+            this.getData();
+        },
+        getData() {
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+            // console.log("after===>");
+            // console.log(this.formQuery);
+            this.api.pmp.getlist(this.formQuery).then((res) => {
+                // console.log("get list===>");
+                // console.log(res.data);
+                if(res.result) {
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        reloadData() {
+            this.datagrid.data = this.getData();
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.datagrid.data = this.getData();
+        },
+        changePageSize (pageSize){
+            this.datagrid.queryParams.rows = pageSize;
+            this.datagrid.data = this.getData();
+        },
+        dialogChangePage (page) {
+            console.log(this.dialog.datagrid.selectData);
+            this.dialog.datagrid.queryParams.page = page;
+            this.dialog.datagrid.data = this.getTransSportData();
+        },
+        dialogChangePageSize (pageSize){
+            this.dialog.datagrid.queryParams.rows = pageSize;
+            this.dialog.datagrid.data = this.getTransSportData();
+        },
+        showTransCode(){
+            this.dialog.modal_dialog = true;
+            this.getTransSportData();
+        },
+        queryTransCode(){
+            this.getTransSportData();
+        },
+
+        getTransSportData() {
+            Object.assign(this.dialog.formQuery, this.dialog.datagrid.queryParams);
+            this.api.tsr.gettranlist(this.dialog.formQuery).then((res) => {
+                console.log("get list===>");
+                console.log(res.data);
+                if(res.result) {
+                    this.dialog.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        saveIdBySelect(selection,row){
+            console.log(this.selectData);
+            this.selectData =  selection;
+        },
+        saveIdBySelectAll(selection){
+            this.selectData =  selection;
+        },
+        cancelSelect(selection,row){
+            this.selectData =  selection;
+        },
+        cabinetsPlanCancel(){
+            this.dialog.modal_dialog = false;
+        },
+        runCabinetsPlan(){
+            this.loading2 = true;
+            console.log(this.selectData);
+            this.dialog.modal_dialog = false;
+            this.api.pmp.runCabinetsPlan(this.selectData,this.loading,function(res){
+                return false;
+            }).then((res) => {
+                if(res.result) {
+                    this.$Message.success({
+                        content: '自动拼柜成功，可以在拼柜结果中查看!',
+                        duration: 10,
+                        closable: true
+                    });
+                    this.loading2 = false;
+                }else {
+                    this.$Message.error({
+                        content: res.msg,
+                        duration: 10,
+                        closable: true
+                    });
+                    this.loading2 = false;
+                }
+            });
+        },
+        runErpPoPlan(){
+            this.api.pmp.runErpPoPlan(this.formQuery,this.loading,function(res){
+                    return false;
+            }).then((res) =>{
+                if(res.result){
+                    this.$Message.success({
+                        content: '拉取客户需求成功!',
+                        duration: 10,
+                        closable: true
+                    });
+                    this.datagrid.data = this.getData();
+                }else{
+                    this.$Message.error({
+                        content: '拉取客户需求失败 请联系管理人员!',
+                        duration: 10,
+                        closable: true
+                    });
+                }
+            });
+        }
+    }
+}
+</script>

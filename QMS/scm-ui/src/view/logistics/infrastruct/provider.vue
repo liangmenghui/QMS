@@ -1,0 +1,427 @@
+<template>
+  <div>
+    <div>
+      <Row>
+        <i-col>
+          <Form class="query_area" ref="formQuery" :model="formQuery" :label-width=120 inline>
+            <Form-item label="货代:">
+              <Input v-model="formQuery.bsProvider" />
+            </Form-item>
+            <Form-item>
+              <Button type="primary" @click="handleSubmit()">查 询</Button>
+            </Form-item>
+          </Form>
+        </i-col>
+      </Row>
+    </div>
+    <Row>
+      <i-col span="24">
+        <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="height:auto;"></Table>
+        <div style="margin: 10px;overflow: hidden">
+          <div style="float: right;">
+            <Page @on-change="changePage" @on-page-size-change="chageSize" :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" show-total show-elevator show-sizer></Page>
+          </div>
+        </div>
+      </i-col>
+    </Row>
+
+    <Modal v-model="dialog.modal_dialog1" title="" @on-ok="ok1" @on-cancel="cancel">
+      <p slot="header" style="color:rgb(99, 168, 168);text-align:center">
+        <Icon type="information-circled"></Icon>
+        <span>编 辑</span>
+      </p>
+      <p>
+        <div>
+          <Row>
+            <i-col>
+              <Form :model="formItem" :label-width="80" style="text-align:center" :ref="dialog.ruleForm" :rules="dialog.ruleForm">
+                <FormItem label="货代" prop='bsProvider'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsProvider" placeholder="请输入货代" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="传真" prop='bsFax'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsFax" placeholder="请输入传真" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="邮箱" prop='bsEmail'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsEmail" placeholder="请输入邮箱" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="地址" prop='bsAddress'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsAddress" placeholder="请输入地址" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="电话" prop='bsTel'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsTel" placeholder="请输入电话" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="联系人" prop='bsContractor'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsContractor" placeholder="请输入联系人" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="收货地" prop='bsShipTo'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsShipTo" placeholder="请输入收货地" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="发货地" prop='bsShipFrom'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsShipFrom" placeholder="请输入发货地" />
+                    </Col>
+                  </Row>
+                </FormItem>
+              </Form>
+            </i-col>
+          </Row>
+        </div>
+      </p>
+    </Modal>
+    <Modal v-model="dialog.modal_dialog" title="" @on-ok="ok" @on-cancel="cancel">
+      <p slot="header" style="color:rgb(99, 168, 168);text-align:center">
+        <Icon type="information-circled"></Icon>
+        <span>添 加</span>
+      </p>
+      <p>
+        <div>
+          <Row>
+            <i-col>
+              <Form :model="formItem" :label-width="80" style="text-align:center" :ref="dialog.ruleForm" :rules="dialog.ruleForm">
+                <FormItem label="货代" prop='bsProvider'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsProvider" placeholder="请输入货代" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="传真" prop='bsFax'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsFax" placeholder="请输入传真" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="邮箱" prop='bsEmail'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsEmail" placeholder="请输入邮箱" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="地址" prop='bsAddress'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsAddress" placeholder="请输入地址" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="电话" prop='bsTel'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsTel" placeholder="请输入电话" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="联系人" prop='bsContractor'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsContractor" placeholder="请输入联系人" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="收货地" prop='bsShipTo'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsShipTo" placeholder="请输入收货地" />
+                    </Col>
+                  </Row>
+                </FormItem>
+                <FormItem label="发货地" prop='bsShipFrom'>
+                  <Row>
+                    <Col span="15">
+                    <Input v-model="formItem.bsShipFrom" placeholder="请输入发货地" />
+                    </Col>
+                  </Row>
+                </FormItem>
+              </Form>
+            </i-col>
+          </Row>
+        </div>
+      </p>
+    </Modal>
+  </div>
+</template>
+<script>
+import { mapState } from "vuex";
+import uRoute from "./transprovider";
+export default {
+  components: {
+    uRoute
+  },
+  computed: {
+    ...mapState({
+      menuData: state => state.menuData
+    })
+  },
+  data() {
+    return {
+      start: 0,
+      end: 15,
+      dialog: {
+        modal_dialog: false,
+        modal_dialog1: false,
+        ruleForm: {
+          bsProvider: [
+            { required: true, message: "请填写货代", trigger: "blur" }
+          ],
+          bsContractor: [
+            { required: true, message: "请填写联系人", trigger: "blur" }
+          ],
+          bsTel: [
+            { required: true, message: "请填写电话号码", trigger: "blur" }
+          ]
+        }
+      },
+      formItem: {
+        id: "",
+        bsProvider: "",
+        bsFax: "",
+        bsAddress: "",
+        bsTel: "",
+        bsContractor: "",
+        bsShipTo: "",
+        bsEmail: "",
+        bsShipFrom: ""
+      },
+      formQuery: {
+        bsProvider: ""
+      },
+      datagrid: {
+        queryParams: {
+          page: 1,
+          rows: 15,
+          pkParent: -1
+        },
+        pagination: [15, 50, 100],
+        data: { rows: [], total: 0, rows1: [] },
+        columns: [
+          {
+            title: "货代",
+            key: "bsProvider"
+          },
+          {
+            title: "邮箱",
+            key: "bsEmail"
+          },
+          {
+            title: "传真",
+            key: "bsFax"
+          },
+          {
+            title: "地址",
+            key: "bsAddress"
+          },
+          {
+            title: "电话",
+            key: "bsTel"
+          },
+          {
+            title: "联系人",
+            key: "bsContractor"
+          },
+          {
+            title: "收货地",
+            key: "bsShipTo"
+          },
+          {
+            title: "收货地",
+            key: "bsShipFrom"
+          },
+          {
+            title: "操作",
+            key: "action",
+            render: (h, params) => {
+              let ary = [];
+              // this.menuData.perms.EDIT
+              // if(true) {
+              //     ary.push(h('Button', {
+              //         props: {
+              //             type: 'primary',
+              //             size: 'small'
+              //         },
+              //         style: {
+              //             marginRight: '5px'
+              //         },
+              //         on: {
+              //             click: () => {
+              //                 this.showEditDialog(params)
+              //             }
+              //         }
+              //     }, '编辑'));
+              // }
+              if (true) {
+                ary.push(
+                  h(
+                    "Button",
+                    {
+                      props: {
+                        type: "error",
+                        size: "small"
+                      },
+                      on: {
+                        click: () => {
+                          this.delete(params);
+                        }
+                      }
+                    },
+                    "删除"
+                  )
+                );
+              }
+              return h("div", ary);
+            }
+          }
+        ]
+      }
+    };
+  },
+  mounted() {
+    this.getData();
+  },
+  methods: {
+    getData() {
+      let param = {};
+      Object.assign(param, this.datagrid.queryParams);
+      Object.assign(param, { bsProvider: this.formQuery.bsProvider });
+      this.api.lmp.provider.selectProvider(param).then(res => {
+        if (res.result) {
+          this.datagrid.data.rows = res.data.rows;
+          this.datagrid.data.total = res.data.total;
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
+    showAddDialog() {
+      this.formItem.id = "";
+      this.formItem.bsProvider = "";
+      this.formItem.bsFax = "";
+      this.formItem.bsEmail = "";
+      this.formItem.bsAddress = "";
+      this.formItem.bsTel = "";
+      this.formItem.bsContractor = "";
+      this.formItem.bsShipTo = "";
+      this.formItem.bsShipFrom = "";
+      this.dialog.modal_dialog = true;
+    },
+    check() {
+      if (this.formItem.bsProvider == "" || this.formItem.bsProvider == null) {
+        this.$Message.error("供应商名称不能为空");
+        return false;
+      } else if (
+        this.formItem.bsContractor == "" ||
+        this.formItem.bsContractor == null
+      ) {
+        this.$Message.error("联系人不能为空");
+        return false;
+      } else if (this.formItem.bsTel == "" || this.formItem.bsTel == null) {
+        this.$Message.error("联系电话不能为空");
+        return false;
+      } else {
+        return true;
+      }
+    },
+    ok() {
+      if (!this.check()) {
+        return false;
+      }
+      this.api.lmp.provider.insertProvider(this.formItem).then(res => {
+        if (res.result) {
+          this.getData();
+          this.$Message.success("添加成功！");
+        } else {
+          this.$Message.error("添加失败！");
+        }
+      });
+    },
+    ok1() {
+      if (!this.check()) {
+        return false;
+      }
+      this.api.lmp.provider.updateProvider(this.formItem).then(res => {
+        if (res.result) {
+          this.getData();
+          this.$Message.success("更新成功！");
+        } else {
+          this.$Message.error("更新失败！");
+        }
+      });
+    },
+    cancel() {},
+    delete(params) {
+      this.$Modal.confirm({
+        title: "提示信息",
+        content: "<p>是否确定删除？</p>",
+        loading: true,
+        onOk: () => {
+          this.api.lmp.provider.deleteProvider(params.row).then(res => {
+            if (res.result) {
+              this.getData();
+              this.$Message.success("删除成功！");
+              this.$Modal.remove();
+            } else {
+              this.$Message.error("删除失败！");
+            }
+          });
+        }
+      });
+    },
+    showEditDialog(params) {
+      this.formItem.id = params.row.id;
+      this.formItem.bsProvider = params.row.bsProvider;
+      this.formItem.bsFax = params.row.bsFax;
+      this.formItem.bsEmail = params.row.bsEmail;
+      this.formItem.bsAddress = params.row.bsAddress;
+      this.formItem.bsTel = params.row.bsTel;
+      this.formItem.bsContractor = params.row.bsContractor;
+      this.formItem.bsShipTo = params.row.bsShipTo;
+      this.formItem.bsShipFrom = params.row.bsShipFrom;
+      this.dialog.modal_dialog1 = true;
+    },
+    handleSubmit() {
+      this.getData();
+    },
+    handleBindRouter() {
+      this.$router.push("/lmp/infrastruct/forecast/transprovider");
+    }, //handleBindRoute
+    changePage(pageSize) {
+      this.datagrid.queryParams.page = pageSize;
+      this.getData();
+    },
+    chageSize(pageSizeOpts) {
+      this.datagrid.queryParams.rows = pageSizeOpts;
+      this.getData();
+    }
+  }
+};
+</script>

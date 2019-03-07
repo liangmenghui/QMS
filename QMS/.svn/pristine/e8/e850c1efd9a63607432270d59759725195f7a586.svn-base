@@ -1,0 +1,127 @@
+<template>
+  <div>
+    <Row>
+      <i-col span=24>
+        <div v-if="mutliAgent == true">
+          <div style="padding: 0 0 24px;line-height:32px;font-size:12px;">
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">客户</p>
+              <Select v-model="form.customer" style="width:200px">
+                <Option v-for="item in customers" :value="item.customer" :key="item.customer">{{item.desc}}</Option>
+              </Select>
+            </div>
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">货代</p>
+              <i-select v-model="form.agent" style="width:200px">
+                <Option v-for="item in agents" :value="item.agent" :key="item.agent">{{item.desc}}</option>
+              </i-select>
+            </div>
+          </div>
+        </div>
+      </i-col>
+    </Row>
+    <Row>
+      <i-col span="24">
+        <component :is="currentContextView"></component>
+      </i-col>
+    </Row>
+    <Row>
+      <i-col span="24">
+        <div style="height:86px;padding-top:24px;background-color:#f1f2f3;">
+          <Button type="success" @click="handleSubmit" size="large" style="float:right;margin-right:60px;">保存</Button>
+        </div>
+      </i-col>
+    </Row>
+  </div>
+</template>
+<script>
+export default {
+  name: "LmpBookingModal",
+  props: {
+    cabinets: {
+      type: [Object, Array],
+      required: true
+    },
+    display: {
+      type: Boolean,
+      required: true
+    },
+    hidden: {
+      type: Boolean,
+      required: true
+    }
+  }, //props
+  data() {
+    return {
+      currentContextView: "",
+      mutliAgent: false,
+      customers: [{ customer: "", desc: "请选择客户" }],
+      agents: [{ agent: "", desc: "请选择货代" }],
+      form: {
+        customer: "",
+        agent: ""
+      }
+    };
+  }, //data
+  methods: {
+    handleSubmit: function() {},
+    getCustomer: function() {
+      this.api.lmp.booking.getCustomerByPlan(this.cabinets).then(res => {
+        if (!res.result) {
+          return;
+        }
+
+        let tmpCustomers = [{ customer: "", desc: "请选择客户" }];
+        this.form.customer = "";
+
+        res.data.forEach(element => {
+          tmpCustomers.push({
+            customer: element.bsCustomer,
+            desc: element.bsCustomerDesc
+          });
+        });
+
+        this.customers = tmpCustomers;
+        if (customers.length > 1) {
+          this.form.customer = this.customers[1].customer;
+        }
+      });
+    }, //getCustomer
+    getAgent: function() {
+      this.api.lmp.booking.getAgentByPlan(this.cabinets).then(res => {
+        if (!res.result) {
+          return;
+        }
+
+        let list = [{ agent: "", name, url: "", desc: "请选择货代" }];
+        this.form.agent = "";
+
+        res.data.forEach(element => {
+          list.push({
+            agent: element.bsAgent,
+            desc: element.bsAgentDesc,
+            url: element.bsPageUrl,
+            name: element.bsPageName
+          });
+        });
+
+        this.agents = list;
+         if (agents.length > 1) {
+          this.form.customer = this.customers[1].customer;
+        }
+
+        
+      });
+    } //getAgent
+  },
+  watch: {
+    display(val) {
+      //获取对应的货代 以及显示的数据
+      this.getCustomer();
+      this.getAgent();
+    }, //display
+    hidden(val) {} //hidden
+  }, //watch
+  computed: {} //computed
+};
+</script>

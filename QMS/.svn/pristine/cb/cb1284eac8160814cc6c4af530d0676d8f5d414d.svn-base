@@ -1,0 +1,84 @@
+package com.unind.qms.web.supplier.controller;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.web.Constants;
+import com.unind.base.web.WebController;
+import com.unind.qms.web.supplier.entity.SupplierPreReport;
+import com.unind.qms.web.supplier.service.SupplierPreReportService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ *供应商初期评审
+ * @author Shen
+ */
+@Api(description = "供应商初期评审模块")
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping(value=Constants.CONTEXT_PATH + "/supplierPreReport")
+public class SupplierPreReportController extends WebController {
+    @Autowired
+    private SupplierPreReportService supplierPreReportService;
+
+    @ApiOperation(value="新增初期评审", notes="新增初期评审")
+    @RequestMapping(value = "/add", method = RequestMethod.POST)
+    public ApiResponseResult add(SupplierPreReport supplierPreReport){
+        try{
+            return supplierPreReportService.add(supplierPreReport);
+        }catch(BusinessException e){
+            e.printStackTrace();
+            return ApiResponseResult.failure(e.getMessage());
+        }
+    }
+
+    @ApiOperation(value="修改初期评审", notes="修改初期评审")
+    @RequestMapping(value = "/edit", method = RequestMethod.POST)
+    public ApiResponseResult edit(SupplierPreReport supplierPreReport){
+        try{
+            return supplierPreReportService.edit(supplierPreReport);
+        }catch(BusinessException e){
+            e.printStackTrace();
+            return ApiResponseResult.failure(e.getMessage());
+        }
+    }
+
+    @ApiOperation(value = "删除初期评审", notes = "删除初期评审")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "ID", dataType = "Long", paramType="query", required = true, defaultValue="")
+    })
+    @RequestMapping(value = "/delete", method = RequestMethod.POST)
+    public ApiResponseResult delete(Long id){
+        try{
+            return supplierPreReportService.delete(id);
+        }catch(BusinessException  e){
+            e.printStackTrace();
+            return ApiResponseResult.failure(e.getMessage());
+        }
+    }
+
+    @ApiOperation(value = "获取初期评审", notes = "获取初期评审")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "ID", dataType = "Long", paramType = "query", defaultValue = ""),
+            @ApiImplicitParam(name = "bsSuppId", value = "供应商ID", dataType = "Long", paramType = "query", defaultValue = ""),
+            @ApiImplicitParam(name = "bsApprovedItemId", value = "审核项目记录ID", dataType = "Long", paramType = "query", defaultValue = "")
+    })
+    public ApiResponseResult getlist(Long id, Long bsSuppId, Long bsApprovedItemId){
+        try {
+            Sort sort = new Sort(Sort.Direction.DESC, "id");
+            return supplierPreReportService.getlist(id, bsSuppId, bsApprovedItemId, super.getPageRequest(sort));
+        } catch (BusinessException e) {
+            e.printStackTrace();
+            return ApiResponseResult.failure(e.getMessage());
+        }
+    }
+
+}

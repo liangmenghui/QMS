@@ -1,0 +1,65 @@
+import httpService from '@/libs/service'
+
+export default {
+    getlist: function (data) {
+        return httpService.get('/lab/equipment/getlist', data)
+    },
+    add: function (data) {
+        return httpService.post('/lab/equipment/add', data)
+    },
+    edit: function (data) {
+        return httpService.post('/lab/equipment/edit', data)
+    },
+    delete: function (data) {
+        return httpService.post('/lab/equipment/delete', data)
+    },
+    saveMachine: function (data) {
+        return httpService.get('/lab/equipment/saveMachine', data)
+    },
+    selectEquipmet : function (data){
+        return httpService.get('/lab/equipment/selectEquipmet', data)
+    },
+    deleteEquipmet : function (data){
+        return httpService.get('/lab/equipment/deleteEquipmet', data)
+    },
+    select : function (data){
+        return httpService.get('/lab/equipmentTime/select', data)
+    },
+    addtest : function (data){
+        return httpService.get('/lab/equipmentTime/addtest', data)
+    },
+    selectTest : function (data){
+        return httpService.get('/lab/equipmentTime/selectTest', data)
+    },
+    selectTesto : function (data){
+        return httpService.get('/lab/equipmentTime/selectTesto', data)
+    },
+    deleteTest : function (data){
+        return httpService.get('/lab/equipmentTime/deleteTest', data)
+    },
+    update : function (data){
+        return httpService.get('/lab/equipment/update', data)
+    },
+    updateTime : function (data){
+        return httpService.get('/lab/equipmentTime/updateTime', data)
+    },
+    selectEablee: function (data){
+        return httpService.get('/lab/equipmentTime/selectEablee', data)
+    },
+    selectTime :function (data){
+        return httpService.get('/lab/equipmentTime/selectTime', data)
+    },
+    updatess :function (data){
+        return httpService.get('/lab/equipmentTime/updatess', data)
+    },
+    selectEquipmet1:function (data){
+        return httpService.get('/lab/equipment/selectEquipmet1', data)
+    },
+    updateEqworkTime:function (data){
+        return httpService.get('/lab/equipment/updateEqworkTime', data)
+    },
+    selectBycode:function (data){
+        return httpService.get('/lab/equipmentTime/selectBycode', data)
+    }
+    
+}

@@ -1,0 +1,83 @@
+package com.unind.qms.web.sample.controller;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.web.Constants;
+import com.unind.base.web.WebController;
+import com.unind.qms.web.sample.entity.SampleInfo;
+import com.unind.qms.web.sample.service.SampleInfoService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * 样品基本信息
+ * @author chen
+ *
+ */
+@Api(description = "样品基本信息模块")
+@RestController
+@RequestMapping(value=Constants.CONTEXT_PATH + "/sampleInfo")
+public class SampleInfoController extends WebController {
+	@Autowired
+	private SampleInfoService sampleInfoService;
+
+	@ApiOperation(value="新增样品", notes="新增样品")
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	public ApiResponseResult add(SampleInfo sampleInfo) {
+		try {
+			return sampleInfoService.add(sampleInfo);
+		} catch (BusinessException e) {
+			e.printStackTrace();
+			return ApiResponseResult.failure(e.getMessage());
+		}
+	}
+
+	@ApiOperation(value="编辑样品", notes="编辑样品")
+	@RequestMapping(value = "/edit", method = RequestMethod.POST)
+	public ApiResponseResult edit(SampleInfo sampleInfo) {
+		try {
+			return sampleInfoService.edit(sampleInfo);
+		} catch (BusinessException e) {
+			e.printStackTrace();
+			return ApiResponseResult.failure(e.getMessage());
+		}
+	}
+
+	@ApiOperation(value="删除样品", notes="删除样品")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "id", value = "ID", dataType = "Long", paramType="query",defaultValue=""),
+	})
+	@RequestMapping(value = "/delete", method = RequestMethod.POST)
+	public ApiResponseResult delete(Long id) {
+		try {
+			if(null!=id && id==-1) {
+				return ApiResponseResult.failure("没有删除权限");
+			}
+			return sampleInfoService.delete(id);
+		} catch (BusinessException e) {
+			return ApiResponseResult.failure(e.getMessage());
+		}
+	}
+
+	@ApiOperation(value="获取样品", notes="获取样品")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "keyWord", value = "查询条件", dataType = "String", paramType="query",defaultValue=""),
+			@ApiImplicitParam(name = "id", value = "样品ID", dataType = "Long", paramType="query",defaultValue=""),
+	})
+	@RequestMapping(value = "/getlist", method = RequestMethod.GET)
+	public ApiResponseResult getlist(String keyWord, Long id) {
+		try {
+			Sort sort = new Sort(Sort.Direction.DESC,"id");
+			return sampleInfoService.getlist(keyWord, id, super.getPageRequest(sort));
+		} catch (BusinessException e) {
+			return ApiResponseResult.failure(e.getMessage());
+		}
+	}
+}

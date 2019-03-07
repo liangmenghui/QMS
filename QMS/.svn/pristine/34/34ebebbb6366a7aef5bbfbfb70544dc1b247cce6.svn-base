@@ -1,0 +1,71 @@
+package com.unind.qms.web.supplier.entity;
+
+import com.unind.base.domain.admin.BaseEntity;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+
+/**
+ * @author Shen
+ */
+@Entity
+@Table(name = SupplierPreReport.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class SupplierPreReport extends BaseEntity {
+
+    private static final long serialVersionUID = 7151771262953316256L;
+    public static final String TABLE_NAME = "t_supplier_preapprove_report";
+
+    /**
+     * 供应商ID
+     */
+    @ApiModelProperty(name = "bsSuppId", required = true, value = "供应商ID")
+    @NotNull
+    @Column
+    protected Long bsSuppId;
+
+    /**
+     * 审核项目记录ID
+     */
+    @ApiModelProperty(name = "bsApprovedItemId", required = true, value = "审核项目记录ID")
+    @NotNull
+    @Column
+    protected Long bsApprovedItemId;
+
+    /**
+     * 供应商等级（2.潜在 3.暂准 5.禁用）
+     */
+    @ApiModelProperty(name = "bsSuppGrade", value = "供应商等级（2.潜在 3.暂准 5.禁用）")
+    @Column
+    protected int bsSuppGrade;
+
+    public Long getBsSuppId() {
+        return bsSuppId;
+    }
+
+    public void setBsSuppId(Long bsSuppId) {
+        this.bsSuppId = bsSuppId;
+    }
+
+    public Long getBsApprovedItemId() {
+        return bsApprovedItemId;
+    }
+
+    public void setBsApprovedItemId(Long bsApprovedItemId) {
+        this.bsApprovedItemId = bsApprovedItemId;
+    }
+
+    public int getBsSuppGrade() {
+        return bsSuppGrade;
+    }
+
+    public void setBsSuppGrade(int bsSuppGrade) {
+        this.bsSuppGrade = bsSuppGrade;
+    }
+}

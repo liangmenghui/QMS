@@ -1,0 +1,103 @@
+package com.unind.qms.web.supplier.service.internal;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.qms.web.supplier.dao.SupplierPreReportDao;
+import com.unind.qms.web.supplier.entity.SupplierPreReport;
+import com.unind.qms.web.supplier.service.SupplierPreReportService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * @author Shen
+ */
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class SupplierPreReportImpl extends BaseOprService implements SupplierPreReportService {
+    @Autowired
+    private SupplierPreReportDao supplierPreReportDao;
+
+    @Override
+    @Transactional
+    public ApiResponseResult add(SupplierPreReport supplierPreReport) throws BusinessException {
+        if(supplierPreReport == null || supplierPreReport.getBsSuppId() == null){
+            return ApiResponseResult.failure("供应商ID为必填项");
+        }
+        if(supplierPreReport.getBsApprovedItemId() == null){
+            return ApiResponseResult.failure("审核项目记录ID为必填项");
+        }
+        supplierPreReport.setBsCreatedTime(new Date());
+        supplierPreReportDao.save(supplierPreReport);
+        return ApiResponseResult.success("新增成功！");
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult edit(SupplierPreReport supplierPreReport) throws BusinessException {
+        if(supplierPreReport == null || supplierPreReport.getId() == null){
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        if(supplierPreReport.getBsSuppId() == null){
+            return ApiResponseResult.failure("供应商ID为必填项");
+        }
+        if(supplierPreReport.getBsApprovedItemId() == null){
+            return ApiResponseResult.failure("审核项目记录ID为必填项");
+        }
+        SupplierPreReport o = supplierPreReportDao.findOne(supplierPreReport.getId());
+        if(o == null){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        supplierPreReport.setBsModifiedTime(new Date());
+        supplierPreReportDao.save(supplierPreReport);
+        return ApiResponseResult.success("修改成功！");
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        if(id == null){
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        if(id == null || id == -1){
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        SupplierPreReport supplierPreReport = supplierPreReportDao.findOne(id);
+        supplierPreReport.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+        supplierPreReportDao.save(supplierPreReport);
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult getlist(Long id, Long bsSuppId, Long bsApprovedItemId, PageRequest pageRequest) throws BusinessException {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIdDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+        if(id != null){
+            filters.add(new SearchFilter("id", SearchFilter.Operator.EQ, id));
+        }
+        if(bsSuppId != null){
+            filters.add(new SearchFilter("bsSuppId", SearchFilter.Operator.EQ, bsSuppId));
+        }
+        if(bsApprovedItemId != null){
+            filters.add(new SearchFilter("bsApprovedItemId", SearchFilter.Operator.EQ, bsApprovedItemId));
+        }
+        Specification<SupplierPreReport> spec = Specifications.where(super.and(filters, SupplierPreReport.class));
+        Page<SupplierPreReport> page = supplierPreReportDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+}

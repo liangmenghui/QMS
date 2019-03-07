@@ -1,0 +1,321 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-02
+    	描述：产品审核/成品检验
+    -->
+	<div class="" v-if="!showRooterView">
+		<el-row class="top">
+  			<el-col :span="24" class="title-panel panel1" >
+  			<div class="grid-content bg-purple-dark">
+  				<div class="fl"><Icon class="icon" type="information-circled"></Icon>{{approvedFlowRecordData.flowBy.bsName}}</div>
+                <div class="fl">
+                    <Icon type="person"></Icon>
+                    {{$t('ApprovedFlow.Principal')}}: {{approvedFlowRecordData.flowBy.approvedBy.bsName}}
+                </div>   				
+  				<div class="fr">
+  					<el-button style="width: 140px;padding: 8px 0px;" type="success" @click="pushToApprovedReport('approved/report')">
+  						{{$t('approved.AuditReport')}}
+  					</el-button>
+  				</div>               
+                 
+  			</div>
+  			</el-col>
+  			<el-col :span="24" class="title-panel setpadding">
+                <div class="grid-content bg-purple-dark">
+                    <div class="approvedstatus">
+                        <el-tag color="white" style="width: 140px;font-size: 14px;" v-if="approvedFlowRecordData.bsStatus==2">
+                        {{$t("approved.resultLabel")}} ：{{$t("approved.flow_result["+approvedFlowRecordData.bsResult+']')}}
+                        </el-tag>
+                        <el-tag color="white" style="width: 140px;font-size: 14px;" v-if="approvedFlowRecordData.bsStatus<2">
+                        {{$t("approved.statusLabel")}} ：{{$t("approved.flow_status["+approvedFlowRecordData.bsStatus+']')}}
+                        </el-tag>
+                    </div>
+                    <div v-if="approvedFlowRecordData.flowBy.bsType<=20">
+    	  				<div class="fl"><Icon type="ios-color-filter"></Icon>{{$t('product.name')}}: {{productInfo.bsPrName}}</div> 
+    	  				<br>
+    	  				<div class="fl bscode"><Icon class="icon" type="ios-list"></Icon>{{$t('product.code')}}: {{productInfo.bsPrCode}}</div>  
+                    </div>
+                    <div v-if="approvedFlowRecordData.flowBy.bsType>20">
+                        <div class="fl">{{$t('product.SuppChieseName')}}: {{supplierInfo.bsSuppChieseName}} {{supplierInfo.bsSuppEnglishName}}</div> 
+                        <br>
+                        <div class="fl">{{$t('product.SuppCode')}}: {{supplierInfo.bsSuppCode}}</div>  
+                    </div>
+	  			</div>
+  			</el-col>
+		</el-row>
+
+         <div class="layout-content">	  
+	          <div class="Title">
+	          	<el-row :gutter="20">
+ 				<el-col :span="6"><div class="grid-content bg-purple">{{$t('approved.AuditingItem')}}</div></el-col>
+  				<el-col :span="6"><div class="grid-content bg-purple">{{$t('approved.statusLabel')}}</div></el-col>
+  				<el-col :span="6"><div class="grid-content bg-purple">{{$t('approved.principal')}}</div></el-col>
+  				<el-col :span="6"><div class="grid-content bg-purple">{{$t('approved.note')}}</div></el-col>
+				</el-row>
+	          </div>
+		
+		<table style="width: 100%" class="approvedItem">	
+    		<tr v-for="item in approvedItemRecords">
+    			<td class="td1">
+                    <el-button plain type="success" style="width:220px;padding: 10px 0px;" @click="pushToChildWithData(item)" :disabled="item.bsStatus==0">
+                        {{item.itemsBy.bsName}}
+                    </el-button></td>
+    			<td class="td1" v-bind:class="{gray:item.bsStatus==0, blue:item.bsStatus==1 ,green:item.bsStatus==2 ,orange:item.bsStatus==3, gray:item.bsStatus==4}">
+                    <span class="circle" v-bind:class="{bggray:item.bsStatus==0, bgblue:item.bsStatus==1 ,bggreen:item.bsStatus==2 ,bgorange:item.bsStatus==3, bggray:item.bsStatus==4}"></span>{{$t("approved.status["+item.bsStatus+"]")}}
+                </td> 
+    			<!-- <el-tag type="warning tag">{{item.bsStatus}}</el-tag> -->
+    			<td class="td1">{{item.usernames.toString()}}</td>
+    			<td class="td1">{{item.bsDesc}}</td>
+    		</tr>
+	    </table>
+	   	 
+        <div style="padding-top: 40px;padding-bottom: 40px;">
+            <center>                
+                <div>{{approvedFlowRecordData.bsDesc}}</div>  
+            </center>
+        </div>
+
+		<div style="padding-top: 0px;padding-bottom: 40px;" v-if="perms.edit">
+            <center v-if="approvedFlowRecordData.bsStatus==0">
+                <el-button type="danger" style="width: 10%;padding: 10px 0px;" @click="closeApproved(0)">{{$t('approved.CloseTheAudit')}}</el-button>
+            </center>
+			<center v-if="approvedFlowRecordData.bsStatus==1">
+                <el-button type="success" v-if="allItmesPassed" style="width: 10%;padding: 10px 0px;" @click="closeApproved(1)">{{$t('Button.Approved')}}</el-button>
+                <el-button type="success" v-if="!allItmesPassed" style="width: 10%;padding: 10px 0px;" @click="closeApproved(1)">{{$t('Button.yieldApproved')}}</el-button>
+                <el-button type="danger" style="width: 10%;padding: 10px 0px;" @click="closeApproved(2)">{{$t('Button.AuditFailed')}}</el-button>
+			</center>
+		</div>
+
+        <Modal v-model="modal_dialog"  @on-ok="comfirmApproved()">
+            <el-form label-width="80">
+                <p style="font-size: 16px;color: #67C23A;">{{$t('approved.flow_corfirm['+comfirm_dialog.bsResult+']')}}</p>
+                <el-form-item label="说明" prop="" >
+                    <el-input v-model="comfirm_dialog.bsDesc" type="textarea"></el-input>
+                </el-form-item>                                     
+            </el-form>
+        </Modal>
+
+        </div>
+	</div>
+    <div v-else-if="showRooterView">
+          <router-view></router-view>
+    </div>
+</template>
+
+
+<script>
+import Cookies from 'js-cookie';
+export default {
+	data() {
+		return {
+			showRooterView: false,
+			approvedItemRecords:{
+			},
+			approvedFlowRecordData: {
+				flowBy:{
+                    approvedBy:{}
+                }
+			},
+			supplierInfo: {},
+			productInfo:{},
+			recordInfo:{},
+            modal_dialog: false,
+            comfirm_dialog:{
+                bsResult: 0,
+                bsDesc: ""
+            },
+            allItmesPassed: true,
+            perms: {}
+		}
+	},
+	created(){
+		this.bsFlowRecordId = this.$route.query.bsFlowRecordId;
+        this.comfirm_dialog.id = this.bsFlowRecordId;
+        this.showRooterView = this.$route.matched.length>3;
+        this.getData();
+
+	},
+    watch: {
+        '$route' (to, from) {
+            this.showRooterView = to.matched.length>3;
+        }
+    },
+	methods: {
+		getData() {
+			this.api.ApprovedItem.getrecords({bsFlowRecordId:this.bsFlowRecordId}).then((res) => {
+            	this.approvedItemRecords = [];
+                for (var i = 0; i < res.data.rows.length; i++) {
+                    var row = res.data.rows[i];
+                    if(this.allItmesPassed && row.bsStatus==3) this.allItmesPassed = false;
+            		if(row.itemsBy == undefined) return row;
+            		var recorderSet = row.itemsBy.recorderSet;
+                    recorderSet.sort(function (r1,r2) {
+                        return r1.bsPriority>r2.bsPriority;
+                    });
+            		if(recorderSet != undefined && recorderSet.length > 0) {
+            			var users = [];
+            			for (var j = 0; j < recorderSet.length; j++) {
+            				var recorder = recorderSet[j];
+            				if(recorder.bsIsDel) continue;
+            				else {
+            					users.push(recorder);
+            				}
+            			}
+                        row.users = users.map(function (user) {
+                            return user.recorderBy.bsCode;
+                        });
+            			row.usernames = users.map(function (user) {
+            				return user.recorderBy.bsName;
+            			});
+            		}
+                    row.resultSet.sort(function (r1,r2) {
+                        return r1.id>r2.id;
+                    });
+            		this.approvedItemRecords.push(row);
+            	};
+            });
+            this.api.approvedFlowRecord.getlist({id:this.bsFlowRecordId}).then((res) => {
+            	this.approvedFlowRecordData = res.data.rows[0];
+                this.perms.edit = (this.$Util.hasPerm('VERIFY') || this.approvedFlowRecordData.flowBy.approvedBy.bsName == Cookies.get('user')) && this.approvedFlowRecordData.bsStatus<2;
+            	this.getInfo();
+            });
+		},
+		getInfo(){
+			if(this.approvedFlowRecordData.bsPrId != undefined) {
+            		this.api.productinfo.getlist({id:this.approvedFlowRecordData.bsPrId}).then((res) => {
+            			this.productInfo = res.data.rows[0];
+        				this.$store.commit("updateProductDataStates",this.productInfo);
+            		});
+            	}
+            	if(this.approvedFlowRecordData.bsSuppId != undefined) {
+					this.api.supplierinfo.getlist({id:this.approvedFlowRecordData.bsSuppId}).then((res) => {
+            			this.supplierInfo = res.data.rows[0];
+        				this.$store.commit("updateSupplierDataStates",this.supplierInfo);
+            		});
+            	}
+		},
+        pushToChildWithData(row){
+        	var query = {
+        		itemsRecordId:row.id,
+        		itemsId:row.bsItemsId,
+        		bsFlowRecordId:this.bsFlowRecordId
+        	};
+        	if(this.approvedFlowRecordData.bsType == 1) query.bsType == 21;
+        	switch(this.approvedFlowRecordData.bsType) {
+        		case 1:
+        			query.bsType = 21;
+        			break;
+        		case 2:
+        			query.bsType = 11;
+        			break;
+        		case 3:
+        			query.bsType = 22;
+        			break;
+        	}
+        	this.$store.commit("updateItemRecordDataStates",row);
+            this.$router.push({path:row.itemsBy.bsRouter,query:query});
+        	
+        },
+        pushToApprovedReport(url){
+        	this.$router.push({path:url});
+            this.$store.commit("updateFlowRecordDataStates",this.approvedItemRecords);
+      	},
+        closeApproved(result){
+            this.modal_dialog = true;
+            this.comfirm_dialog.bsResult = result;
+        },
+        comfirmApproved(){
+            if(this.comfirm_dialog.bsResult == 0) {
+                this.api.approvedFlowRecord.close(this.comfirm_dialog).then((res) => {
+                    this.$Message.info("关闭审核成功");
+                    this.getData();
+                });
+            }
+            else {
+                this.api.approvedFlowRecord.edit(this.comfirm_dialog).then((res) => {
+                    this.$Message.info("提交成功");
+                    this.getData();
+                });
+            }
+        }
+	}
+}
+</script>
+
+<style>
+.circle{
+	font-size: 14px;color: #27558e;width: 10px;height: 10px;display: inline-block;background-color:#27558e;
+	border-radius: 50%; 
+    margin-right: 5px
+}
+
+ .red{color:#fd5822;}
+.blue{color: #409EFF;}
+.green{color: #67C23A;}
+.orange{color: #fd5822;}
+.gray{color: #333;}
+
+ .bgred{background-color:#fd5822;}
+.bgblue{background-color: #409EFF;}
+.bggreen{background-color: #67C23A;}
+.bgorange{background-color: #fd5822;}
+.bggray{background-color: #333;}
+.mt10{margin-top:10px;}
+	.title-panel{
+			padding: 20px 40px;
+			/*margin-bottom: 30px;*/
+   			background-color: #FFFFFF;
+    		border-radius: 3px;
+   			-moz-border-radius: 3px;
+   			 -webkit-border-radius: 3px;
+   			 /*box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.05);*/
+   			 width: 100%;
+   			}
+
+
+.setpadding{padding: 12px 40px;border: 1px solid #ddd;
+    border-top: none;}
+.layout-content{
+	background-color: white;
+}
+		 
+	.Title{
+		padding-left: 1%;padding-right: 1%;
+		height: 45px;line-height: 50px; font-size: 14px;
+		 font-family: "Microsoft YaHei";font-weight:600;
+		 text-align: center; margin-bottom: 15px;
+         background: #f0f0f0;
+         margin-top:10px;
+	}
+	.td1{
+		width: 25%;
+		height: 55px;
+		text-align: center;
+		font-size: 14px;
+		font-family: "Microsoft YaHei";
+       
+	}
+	.status{color:#657180;font-family: "Microsoft YaHei";font-size: 14px;}
+	.cpshtd2{
+		height: 50px;
+		background-color: #f5f7f9;
+		padding-left: 50px;
+	}
+
+	.grid-content .ivu-icon{font-size: 20px;color:#888; margin-right: 10px;}
+	.grid-content{font-size: 15px;}
+	.top .fr{float:right; margin-right: 6%;}
+	.top .fl{float:left;display: inline-block;width: 70%;line-height: 45px;}
+	.RecordeBtn{width: 140px;padding:12px 12px;}
+	.tag{text-align: right;margin-left: 40%;}
+	.fr .el-button--success{padding:10px 10px;}
+	.icon{font-size: 14px;}
+	.top .grid-content .ivu-icon{color:#fd5822;}
+	.bscode{line-height: 50px;color:16px;height: 50px;}
+	.bscode .icon{font-size: 18px;color: blue}
+	.approvedItem .el-button{padding: 9px 20px;}
+    .approvedstatus{float:right;font-size:14px;margin-right: 6%;}
+    .panel1{background: #f1f6fc!important}
+
+</style>

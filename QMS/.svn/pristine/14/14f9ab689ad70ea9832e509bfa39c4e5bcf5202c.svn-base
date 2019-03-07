@@ -1,0 +1,112 @@
+package com.unind.qms.web.sample.service.internal;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BaseService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.qms.web.sample.dao.SampleInfoDao;
+import com.unind.qms.web.sample.dao.SampleRecordDao;
+import com.unind.qms.web.sample.entity.SampleInfo;
+import com.unind.qms.web.sample.entity.SampleRecord;
+import com.unind.qms.web.sample.service.SampleInfoService;
+import com.unind.qms.web.sample.service.SampleRecordService;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class SampleRecordImpl extends BaseOprService implements SampleRecordService {
+    @Autowired
+    private SampleRecordDao sampleRecordDao;
+
+    @Transactional
+    public ApiResponseResult add(SampleRecord sampleRecord) throws BusinessException {
+        if (null == sampleRecord.getBsSampleId()) {
+            return ApiResponseResult.failure("样品ID不能为空");
+        }
+        if (null == sampleRecord.getBsShipmentId()) {
+            return ApiResponseResult.failure("出货检验报告ID不能为空");
+        }
+
+        sampleRecord.setBsCreatedTime(new Date());
+        sampleRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+//        sampleInfo.setPkCreatedBy(Long.parseLong("1"));
+        sampleRecordDao.save(sampleRecord);
+        return ApiResponseResult.success("新增成功！").data(sampleRecord);
+    }
+
+    @Transactional
+    public ApiResponseResult edit(SampleRecord sampleRecord) throws BusinessException {
+        if (null == sampleRecord || null == sampleRecord.getId()) {
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        if (null == sampleRecord.getBsSampleId()) {
+            return ApiResponseResult.failure("样品ID不能为空");
+        }
+        if (null == sampleRecord.getBsShipmentId()) {
+            return ApiResponseResult.failure("出货检验报告ID不能为空");
+        }
+        SampleRecord o = sampleRecordDao.findOne(sampleRecord.getId());
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+//        if (!StringUtils.equals(approvedFlow.getBsName().trim(), o.getBsName())) {
+//            int counts = approvedFlowDao.countByBsName(approvedFlow.getBsName());
+//            if (counts > 0) {
+//                return ApiResponseResult.failure("项目名称不能重复");
+//            }
+//            o.setBsName(approvedFlow.getBsName().trim());
+//        }
+        o.setBsStatus(sampleRecord.getBsStatus());
+
+        o.setBsModifiedTime(new Date());
+		o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+//        o.setPkModifiedBy(Long.parseLong("1"));
+        sampleRecordDao.save(o);
+        return ApiResponseResult.success("修改成功！").data(o);
+    }
+
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        SampleRecord o = sampleRecordDao.findOne(id);
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除").status("error1");
+        }
+        if (o.getId() <= 0) {
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        o.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+        sampleRecordDao.save(o);
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponseResult getlist(Long bsShipmentId, Long bsQualityId, PageRequest pageRequest) {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+        if (bsShipmentId != null) {
+            filters.add(new SearchFilter("bsShipmentId", SearchFilter.Operator.EQ, bsShipmentId));
+        }else if (bsQualityId != null) {
+            filters.add(new SearchFilter("bsQualityId", SearchFilter.Operator.EQ, bsQualityId));
+        }else{
+            return ApiResponseResult.failure("传入参数为空！");
+        }
+        Specifications<SampleRecord> spec = Specifications.where(super.and(filters, SampleRecord.class));
+        Page<SampleRecord> page = sampleRecordDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+}

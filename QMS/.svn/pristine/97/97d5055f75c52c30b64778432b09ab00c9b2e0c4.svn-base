@@ -1,0 +1,17 @@
+package com.unind.qms.web.sample.dao;
+
+import com.unind.qms.web.sample.entity.SampleInfo;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.CrudRepository;
+
+/**
+ * 
+ * @author chen
+ *
+ */
+public interface SampleInfoDao extends CrudRepository<SampleInfo, Long>, JpaSpecificationExecutor<SampleInfo> {
+
+//	public int countByBsSuppCode(String bsSuppCode);
+//
+//	public List<SampleInfo> findByBsSuppCode(String bsSuppCode);
+}

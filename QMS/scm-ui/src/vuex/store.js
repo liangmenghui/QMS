@@ -1,0 +1,87 @@
+//文档地址: https://vuex.vuejs.org/zh-cn/
+
+import Vue from 'vue'
+import Vuex from 'vuex'
+import app from './modules/app';
+import user from './modules/user';
+import permissions from './modules/permissions'
+import lmpBooking from './modules/lmpBooking.js'
+
+Vue.use(Vuex)
+
+var mStorage = window.localStorage;
+
+const store = new Vuex.Store({
+    state: {
+        menuData: mStorage.getItem('menuData')?{perms:{}}:JSON.parse(mStorage.getItem('menuData')),
+        flowdata: mStorage.getItem('flowdata'),
+        supplierData: mStorage.getItem('supplierData'),
+        productData: mStorage.getItem('productData'),
+        sampleData: mStorage.getItem('sampleData'),
+        flowRecordData: mStorage.getItem('flowRecordData'),
+        itemRecordData: mStorage.getItem('itemRecordData'),
+        riskData: mStorage.getItem('riskData'),
+        todoData:mStorage.getItem('todoData'),
+    },
+    getters: {
+        getSupplierData: (state)=>state.supplierData == null?{}:JSON.parse(state.supplierData),
+        getFlowdata: (state)=>state.flowdata == null?{}:JSON.parse(state.flowdata),
+        getProductData: (state)=>state.productData == null?{}:JSON.parse(state.productData),
+        getSampleData: (state)=>state.sampleData == null?{}:JSON.parse(state.sampleData),
+        getFlowRecordData: (state)=>state.flowRecordData == null?{}:JSON.parse(state.flowRecordData),
+        getItemRecordData: (state)=>state.itemRecordData == null?{}:JSON.parse(state.itemRecordData),
+        getRiskData: (state)=>state.riskData == null?{}:JSON.parse(state.riskData),
+        getTodoData: (state)=>state.todoData == null?{}:JSON.parse(state.todoData),
+    },
+    mutations: {
+        updateMenuDataStates(state,_menuData){
+            state.menuData = _menuData;
+            mStorage.setItem('menuData', JSON.stringify(state.menuData));
+        },
+        updateFlowDataStates(state,_flowdata) {
+            state.flowdata = JSON.stringify(_flowdata);
+            mStorage.setItem('flowdata', state.flowdata);
+        },
+        updateSupplierDataStates(state,_supplierData) {
+            state.supplierData = JSON.stringify(_supplierData);
+            mStorage.setItem('supplierData', state.supplierData);
+        },
+        updateProductDataStates(state,_productData) {
+            state.productData = JSON.stringify(_productData);
+            mStorage.setItem('productData', state.productData);
+        },
+        updateSampleDataStates(state,_sampleData) {
+            state.sampleData = JSON.stringify(_sampleData);
+            mStorage.setItem('sampleData', state.sampleData);
+        },
+        updateFlowRecordDataStates(state,_flowRecordData) {
+            state.flowRecordData = JSON.stringify(_flowRecordData);
+            mStorage.setItem('flowRecordData', state.flowRecordData);
+        },
+        updateItemRecordDataStates(state,_itemRecordData) {
+            state.itemRecordData = JSON.stringify(_itemRecordData);
+            mStorage.setItem('itemRecordData', state.itemRecordData);
+        },
+        updateRiskDataStates(state,_riskData) {
+            state.riskData = JSON.stringify(_riskData);
+            mStorage.setItem('riskData', state.riskData);
+        },
+        updateTodoStates(state,_todoData) {
+            state.todoData = JSON.stringify(_todoData);
+            mStorage.setItem('todoData', state.todoData);
+        },
+    },
+    actions: {
+
+    },
+    modules: {
+        app,
+        user,
+        permissions,
+        lmpBooking
+    },
+})
+
+Vue.use(store)
+
+export default store;

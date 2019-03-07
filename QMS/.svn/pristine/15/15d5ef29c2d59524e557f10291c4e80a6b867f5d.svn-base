@@ -1,0 +1,422 @@
+<template>
+    <form>
+        <table class="formed" align="left" valign="left">
+           <tr>
+               <td colspan="4" style="width:30%;font-weight:800;color:rgb(43, 135, 235)">
+                  <p>Shipper    付货人 </p>
+                </td>
+                 <td colspan="4" >
+                       <p ></p>
+                </td>
+                         
+           </tr>
+
+           <tr>
+                  <td colspan="4">
+                        <textarea  v-model='bsShipper' rows="4"></textarea>
+                 </td>
+                  <td colspan="4" style="font-weight:800;font-size:18px;border-bottom-style:none">
+                       
+                         <p></p><br><br>
+                         <p>汉宏物流(中国)有限公司广州分公司</p>
+                         <p>Hellmann Worldwide Logistics (China) Ltd</p>
+                 </td>        
+            </tr>
+            <tr>
+                <td colspan="2" style="width:10%;color:rgb(43, 135, 235)">
+                 <nobr>
+                        Tel:<input  v-model='bsShipperTel' style="width:81%">
+                 </nobr>
+                </td>
+                 <td colspan="2" style="width:10%;color:rgb(43, 135, 235)">
+                   <nobr>
+                        Fax : <input v-model='bsShipperFax' style="width:91%">
+                  </nobr>     
+                </td>
+                 <td colspan="4" style="width:10%;font-weight:700;border-bottom-style:none;border-top-style:none;font-size:16px">
+                  <p>Seafreight Dept-Guangzhou Branch</p>
+                </td>
+                
+            </tr>
+            <tr>
+               <td colspan="4" style="width:30%;font-weight:800;color:rgb(43, 135, 235)">
+                  <p>Consignee     收货人 </p>
+                </td>
+                 <td colspan="4" style="border-style:none;font-weight:600;font-size:18px;" >
+                       <p >Tel: 8620-28330318(直线)</p>
+                </td>                      
+           </tr>
+           <tr>
+                <td colspan="4">
+                      <textarea  v-model='bsConsignee' rows="4"></textarea>
+               </td>
+                <td colspan="4" style="font-weight:600;font-size:16px;border-bottom-style:none" >
+                       <p>Fax: 8620-28330202</p>
+                       <p>广州市越华路112号珠江国际大厦4304-05单元</p>
+                       <br>
+                       <p align=center >SHIPPING ORDER</p>
+               </td>        
+          </tr>
+           <tr>
+                <td colspan="2" style="width:10%;color:rgb(43, 135, 235)" >
+                 <nobr>
+                        Tel :<input   v-model='bsConsigneeTel' style="width:81%">
+                 </nobr>
+                </td>
+                 <td colspan="2" style="width:10%;color:rgb(43, 135, 235)" >
+                   <nobr>
+                        Fax : <input   v-model='bsConsigneeFax' style="width:91%">
+                  </nobr>     
+                </td>
+                 <td colspan="4" style="border-bottom-style:none" >
+                  <nobr>
+                      <diV align=center style="font-weight:900;">
+                            S/O No: <input  v-model='bsSoNo' style="width:170px" type="text">
+                      </diV>
+                  </nobr>
+                </td>
+                
+            </tr>
+            <tr>
+               <td colspan="4" style="width:30%;font-weight:800;color:rgb(43, 135, 235)">
+                  <p>Notify party  通知人  </p>
+                </td>
+                 <td colspan="4" style="border-style:none solid none solid">
+                       <p ></p>
+                </td>                      
+           </tr>
+           <tr>
+                <td colspan="4">
+                      <textarea   v-model='bsNotifyParty' rows="4"></textarea>
+               </td>
+                <td colspan="4">
+                       <p></p>
+               </td>        
+          </tr>    
+           <tr>
+               <td colspan="2" style="font-weight:600;color:rgb(43, 135, 235)" >
+                  <p>Pre-carriage by  前段运输</p>
+               </td>
+               <td colspan="2" style="font-weight:600;color:rgb(43, 135, 235)">
+                  <p>Place of receipt 装货地点</p>
+               </td>
+               <td  colspan="4" style="border-bottom-style:none">
+                    <p>美国政府规定其道路限重为：17236KGS/20'GP; </p>
+               </td>
+           </tr>
+           <tr>
+                <td colspan="2"  >
+                  <input v-model='bsPreCarriage' ></input>
+                </td>
+                <td colspan="2" >
+                    <input v-model='bsReceipt' ></input>
+                </td>
+                <td  colspan="4" style="border-style:none solid none solid">
+                     <p>19958KGS/40’（40‘HQ），如因超重被有关当局查获， </p>
+                </td>
+              
+            </tr>
+            <tr>
+                    <td colspan="2" style="font-weight:600;color:rgb(43, 135, 235)" >
+                       <p>Ocean Vessel 海运船名</p>
+                    </td>
+                    <td colspan="2" style="font-weight:600;color:rgb(43, 135, 235)">
+                       <p> Port of Loading (装货港)</p>
+                    </td>
+                    <td  colspan="4" >
+                         <p>一切责任将由付货人承担。敬请留意。</p>
+                    </td>
+                   
+                </tr>
+                <tr>
+                     <td colspan="2"  >
+                       <input v-model='bsVessel' ></input>
+                     </td>
+                     <td colspan="2" >
+                         <input  v-model='bsLoading'></input>
+                     </td>
+                     
+                     <td  colspan="4" >
+                          <p></p>
+                     </td>
+                 </tr><tr>
+                        <td colspan="2" style="font-weight:600;color:rgb(43, 135, 235)" >
+                           <p>Port of discharge 卸货港</p>
+                        </td>
+                        <td colspan="2" style="font-weight:600;color:rgb(43, 135, 235)" >
+                           <p> Place of Delivery 最终卸货地</p>
+                        </td>
+                        <td  colspan="2" style="font-weight:600;color:rgb(43, 135, 235)" >
+                             <p>Freight Payable at  运费支付</p>
+                        </td>
+                        <td  colspan="2" style="font-weight:600;color:rgb(43, 135, 235)">
+                             <p>No. of B/L  正本提单份数</p>
+                        </td>
+                    </tr>
+                    <tr>
+                         <td colspan="2"  >
+                           <input  v-model='bsDischarge' ></input>
+                         </td>
+                         <td colspan="2" >
+                             <input   v-model='bsDelivery'></input>
+                         </td>
+                         <td  colspan="2" >
+                               <input  v-model='bsFreightPayable' ></input>
+                         </td>
+                         <td  colspan="2" >
+                                <input  v-model='bsNoOfBl' ></input>
+                         </td>
+                     </tr>
+            <tr>
+                <td colspan="8" height="20px">
+                    <p></p>
+                </td>
+            </tr>
+             <tr>
+                <td colspan="3" align=center style="font-weight:600;color:rgb(43, 135, 235)">
+                   <p style="color:#000">唛头和号码</p>
+                   <P>Marks & Nos</P>
+                   <P>(散货必须提供唛头)</P>
+                 </td>
+                  <td colspan="1" align=center style="font-weight:600;color:rgb(43, 135, 235)">
+                    <p style="color:#000">件数和包装种类</p>
+                    <p>Number & kind of packages </p>
+                    <P>(箱数和包装种类)</P>
+                 </td>
+                  <td colspan="2" align=center style="font-weight:600;color:rgb(43, 135, 235)">
+                   <p style="color:#000">货                           名</p>
+                   <p>Description of goods</p>
+                   <P>(必须提供中英文货名和商品编码)</P>
+                 </td>
+                  <td colspan="1"  align=center style="font-weight:600;color:rgb(43, 135, 235)">
+                    <p style="color:#000">总毛重（公斤）</p>  
+                    <p>Gross Weight</p> 
+                    <P>(KGS)</P>
+                 </td>     
+                 <td colspan="1" align=center style="font-weight:600;color:rgb(43, 135, 235)">
+                        <p style="color:#000">总体积（立方米）</p>  
+                        <p>Measurement</p> 
+                        <P>(CBM)</P>
+                     </td>     
+            </tr>
+            <tr>
+                <td colspan="3">
+                        <input type="text" style="width:100%"  v-model="form.bsMarks"></input>
+                 </td>
+                  <td colspan="1">
+                        <input type="text" style="width:100%"  v-model="form.bsPackagesQuantity"></input>
+                 </td>
+                  <td colspan="2">
+                        <input type="text" style="width:100%"  v-model="form.bsDescription"></input>
+                 </td>
+                  <td colspan="1">
+                        <input type="text" style="width:100%"  v-model="form.bsWeight"></input>
+                 </td>   
+                 <td colspan="1">
+                        <input type="text" style="width:100%"  v-model="form.bsMeasurement"></input>
+                 </td>      
+            </tr>
+        </table>
+    </form>
+</template>
+
+<script>
+import Vue from "vue";
+export default {
+  props: {
+    customer: {
+      type: String
+    },
+    agent: {
+      type: String
+    },
+    cabinets: {
+      type: Array
+    }
+  }, //props
+  data() {
+    return {
+      receipts: [{ name: "", desc: "请选择" }],
+      deliveries: [{ name: "", desc: "请选择" }],
+      contentData:"",
+      form: {
+        bsSoNo:'',
+        bsShipper: "",
+        bsShipperTel:'',
+        bsShipperFax:'',
+        bsConsignee:'',
+        bsConsigneeTel:'',
+        bsConsigneeFax:'',   
+        bsNotifyParty:'',
+        bsVessel:'',
+        bsLoading:'',
+        bsPreCarriage:'',
+        bsReceipt:'',
+        bsDischarge:'',
+        bsDelivery:'',
+        bsMarks:'',
+        bsPackagesQuantity:'',
+        bsDescription:'',
+        bsWeight:'',
+        bsMeasurement:'',
+        bsFreightPayable:'',
+        bsNoOfBl:'',
+       
+        
+      }
+    };
+  }, //data
+  methods: {
+    loadContextData: function() {
+      this.api.lmp.booking
+        .getContextData({
+          customer: this.customer,
+          agent: this.agent,
+          cabinets: this.cabinets
+        })
+        .then(res => {
+          if (res.result) {
+            //保留原数据
+            this.contentData =JSON.parse(JSON.stringify(res.data));
+            let formData = res.data;
+            let cabinets = [];
+            //转换成html能解析的
+            formData.cabinets.forEach(ele => {
+              ele.cabinetDetail.forEach((dele, index) => {
+                cabinets.push({
+                  partNo: dele.partNo,
+                  qty: dele.qty,
+                  cartonQty: dele.cartonQty,
+                  partNoDesc: dele.partNoDesc,
+                  loadingDate: dele.loadingDate,
+                  firstRow: index == 0 ? true : false,
+                  rowCount: ele.cabinetDetail.length,
+                  volume: ele.cabinetVolume,
+                  weight: ele.cabinetWeight
+                });
+              });
+            });
+            formData.cabinets = cabinets;
+            this.form = formData;
+            console.log(this.form);
+          }
+        });
+    }, //loadContextData
+    getFormData: function() {
+      let validSuccess = true;
+      if (this.form.receipt == undefined || this.form.receipt == "") {
+        this.$Message.error("请选择收货地点");
+        validSuccess = false;
+      }
+      if (this.form.delivery == undefined || this.form.delivery == "") {
+        this.$Message.error("请选择目的地");
+        validSuccess = false;
+      }
+      if (this.form.invoiceCode == undefined || this.form.invoiceCode == "") {
+        this.$Message.error("请输入发票号");
+        validSuccess = false;
+      }
+      this.$emit("validate", validSuccess);
+      if (validSuccess == false) return;
+      this.contentData.receipt = this.form.receipt;
+      this.contentData.delivery = this.form.delivery;
+      this.contentData.invoiceCode = this.form.invoiceCode;
+      return this.contentData;
+    } //getFormData
+  }, //methods
+  computed: {
+    total() {
+      let count = 0;
+      this.cabinets.forEach(element => {
+        count += element.qty;
+      });
+      return count;
+    }
+  }, //computed
+  watch: {}, //watch
+  mounted() {
+    //初始化
+    this.loadContextData();
+  } //mounted
+};
+</script>
+
+<style>
+table {
+  padding: 0;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0px;
+}
+.td2{
+    font-weight:bold
+}
+.formed {
+  margin: 6px 10px;
+  border: 2px solid #000;
+  line-height: 1.6em;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+.formed tr {
+  padding: 0px;
+}
+.formed tr td {
+  border: 0;
+  border-right: 1px solid #c1c1c3;
+  border-bottom: 1px dashed #c1c1c3;
+  padding: 0px;
+  padding: 1px 1px;
+}
+
+.formed > tr:last-child > td {
+  border-bottom: 0;
+}
+.formed .sperator {
+  border-top: 2px solid #000;
+}
+
+.formed p > u {
+  margin: 3px 5px;
+  font-size: 12px;
+  display: inline;
+  line-height: 12px;
+  text-decoration: none;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.formed input,
+select {
+  width: 100%;
+  border: 1px solid #c1c1c3;
+}
+.formed input {
+  background-color: #f8f9fa;
+  width:96%;
+}
+.formed label {
+  margin-left: 30px;
+  position: relative;
+}
+.formed input[type="checkbox"] {
+  margin-left: 2px;
+  position: absolute;
+  left: -20px;
+  bottom: 1px;
+}
+
+.formed textarea {
+  resize: none;
+  width: 100%;
+  border: 1px solid #c1c1c3;
+  background-color: #e1e2e3;
+}
+.f-blue {
+  background-color: #c0d9f1;
+}
+.f-white {
+  background-color: #fff;
+}
+.f-yellow {
+  background-color: #ff0;
+}
+</style>

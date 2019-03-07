@@ -1,0 +1,51 @@
+/*产品详情*/
+	.productdetails #product-body:after{
+		content:".";
+		visibility:hidden;
+		display:block; 
+		clear:both;
+	}
+	.productdetails .product-body-div{
+		float: left;height: 50px;
+	}
+	.productdetails .product-body-text{
+		float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;
+	}
+	.productdetails .product-body-input{
+		float: left;
+	}
+	.productdetails .product-body-div .el-input{
+		width: 300px;
+	}
+
+/*产品风险管理*/
+ .productriskmanagement .clearfix{
+  	width: 30%;border: 1px solid #DDDDDD;margin-left: 5%;padding-top: 10px;padding-bottom: 25px;margin-bottom: 20px;
+  } 
+ .productriskmanagement .clearfix:after {
+    display: table;content: "";
+  }
+ .productriskmanagement .clearfix:after {
+    clear: both;
+  }
+ .productriskmanagement .Sysmessage{
+  width:100%;height:60px;list-style:none;
+}
+.productriskmanagement .Sysmessage li{
+	float:left;width:50%; text-align:center;
+	}
+.productriskmanagement .Sysmessage li p{
+	line-height:35px;font-size:14px; color:#555;font-family:"Microsoft YaHei";margin-bottom:10px; position:relative;
+	}
+.productriskmanagement .Sysmessage li p.RatingSystem{
+	font-size:25px; color:#409EFF;font-family:"Arial";
+	}
+.productriskmanagement .Sysmessage li p.RatingSystem:after{
+	content:'';height:50px;display:inline-block;border-left:1px solid #ccc; position:absolute;right:0;top:-20px;
+	}
+.productriskmanagement .Sysmessage li p.ManualClassification{
+	font-size:25px;color:#67C23A;font-family:"Arial";
+	}
+  .productriskmanagement .Radios{display: inline-block;margin-left: 70px;}
+ .productriskmanagement .changeRiskGrade .el-input{width: 80%}
+ .productriskmanagement .mt10{margin-top: 10px; font-size: 14px;color: #444;font-family: "Microsoft YaHei"}

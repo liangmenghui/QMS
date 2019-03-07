@@ -1,0 +1,310 @@
+package com.unind.qms.web.basic.service.internal;
+
+import com.unind.base.components.mail.MailSenderService;
+import com.unind.base.configure.AppConfig;
+import com.unind.base.dao.admin.SysRoleDao;
+import com.unind.base.dao.admin.SysUserDao;
+import com.unind.base.dao.admin.agg.SysUserRolesAggDao;
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.agg.SysUserRolesAgg;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.domain.admin.role.SysRole;
+import com.unind.base.domain.admin.user.SysUser;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BaseService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.qms.enumeration.BasicEnumConstants;
+import com.unind.qms.enumeration.BasicStateEnum;
+import com.unind.qms.web.basic.dao.TodoInfoDao;
+import com.unind.qms.web.basic.entity.TodoInfo;
+import com.unind.qms.web.basic.service.TodoInfoService;
+import com.unind.qms.web.supplier.dao.SupplierInfoDao;
+import com.unind.qms.web.supplier.entity.SupplierInfo;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class TodoInfoImpl extends BaseOprService implements TodoInfoService {
+    @Autowired
+    private TodoInfoDao todoInfoDao;
+    @Autowired
+    private SysUserRolesAggDao sysUserRolesAggDao;
+    @Autowired
+    private SysRoleDao sysRoleDao;
+    @Autowired
+    private SupplierInfoDao supplierInfoDao;
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private MailSenderService mailSenderService;
+    @Autowired
+    private AppConfig appConfig;
+
+    @Transactional
+    public ApiResponseResult add(TodoInfo todoInfo, Long roleId) throws BusinessException {
+        if (null == todoInfo.getBsUserId() && null == roleId) {
+            return ApiResponseResult.failure("待办人和角色不能同时为空");
+        }
+        if (StringUtils.isEmpty(todoInfo.getBsTitle()) || StringUtils.isEmpty(todoInfo.getBsTitle().trim())) {
+            return ApiResponseResult.failure("标题不能为空");
+        }
+        todoInfo.setBsTitle(todoInfo.getBsTitle().trim());
+        todoInfo.setBsSystemType(BasicStateEnum.TODO_QMSTYPE.intValue());
+//        todoInfo.setBsNo(todoInfo.getBsNo().trim());
+//        todoInfo.setBsType(todoInfo.getBsType());
+//        todoInfo.setBsSubtype(todoInfo.getBsSubtype());
+//        todoInfo.setBsContent(todoInfo.getBsContent());
+//        todoInfo.setBsStandard(todoInfo.getBsStandard());
+//        todoInfo.setBsRemark(todoInfo.getBsRemark());
+        todoInfo.setBsCreatedTime(new Date());
+        todoInfo.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+        if(null == todoInfo.getBsEndTime()){
+            //如果没有传截止时间，则默认为一周之后
+            Calendar curr = Calendar.getInstance();
+            curr.setTime(todoInfo.getBsCreatedTime());
+            curr.add(Calendar.WEEK_OF_YEAR, 1);
+            Date after7Days=curr.getTime();
+            todoInfo.setBsEndTime(after7Days);                  //有效结束时间
+        }
+
+        //1.用户ID不为空时只添加一个用户
+        if(null != todoInfo.getBsUserId()){
+            todoInfoDao.save(todoInfo);
+
+            //发送邮件
+            //先判断是否开启了邮件功能，开启了就可以发邮件
+            String flagMail = appConfig.getString("scm.mail.enabled");
+            if(StringUtils.isNotEmpty(flagMail) && flagMail.equals("true")){
+                SysUser sysUser = sysUserDao.findOne(todoInfo.getBsUserId());
+                if(sysUser != null && StringUtils.isNotEmpty(sysUser.getBsEmail())){
+                    String nameTo = sysUser.getBsName();    //收件人名
+                    String mailTo = sysUser.getBsEmail().trim();   //收件人邮箱
+                    String subject = "待办事项提醒";    //主题
+                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日");
+                    String dateStr = simpleDateFormat.format(new Date());
+                    StringBuffer text = new StringBuffer();   //邮件内容
+                    text.append("<div style='padding: 5px;'>" + nameTo + "，" + "</div>");
+                    text.append("<div style='padding: 5px;'>" + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;你好！" + todoInfo.getBsTitle() +"。请及时处理！</div>");
+                    text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;请<a href='http://www.unind.net'>点击此处</a>进入QMS系统。</div>");
+                    text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;此致</div>");
+                    text.append("<div style='padding: 5px;'>敬礼</div>");
+                    text.append("<div style='padding: 5px; float: right; margin: 0 50px 0 0;'>QMS系统</div><br>");
+                    text.append("<div style='padding: 5px; float: right; margin: 0 20px 0 0;clear: both;'>" + dateStr + "</div><br>");
+                    mailSenderService.send(mailTo, subject, text.toString());
+                }
+            }
+        }
+        //2.用户ID为空，角色ID不为空时，添加角色下的所有用户待办
+        if(null == todoInfo.getBsUserId() && null != roleId){
+            List<SearchFilter> filters = new ArrayList<SearchFilter>();
+            filters.add(new SearchFilter("pkRole", SearchFilter.Operator.EQ, roleId));
+            Specifications<SysUserRolesAgg> spec = Specifications.where(super.and(filters, SysUserRolesAgg.class));
+            List<SysUserRolesAgg> sysUserRolesAggList = sysUserRolesAggDao.findAll(spec);
+            if(sysUserRolesAggList.size() <= 0){
+                return ApiResponseResult.failure("该角色下的用户不存在").data(roleId);
+            }
+            //添加待办事项
+            List<TodoInfo> todoInfoList = new ArrayList<TodoInfo>();
+            for(int i = 0; i < sysUserRolesAggList.size(); i++){
+                TodoInfo todoInfoItem = todoInfo;
+                todoInfoItem.setBsUserId(sysUserRolesAggList.get(i).getPkUser());
+                todoInfoList.add(todoInfoItem);
+
+                //发送邮件
+                //先判断是否开启了邮件功能，开启了就可以发邮件
+                String flagMail = appConfig.getString("scm.mail.enabled");
+                if(StringUtils.isNotEmpty(flagMail) && flagMail.equals("true")){
+                    SysUser sysUser = sysUserDao.findOne(todoInfoItem.getBsUserId());
+                    if(sysUser != null && StringUtils.isNotEmpty(sysUser.getBsEmail())){
+                        String nameTo = sysUser.getBsName();    //收件人名
+                        String mailTo = sysUser.getBsEmail().trim();   //收件人邮箱
+                        String subject = "待办事项提醒";    //主题
+                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日");
+                        String dateStr = simpleDateFormat.format(new Date());
+                        StringBuffer text = new StringBuffer();   //邮件内容
+                        text.append("<div style='padding: 5px;'>" + nameTo + "，" + "</div>");
+                        text.append("<div style='padding: 5px;'>" + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;你好！" + todoInfoItem.getBsTitle() +"。请及时处理！</div>");
+                        text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;请<a href='http://www.unind.net'>点击此处</a>进入QMS系统。</div>");
+                        text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;此致</div>");
+                        text.append("<div style='padding: 5px;'>敬礼</div>");
+                        text.append("<div style='padding: 5px; float: right; margin: 0 50px 0 0;'>QMS系统</div><br>");
+                        text.append("<div style='padding: 5px; float: right; margin: 0 20px 0 0;clear: both;'>" + dateStr + "</div><br>");
+                        mailSenderService.send(mailTo, subject, text.toString());
+                    }
+                }
+            }
+            todoInfoDao.save(todoInfoList);
+        }
+        return ApiResponseResult.success("新增成功！").data(todoInfo);
+    }
+
+    @Transactional
+    public ApiResponseResult edit(TodoInfo todoInfo) throws BusinessException {
+        if (null == todoInfo || null == todoInfo.getId()) {
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        if (null == todoInfo.getBsUserId()) {
+            return ApiResponseResult.failure("待办人不能为空");
+        }
+        if (StringUtils.isEmpty(todoInfo.getBsTitle()) || StringUtils.isEmpty(todoInfo.getBsTitle().trim())) {
+            return ApiResponseResult.failure("标题不能为空");
+        }
+        TodoInfo o = todoInfoDao.findOne(todoInfo.getId());
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+//        if (!StringUtils.equals(approvedFlow.getBsName().trim(), o.getBsName())) {
+//            int counts = approvedFlowDao.countByBsName(approvedFlow.getBsName());
+//            if (counts > 0) {
+//                return ApiResponseResult.failure("项目名称不能重复");
+//            }
+//            o.setBsName(approvedFlow.getBsName().trim());
+//        }
+        o.setBsUserId(todoInfo.getBsUserId());
+        o.setBsRouter(todoInfo.getBsRouter().trim());
+        o.setBsTitle(todoInfo.getBsTitle().trim());
+        o.setBsContent(todoInfo.getBsContent());
+        o.setBsType(todoInfo.getBsType());
+        o.setBsPriority(todoInfo.getBsPriority());
+        o.setBsReferId(todoInfo.getBsReferId());
+
+        o.setBsModifiedTime(new Date());
+		o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+//        o.setPkModifiedBy(Long.parseLong("1"));
+        todoInfoDao.save(o);
+        return ApiResponseResult.success("修改成功！").data(o);
+    }
+
+    @Transactional
+    public ApiResponseResult close(Long id, Long bsUserId, Long roleId, Long bsReferId) throws BusinessException {
+        if(null != id){
+            todoInfoDao.closeById(id);
+            return ApiResponseResult.success("关闭成功！");
+        }
+        if(null == id && null != bsUserId && null != bsReferId){
+            todoInfoDao.closeByBsUserIdAndBsReferId(bsUserId, bsReferId);
+            return ApiResponseResult.success("关闭成功！");
+        }
+        if(null == id && null == bsUserId && null != roleId && null != bsReferId){
+            todoInfoDao.closeByRoleIdAndBsReferId(roleId, bsReferId);
+            return ApiResponseResult.success("关闭成功！");
+        }
+        if(null == id && null == bsUserId && null == roleId && null != bsReferId){
+            todoInfoDao.closeByBsReferId(bsReferId);
+            return ApiResponseResult.success("关闭成功！");
+        }
+        return ApiResponseResult.failure("关闭失败！");
+    }
+
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        TodoInfo o = todoInfoDao.findOne(id);
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除").status("error1");
+        }
+        if (o.getId() <= 0) {
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        o.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+        todoInfoDao.save(o);
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponseResult getlist(int bsStatus, PageRequest pageRequest) {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        filters.add(new SearchFilter("bsStatus", SearchFilter.Operator.EQ, bsStatus));
+        filters.add(new SearchFilter("bsUserId", SearchFilter.Operator.EQ, SessionContextUtils.getCurrentUser().getId()));
+        Specifications<TodoInfo> spec = Specifications.where(super.and(filters, TodoInfo.class));
+        Page<TodoInfo> page = todoInfoDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+
+    @Transactional
+    public ApiResponseResult addReview(Long bsSuppId) throws BusinessException {
+        if (null == bsSuppId) {
+            return ApiResponseResult.failure("供应商ID不能为空");
+        }
+
+        //2.给角色为质量经理的用户发送待办事项
+        List<SysRole> sysRoleList = sysRoleDao.findByBsCode("QMS_DEVELOPMENT_MANAGER");
+        if(sysRoleList.size()==0){
+            return ApiResponseResult.failure("无供应商发展经理角色！");
+        }
+        Long roleId = sysRoleList.get(0).getId();
+
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("pkRole", SearchFilter.Operator.EQ, roleId));
+        Specifications<SysUserRolesAgg> spec = Specifications.where(super.and(filters, SysUserRolesAgg.class));
+        List<SysUserRolesAgg> sysUserRolesAggList = sysUserRolesAggDao.findAll(spec);
+        if(sysUserRolesAggList.size() <= 0){
+            return ApiResponseResult.failure("发送待办事项失败，供应商发展经理用户不存在！").data(roleId);
+        }
+
+        SupplierInfo supplierInfo = supplierInfoDao.findOne(bsSuppId);
+        List<TodoInfo> todoInfoList = new ArrayList<TodoInfo>();
+        for(int i = 0; i < sysUserRolesAggList.size(); i++){
+            TodoInfo todoInfo = new TodoInfo();
+            todoInfo.setBsUserId(sysUserRolesAggList.get(i).getPkUser());  //用户ID
+            todoInfo.setBsReferId(supplierInfo.getId());  //关联ID
+            todoInfo.setBsExtend(supplierInfo.getId());   //扩展内容
+            todoInfo.setBsRouter("/qms/supplier/approved");  //页面路由
+            todoInfo.setBsTitle("[" + supplierInfo.getBsSuppChieseName() +"]" + "待进行辅导");   //标题
+            todoInfo.setBsStatus(BasicEnumConstants.TODO_NOFINISH);  //状态
+            todoInfo.setBsSystemType(BasicStateEnum.TODO_QMSTYPE.intValue());  //系统状态
+            todoInfo.setBsType(BasicEnumConstants.TODO_SUPP_SETUP);   //类型
+            todoInfo.setBsStartTime(new Date());      //有效开始时间
+//            //计算一周后的时间
+//            Calendar curr = Calendar.getInstance();
+//            curr.setTime(todoInfo.getBsStartTime());
+//            curr.add(Calendar.WEEK_OF_YEAR, 1);
+//            Date after7Days=curr.getTime();
+//            todoInfo.setBsEndTime(after7Days);                  //有效结束时间
+            todoInfo.setBsCreatedTime(new Date());    //创建时间
+            todoInfo.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+            todoInfoList.add(todoInfo);
+
+            //发送邮件
+            //先判断是否开启了邮件功能，开启了就可以发邮件
+            String flagMail = appConfig.getString("scm.mail.enabled");
+            if(StringUtils.isNotEmpty(flagMail) && flagMail.equals("true")){
+                SysUser sysUser = sysUserDao.findOne(todoInfo.getBsUserId());
+                if(sysUser != null && StringUtils.isNotEmpty(sysUser.getBsEmail())){
+                    String nameTo = sysUser.getBsName();    //收件人名
+                    String mailTo = sysUser.getBsEmail().trim();   //收件人邮箱
+                    String subject = "待办事项提醒";    //主题
+                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日");
+                    String dateStr = simpleDateFormat.format(new Date());
+                    StringBuffer text = new StringBuffer();   //邮件内容
+                    text.append("<div style='padding: 5px;'>" + nameTo + "，" + "</div>");
+                    text.append("<div style='padding: 5px;'>" + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;你好！" + todoInfo.getBsTitle() +"。请及时处理！</div>");
+                    text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;请<a href='http://www.unind.net'>点击此处</a>进入QMS系统。</div>");
+                    text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;此致</div>");
+                    text.append("<div style='padding: 5px;'>敬礼</div>");
+                    text.append("<div style='padding: 5px; float: right; margin: 0 50px 0 0;'>QMS系统</div><br>");
+                    text.append("<div style='padding: 5px; float: right; margin: 0 20px 0 0;clear: both;'>" + dateStr + "</div><br>");
+                    mailSenderService.send(mailTo, subject, text.toString());
+                }
+            }
+        }
+        todoInfoDao.save(todoInfoList);
+        return ApiResponseResult.success("新增成功！");
+    }
+}

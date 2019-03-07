@@ -1,0 +1,245 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-08
+    	描述：供应商风险信息录入
+    -->
+    <div class="sup-inp">
+    	<Row :gutter="10">
+    	<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：PPM
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;PPM
+                </p>
+		
+			<div class="body">
+				<div class="body-text">PPM：</div>
+				<div class="body-model">
+					<el-input v-model="supplierrisk.bsPpmValue" style="width: 300px;"></el-input>
+				</div>
+			</div>
+			</Card>
+		</Col>
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：关键工序SPC制程能力监控
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;关键工序SPC制程能力监控
+                </p>
+        	
+			<div class="body">
+				<div class="body-text">CPK：</div>
+				<div class="body-model">
+					<el-input v-model="supplierrisk.bsCpkValue" style="width: 300px;"></el-input>
+				</div>
+			</div>
+			</Card>
+		</Col>
+		</Row>
+		
+		<Row :gutter="10">
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：EHS不符合性
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;EHS不符合性
+                </p>
+        	
+			<div class="body">
+				<div class="body-text">EHS不符合项目数：</div>
+				<div class="body-model">
+					<el-input v-model="supplierrisk.bsEhsValue" style="width: 300px;"></el-input>
+				</div>
+			</div>
+			</Card>
+		</Col>
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：交货达成情况
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;交货达成情况
+                </p>
+        
+			<div class="body" style="padding-left: 150px;">
+				<el-select v-model="supplierrisk.bsDeliveryType" style="width: 300px;">
+    				<el-option v-for="item in options1" :key="item.value" :label="item.label" :value="item.value">
+    				</el-option>
+  				</el-select>
+			</div>
+			</Card>
+		</Col>
+		</Row>
+		
+		<Row :gutter="10">
+		<Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：验货情况
+        -->
+        	<Card :style="{marginBottom: '20px'}">
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;验货情况
+                </p>
+        	
+			<div class="body">
+				<div class="body-text">验货不合格次数：</div>
+				<div class="body-model">
+					<el-input v-model="supplierrisk.bsInspectValue" style="width: 300px;"></el-input>
+				</div>
+			</div>
+			</Card>
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：付款期
+        -->
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;付款期
+                </p>
+        	
+			<div class="body" style="padding-left: 150px;">
+				<el-select v-model="supplierrisk.bsPaymentType" style="width: 300px;">
+    				<el-option v-for="item in options2" :key="item.value" :label="item.label" :value="item.value">
+    				</el-option>
+  				</el-select>
+			</div>
+			</Card>
+		</Col>
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：商务总评
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;商务总评
+                </p>
+      
+			<div style="width: 300px;height: 245px;padding-top: 10px;padding-left: 20px;">
+    			<el-checkbox v-model="supplierrisk.bsComStability" label="公司股东构成的稳定性 ( 从上市公司 / 销售额 / 股东数量 / 地域 / 行业等考虑 )" style="display: block;height: 40px;margin-left: 30px;"></el-checkbox>
+    			<el-checkbox v-model="supplierrisk.bsAntiCorruptProtocol" label="未签订反腐协议" style="display: block;height: 40px;"></el-checkbox>
+    			<el-checkbox v-model="supplierrisk.bsLongTermProtocol" label="未签订长期协议" style="display: block;height: 40px;"></el-checkbox>
+    			<el-checkbox v-model="supplierrisk.bsCooperProtocol" label="未签订战略合作协议" style="display: block;height: 40px;"></el-checkbox>
+    			<el-checkbox v-model="supplierrisk.bsBusinessBroScore" label="未签订商务手册" style="display: block;height: 40px;"></el-checkbox>
+			</div>
+			</Card>
+		</Col>
+		</Row>
+		
+		<div id="bottom">
+			<center>
+            <el-button type="primary" @click="edit()" style="padding: 7px 20px;">
+            	<i class="el-icon-news"></i>&nbsp;&nbsp;{{$t('Button.SaveChanges')}}
+            </el-button>
+            </center>
+        </div>
+    </div>
+</template>
+
+<script>
+	import {mapState} from 'vuex'
+	export default {
+    data() {
+      return {
+      	thesupplier:{},
+      	supplierrisk:{},
+        options1: [{
+          value: 1,
+          label: '大于24个月无交货延迟'
+        }, {
+          value: 2,
+          label: '大于12个月无交货延迟'
+        }, {
+          value: 3,
+          label: '大于2个月无交货延迟'
+        }, {
+          value: 4,
+          label: '3个月内有1次以上交货延迟'
+        }, {
+          value: 5,
+          label: '3个月内有2次以上交货延迟'
+        }],
+        options2: [{
+          value: 1,
+          label: '大于120天'
+        }, {
+          value: 2,
+          label: '小于120天'
+        }, {
+          value: 3,
+          label: '小于90天'
+        }, {
+          value: 4,
+          label: '小于30天'
+        }, {
+          value: 5,
+          label: '小于15天,或现金'
+        }],
+        checkList: [],
+      }
+    },
+    created(){
+		this.thesupplier = this.$store.getters.getSupplierData;
+		this.getData();
+    },
+    methods:{
+    	getData(){
+        	let id = this.thesupplier.id;
+    		this.api.supplierrisk.getlist({bsSuppId:id}).then((res) => {
+      			this.supplierrisk = res.data.rows[0];
+        });
+    	}, 
+    	reloadData(){
+            this.getData();
+        },
+        edit(){
+        	var params = this.$Util.formattedParams(this.supplierrisk);
+            this.api.supplierrisk.edit(params).then((res) => {
+                  this.$Message.info("修改完成");
+            });
+        }
+    }
+  }
+</script>
+
+<style>
+	.sup-inp .body{
+		height: 50px;margin-top: 10px;margin-bottom: 10px;
+	}
+	.sup-inp .body-text{
+		float: left;width: 150px;text-align:right;padding-top: 10px;
+	}
+	.sup-inp .body-model{
+		float: left;
+	}
+	.sup-inp #bottom{
+		height:150px;margin-top: 20px;margin-bottom: 20px;
+	}
+</style>

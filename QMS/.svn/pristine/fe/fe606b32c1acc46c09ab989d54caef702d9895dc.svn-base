@@ -1,0 +1,63 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-02
+    	描述：供应商预评估
+    -->
+	<div>
+		<Col :md="4"><div style="width: 16%;height: 1px;"></div></Col>
+		<Col :md="16">
+		<div><center><h4>供应商预评估</h4></center></div>									
+		<div style="height: 350px; margin-top: 40px;">
+			<Col :md="4"><div style="width: 16%;height: 1px;"></div></Col>
+			<Col :md="16">
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 130px;text-align: right;">供应商编号：</div>
+				<div style="float: left;"><el-input v-model="input1" style="width: 300px;" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 130px;text-align: right;">供应商名称：</div>
+				<div style="float: left;"><el-input v-model="input2" style="width: 300px;" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 130px;text-align: right;">联系人：</div>
+				<div style="float: left;"><el-input v-model="input3" style="width: 300px;" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 130px;text-align: right;">联系方式：</div>
+				<div style="float: left;"><el-input v-model="input4" style="width: 300px;" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="margin-top: 30px;">
+			<el-button style="width: 40%;" type="success">查看基本信息</el-button><el-button style="width: 40%;" type="success">查看补充信息</el-button>
+			</div>
+			</Col>
+		</div>
+		<div>
+			<h6>审核说明</h6>
+			<el-input
+  			type="textarea"
+  			autosize
+  			placeholder="请输入内容"
+  			v-model="textarea1">
+			</el-input>
+		</div>	
+		</Col>	
+	</div>
+</template>
+
+<script>
+	export default {
+  data() {
+    return {
+      input1: '',
+      input2: '',
+      input3: '',
+      input4: '',
+      textarea1: '',
+    }
+  }
+}
+</script>
+
+<style>
+</style>

@@ -1,0 +1,143 @@
+package com.unind.qms.web.risk.service.internal;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.qms.enumeration.BasicEnumConstants;
+import com.unind.qms.web.basic.dao.TodoInfoDao;
+import com.unind.qms.web.product.dao.ProductInfoDao;
+import com.unind.qms.web.product.entity.ProductInfo;
+import com.unind.qms.web.risk.dao.ProductRiskDao;
+import com.unind.qms.web.risk.dao.RiskApprovedRecordDao;
+import com.unind.qms.web.risk.dao.SupplierRiskDao;
+import com.unind.qms.web.risk.entity.ProductRisk;
+import com.unind.qms.web.risk.entity.RiskApprovedRecord;
+import com.unind.qms.web.risk.entity.SupplierRisk;
+import com.unind.qms.web.risk.service.RiskApprovedRecordService;
+import com.unind.qms.web.risk.service.SupplierRiskService;
+import com.unind.qms.web.supplier.dao.SupplierInfoDao;
+import com.unind.qms.web.supplier.entity.SupplierInfo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * 风险批准记录表
+ * @author Shen
+ */
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class RiskApprovedRecordImpl extends BaseOprService implements RiskApprovedRecordService {
+    @Autowired
+    private RiskApprovedRecordDao riskApprovedRecordDao;
+    @Autowired
+    private ProductRiskDao productRiskDao;
+    @Autowired
+    private ProductInfoDao productInfoDao;
+    @Autowired
+    private SupplierRiskDao supplierRiskDao;
+    @Autowired
+    private SupplierInfoDao supplierInfoDao;
+    @Autowired
+    private TodoInfoDao todoInfoDao;
+
+    @Override
+    @Transactional
+    public ApiResponseResult edit(RiskApprovedRecord riskApprovedRecord) throws BusinessException {
+        if(riskApprovedRecord == null){
+            return ApiResponseResult.failure("不能为空！");
+        }
+        if(riskApprovedRecord.getId() == null){
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        RiskApprovedRecord o = riskApprovedRecordDao.findOne(riskApprovedRecord.getId());
+        o.setBsNewRiskLevel(riskApprovedRecord.getBsNewRiskLevel());
+        o.setBsApprovedAdvice(riskApprovedRecord.getBsApprovedAdvice());
+        o.setBsStatus(riskApprovedRecord.getBsStatus());
+        o.setBsModifiedTime(new Date());
+        return ApiResponseResult.success("修改成功！");
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult getlist(Long id, Long bsPrId, Long bsSuppId, Integer bsStatus, PageRequest pageRequest) throws BusinessException {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+        if (id != null) {
+            filters.add(new SearchFilter("id", SearchFilter.Operator.EQ, id));
+        }
+        if (bsPrId != null) {
+            filters.add(new SearchFilter("bsPrId", SearchFilter.Operator.EQ, bsPrId));
+        }
+        if(bsSuppId != null){
+            filters.add(new SearchFilter("bsSuppId", SearchFilter.Operator.EQ, bsSuppId));
+        }
+        if(bsStatus != null){
+            filters.add(new SearchFilter("bsStatus", SearchFilter.Operator.EQ, bsStatus));
+        }
+        Specifications<RiskApprovedRecord> spec = Specifications.where(super.and(filters, RiskApprovedRecord.class));
+        Page<RiskApprovedRecord> page = riskApprovedRecordDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult approve(Long id, String bsApprovedAdvice, Integer bsStatus) throws BusinessException{
+        if(id == null){
+            return ApiResponseResult.failure("记录ID不能为零！");
+        }
+
+        //1.更新风险批准记录表
+        RiskApprovedRecord o = riskApprovedRecordDao.findOne(id);
+        if(o == null){
+            return ApiResponseResult.failure("记录ID不存在！");
+        }
+        o.setBsApprovedAdvice(bsApprovedAdvice);
+        o.setBsStatus(bsStatus);   //状态（0:进行中, 1:同意, 2:拒绝）
+        o.setBsModifiedTime(new Date());
+        riskApprovedRecordDao.save(o);
+
+        //2.关闭待办事项
+        if(o.getBsPrId() != null){
+            todoInfoDao.closeByBsReferIdAndBsType(o.getBsPrId(), BasicEnumConstants.TODO_PR_RISK);
+        }
+        if(o.getBsSuppId() != null){
+            todoInfoDao.closeByBsReferIdAndBsType(o.getBsSuppId(), BasicEnumConstants.TODO_SUPP_RISK);
+        }
+
+        //3.产品和供应商
+        //3.1更新产品风险信息表的风险
+        if (o.getBsPrId() != null) {
+            List<ProductRisk> productRiskList = productRiskDao.findByBsIsDelAndBsPrIdOrderByBsCreatedTimeDesc(BooleanStateEnum.FALSE.intValue(), o.getBsPrId());
+            if (productRiskList.size() > 0) {
+                ProductRisk productRisk = productRiskList.get(0);
+                productRisk.setBsStatus(0);   //状态改为完成（0.完成 1.进行中）
+                productRiskDao.save(productRisk);
+            }
+        }
+
+        //3.2更新供应商风险信息表
+        if (o.getBsSuppId() != null) {
+            List<SupplierRisk> supplierRiskList = supplierRiskDao.findByBsIsDelAndBsSuppIdOrderByBsCreatedTimeDesc(BooleanStateEnum.FALSE.intValue(), o.getBsSuppId());
+            if (supplierRiskList.size() > 0) {
+                SupplierRisk supplierRisk = supplierRiskList.get(0);
+                supplierRisk.setBsStatus(0);   //状态改为完成（0.完成 1.进行中）
+                supplierRiskDao.save(supplierRisk);
+            }
+        }
+
+        return ApiResponseResult.success().data(o);
+    }
+}

@@ -1,0 +1,46 @@
+package com.unind.qms.web.basic.dao;
+
+import com.unind.qms.web.basic.entity.TodoInfo;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+/**
+ * 
+ * @author chen
+ *
+ */
+public interface TodoInfoDao extends CrudRepository<TodoInfo, Long>, JpaSpecificationExecutor<TodoInfo> {
+
+//	public int countByBsSuppCode(String bsSuppCode);
+//
+//	public List<SampleInfo> findByBsSuppCode(String bsSuppCode);
+
+    @Modifying
+    @Query("update TodoInfo t set t.bsStatus='1' where t.id=?1 and t.bsStatus='0'")
+    public void closeById(Long id);
+
+    @Modifying
+    @Query("update TodoInfo t set t.bsStatus='1' where t.bsUserId=?1 and t.bsExtend=?2")
+    public void closeByBsUserIdAndBsAndBsExtend(Long bsUserId, Long bsExtend);
+
+    @Modifying
+    @Query("update TodoInfo t set t.bsStatus='1' where t.bsUserId=?1 and t.bsReferId=?2")
+    public void closeByBsUserIdAndBsAndBsReferId(Long bsUserId, Long bsReferId);
+
+    @Modifying
+    @Query("update TodoInfo t set t.bsStatus='1' where t.bsReferId=?1")
+    public void closeByBsAndBsReferId(Long bsReferId);
+
+    @Modifying
+    @Query("update TodoInfo t set t.bsStatus='1' where t.bsReferId=?1 and t.bsStatus='0'")
+    public void closeByBsReferId(Long bsReferId);
+
+    @Modifying
+    @Query(value = "update t_todo_info t set t.bs_status = '1' where t.bs_refer_id = ?2 and t.bs_status = '0' and t.bs_user_id " +
+            "in (select v.pk_user from sys_user_roles_agg v where v.pk_role = ?1)", nativeQuery = true)
+    public void closeByRoleIdAndBsReferId(Long roleId, Long bsReferId);
+}

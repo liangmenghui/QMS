@@ -1,0 +1,230 @@
+<style scoped>
+    .expand-row{
+        margin-bottom: 0px;
+    }
+</style>
+<template>
+    <div>
+    <Form  :label-width="80">
+        <Row class="expand-row">
+            <Col span="8">
+                <Form-item label="测试项"  >
+                    <Select v-model='row.testx'  @on-change='changeTestx'>
+                            <Option v-for="x in testxList" :value="x" :key='x' >{{x}}</Option>
+                    </Select>
+                </Form-item>
+            </Col>
+            <Col span="8">
+                <Form-item label="可用设备">
+                        <Select v-model="row.bsName"  @on-change='changeEqName'>
+                                <Option v-for="y in bsNameList" :value="y" :key='y' >{{y}}</Option>
+                        </Select>
+                </Form-item>
+            </Col> 
+            <Col span="8">
+                <Form-item label="测试时间">
+                    <Input v-model="row.testTime" placeholder="请输入..." readonly="readonly"></Input>
+                </Form-item>
+            </Col>
+        </Row>
+        <Row class="expand-row">
+                <Col span="8">
+                    <Form-item label="Nominal Spec基准值"  >
+                            <Input v-model="row.bsBaseline" placeholder="请输入..." ></Input>
+                    </Form-item>
+                </Col>
+                <Col span="8">
+                    <Form-item label="USL+上限值">
+                            <Input v-model="row.bsBaselineUp" placeholder="请输入..." ></Input>
+                    </Form-item>
+                </Col> 
+                <Col span="8" >
+                    <Form-item label="USL+下限值">
+                      <Input v-model="row.bsBaselineDown" placeholder="请输入..." ></Input>
+                   </Form-item>
+                </Col>
+            </Row>
+            <Row>
+                <Col span="12">
+                    <Form-item label="测试数据"  >
+                            <textarea v-model="row.bsBaseData"  style="width:500px" placeholder="请输入..." ></textarea>
+                    </Form-item>
+                </Col>
+                <Col span="8">
+                    <Form-item label="Mean" v-if="false">
+                            <Input v-model="row.bsMean" placeholder="请输入..." ></Input>
+                    </Form-item>
+                </Col> 
+                <Col span="8" >
+                    <Form-item label="Range" v-if="false">
+                      <Input v-model="row.bsRange" placeholder="请输入..." ></Input>
+                   </Form-item>
+                </Col>
+                <Col span="8" >
+                    <Form-item label="Result结果" v-if="false">
+                      <Input v-model="row.bsResult" placeholder="请输入..." ></Input>
+                   </Form-item>
+                </Col>
+            </Row>
+        <Row>
+            <Col span="24" v-if="visible" align="center">
+                <Button type="primary" size="small" @click="handleCancel">取 消</Button>&nbsp;&nbsp;&nbsp;&nbsp;
+                <Button type="primary" size="small" @click="handleSubmit">保 存</Button>&nbsp;&nbsp;&nbsp;&nbsp;
+                <Button type="primary" size="small" @click="deleteData">删除数据</Button>
+            </Col>
+        </Row>
+    </Form>
+    </div>
+</template>
+<script>
+    export default {
+        props: {
+            data: Object
+        },
+        data() {
+            return {
+                math:{
+                  maxValue:"",
+                  minValue:"",
+
+                },
+                bsCode:'',
+                result:"",
+                sum:0,
+                visible:true,
+                testxList:[],
+                testx:'',
+                testTime:0,
+                bsName:'',
+                bsNameList:[],
+                arry:[],
+            formQuery:{
+                testx:'',
+                bsName:'',
+                bsPartNo:'',bsSampleName:''
+            }
+            
+
+        }
+            
+        },
+        created() {
+            this.row = this.data.row;
+            this.formQuery.bsPartNo=this.data.row.bsPartNo;
+            this.formQuery.bsSampleName=this.data.row.bsSampleName;
+            this.selectTestx();
+            this.index = this.data.index;
+        },
+        
+        methods: {
+            //保存
+            handleSubmit() {
+               
+                this.arry=this.row.bsBaseData.split("/");
+                if(this.arry !=""){
+              //最大值
+                this.math.maxValue=Math.max.apply(null, this.arry);
+                //最小值
+                this.math.minValue=Math.min.apply(null, this.arry);
+                for( let i=0;i<this.arry.length;i++){
+                    this.sum = this.sum +Number(this.arry[i]);            
+                }
+                    if(Number(this.math.maxValue)<=Number(this.row.bsBaselineUp)&& Number(this.math.minValue)>=Number(this.row.bsBaselineDown)){
+                        this.row.bsResult="OK";
+                        this.data.bsResult="OK";
+                    }else{
+                        this.row.bsResult="NG";
+                        this.data.bsResult="NG";
+                    }
+             
+                this.data.bsMean=this.sum/(this.arry.length);
+                this.data.bsRange=Number(this.math.maxValue)-Number(this.math.minValue);
+                this.row.bsMean=Number(this.data.bsMean).toFixed(3);
+                this.row.bsRange=Number(this.data.bsRange).toFixed(4);
+                this.arry=[];
+                }else{
+                    this.row.bsResult="";
+                    this.row.bsMean="";
+                    this.row.bsRange="";
+                    this.arry=[];
+                }
+                if(this.row.testx !="" && this.row.testx!=undefined&& this.row.bsName !="" && this.row.bsName!=undefined){
+
+                    this.api.sampletesttime.save(this.row).then((res) =>{
+                        if(res.result){
+                            this.$Message.success("保存成功");
+                        }
+
+                    })
+               }else{
+                this.$Message.error("请正确填写信息");
+             }
+                this.$emit("returnadd", this.data);
+            },
+
+            //取消
+            handleCancel() {
+                this.$emit("returncancle", this.data);
+            },
+            //删除
+            deleteData(){
+                this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否将这条数据从数据库中删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.sampletesttime.deleteData(this.row).then((res)=>{
+                        if(res.result) {
+                            this.$emit("getRowLoad", this.data);
+                            this.$Message.info('删除成功');
+                            this.$Modal.remove();
+                        }else {
+                            this.$Message.error("删除失败");
+                        }
+                    });
+                }
+            });
+            },
+
+         
+            //查询测试项
+            selectTestx(){
+                this.api.equipmenttime.selectTestx(this.formQuery).then((res)=> {
+                     if(res.result){                   
+                         this.testxList=res.data;
+                     }
+           
+                })
+            },
+
+            
+            changeTestx(){ 
+                this.formQuery.testx=this.row.testx;
+                this.bsNameList=[];
+                this.api.equipment.selectEablee(this.formQuery).then((res) =>{
+                    if(res.data.total==0){
+                       this.$Message.error('这个测试项的设备处于不可用状态！');
+                     }else{
+                             this.bsNameList=res.data;                  
+                             this.changeEqName();
+                     }                          
+                });
+             },
+            changeEqName(){
+                this.formQuery.testx=this.row.testx;   
+                this.formQuery.bsName=this.row.bsName;
+                if(this.formQuery.bsName !=undefined && this.formQuery.bsName !=''){
+                this.api.equipmenttime.selectTestTime(this.formQuery).then((res) =>{ 
+                    if(res.result){
+                        this.row.testTime=0;
+                        this.row.testTime=res.data.rows[0].testTime;
+                    }else{
+                        this.$Message.error('查询有误');
+                    }                                               
+                  });
+                }
+         
+             },
+        }
+    };
+</script>

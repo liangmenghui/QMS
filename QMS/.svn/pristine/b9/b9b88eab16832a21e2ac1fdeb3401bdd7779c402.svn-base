@@ -1,0 +1,136 @@
+<template>
+	<div class="upcbox">   
+
+		<el-card class="box-card">
+      <div slot="header">
+        <span class="title"><i class="el-icon-bell"></i>{{$t('Dashboard.Todoitems')}}</span>
+
+      </div>
+      <ul class="to-do-list-con" v-model="todolistdata">
+        <li v-for="item in toDoList ">
+          <el-row>
+           <el-col :span="16"><a :href="item.path" @click="pushTodolist()" class="grid-content bg-purple"><i class="el-icon-caret-right"></i>{{item.bsTitle}}</a></el-col>
+
+           <el-col :span="4"><div class="bsCreatedTime"><i class="el-icon-time"></i>{{item.bsCreatedTime}}</div></el-col>
+            <el-col :span="4"> <el-button size="mini" type="primary" plain @click="closeItem(item.id)">关闭待办</el-button></el-col>
+         </el-row>
+       </li>          
+     </ul>  		  
+   </el-card>
+
+   <el-card class="box-card">
+    <div slot="header">
+     <span class="title">  <i class="el-icon-check"></i>{{$t('Dashboard.CompletedItems')}}</span>
+   </div>
+   <ul class="to-do-list-con" v-model="completed">
+        <li v-for="item in completedtoDoList ">
+          <el-row>
+           <el-col :span="20"><div class="grid-content bg-purple"><i class="el-icon-caret-right"></i>{{item.bsTitle}}<a :href="item.path" class="search">{{$t('Button.View')}}>></a></div></el-col>
+           
+           <el-col :span="4"><div class="bsCreatedTime">
+            <i class="el-icon-time"></i>{{item.bsCreatedTime}}</div>
+          </el-col>
+         </el-row>
+       </li>          
+     </ul> 
+
+ </el-card>
+
+
+
+</div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      supplier_data: 200,
+      product_data: 300,
+      showRooterView: false,
+      toDoList: [            
+      ],
+      todolistdata:{},
+      completed:{},
+      completedtoDoList:[]
+    }
+  },
+  created(){
+    this.getTodoData();
+    this.getTodoData1()
+
+  },
+  methods: {
+    getTodoData(){
+        var _this = this;  
+        this.api.todo.getlist({bsStatus:0}).then((res) => {    
+            this.toDoList = res.data.rows.map(function (row) {
+                row.path = _this.$Util.getPathFromTodo(row);                
+                return row;
+            });
+            
+        });
+    },
+  getTodoData1(){
+    var _this = this;  
+    this.api.todo.getlist({bsStatus:1}).then((res) => {    
+       this.completedtoDoList = res.data.rows.map(function (row) {
+            row.path = _this.$Util.getPathFromTodo(row);
+            return row;
+        });
+    });
+  },
+  closeItem(item){    
+    this.api.todo.close({Id:item}).then((res) => {  
+         if(res.result) {                                
+                
+            }else {
+                this.$Message.error(res.msg);   
+        }
+    });
+  }
+
+
+}
+
+}
+</script>
+
+<style lang='less'>
+div{margin:0; padding:0;}
+.upcbox{
+	.title{font-size:14px;color:#35464e;font-size:16px;font-family:"Microsoft YaHei";}
+	.text {
+    font-size: 14px;
+    font-family:"Microsoft YaHei";
+    cursor:pointer;
+
+  }
+  li{list-style:none;}
+  .upctime{margin:10px 20px 5px; color:14px; color:#777;  }
+
+  .el-icon-bell,.el-icon-check{
+    color:#fd5822;font-size:22px;
+    margin-right:10px;
+  }
+
+
+  .el-button.is-round {
+    border-radius: 20px;
+    padding: 5px 19px;
+  }
+
+  .el-card{margin:10px 15px; }
+  .plugins-tips{background: #eef1f6;padding:10px 20px; font-size:14px;}
+  .mt15{margin-top:20px;}
+  .el-card__header{padding:9px 20px;}
+  .to-do-list-con li{margin-bottom:10px;font-size:14px;font-family:"Microsoft YaHei"}
+}
+
+
+.to-do-list-con li .el-icon-caret-right:before{margin-right:10px;}
+.search{font-size:  14px;font-family: "Microsoft YaHei"; text-align: right;margin-left:20px;}
+.bsCreatedTime{margin-left:20px;color:#666;font-family:"Arial";line-height:30px; font-size:12px;}
+.grid-content{font-family:"Microsoft YaHei"}
+
+</style>

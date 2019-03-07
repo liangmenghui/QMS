@@ -1,0 +1,64 @@
+/*供应商基本信息*/
+.supplierbasicinfo #basicinfo-body{
+		margin-top: 5px;height: auto;background-color: white;padding-top: 30px; height: auto;
+	}
+	.supplierbasicinfo .basicinfo-body-div{
+		height: 50px;float: left;margin-left: 15px;
+	}
+	.supplierbasicinfo .basicinfo-body-text{
+		float: left;margin-top: 10px;width: 130px;text-align: right;font-size: 14px;
+	}
+	.supplierbasicinfo .basicinfo-body-input{
+		float: left;
+	}
+	.supplierbasicinfo #basicinfo-body .el-input{
+		width: 300px;
+	}
+	.supplierbasicinfo .Contact-body{
+		background-color: white;margin-top: 5px;padding-top: 30px;padding-left: 11%;padding-bottom: 10px;
+	}
+	.supplierbasicinfo .Contact-body-div{
+		height: 50px;
+		
+	}
+	.supplierbasicinfo .Contact-body-text{
+		float:left;width:25%;font-size: 14px;
+	}
+	.supplierbasicinfo .Contact-body-span{
+		font-size: 14px;color: #657180;
+	}
+	.supplierbasicinfo #basicinfo-body:after{
+		content:".";
+		visibility:hidden;
+		display:block; 
+		 clear:both;
+		}
+	
+
+	@media (max-width: 768px){ 
+		.supplierbasicinfo .fl{margin-left: 0px;}
+	 }
+
+	 
+/*供应商补充信息*/
+	 .supplieradvanceinfo {
+		height:auto;margin-top: 5px;background-color: white;padding-top: 30px;
+	}
+	.supplieradvanceinfo .bank-body-div{
+		height: 50px;float: left;
+	}
+	.supplieradvanceinfo .bank-body-text{
+		float: left;margin-top: 10px;width: 130px;text-align: right;
+	}
+	.supplieradvanceinfo .bank-body-input{
+		float: left;
+	}
+	.supplieradvanceinfo #bank-body .el-input{
+		width: 300px;
+	}
+	.supplieradvanceinfo #bank-body:after{
+		content:".";
+		visibility:hidden;
+		display:block; 
+		 clear:both;
+	}

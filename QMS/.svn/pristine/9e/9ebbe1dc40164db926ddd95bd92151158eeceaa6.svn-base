@@ -1,0 +1,153 @@
+<template>
+    <div class="approvedextrareports">
+        <div>
+        <el-table :data="records" style="width: 100%;padding: 1%;">
+            <el-table-column prop="id" :label="$t('approved.number')">
+            </el-table-column>
+            <el-table-column prop="itemsBy.bsName" :label="$t('approved.AuditingItem')">
+            </el-table-column>
+            <el-table-column prop="bsScoreNum" :label="$t('New-audit.Auditscore')">
+            </el-table-column>
+            <el-table-column prop="" :label="$t('approved.note')">
+            </el-table-column>
+        </el-table>     
+        </div>
+        <Row :style="{marginBottom: '20px'}">
+            <Card>
+                <p slot="title">
+                    <Icon type="pricetag" style="color: #ff9900;"></Icon>
+                    &nbsp;{{approvedItemRecord.itemsBy.bsName}}
+                </p>
+                <div id="other-body">  
+                    <div style="padding:0 25px;">
+                        <el-select v-model="supplierInfo.bsSuppGrade" :placeholder="$t('supplier.SuppLevel')" style="width:380px" :disabled="!perms.edit">
+                            <el-option :label="$t('supplier.LevelDesc[2]')" value="2">
+                            </el-option>
+                            <el-option :label="$t('supplier.LevelDesc[3]')" value="3">
+                            </el-option>
+                            <el-option :label="$t('supplier.LevelDesc[5]')" value="5">
+                            </el-option>
+                        </el-select>
+                    </div>
+                    <div id="other-body-div1">              
+                        <div style="padding:0 15px;" class="fileList2">
+                            <upload :fileList="approvedItemRecord.fileSet" :canUpload="perms.edit"></upload>
+                        </div>
+                    </div>
+                </div>  
+                <ApprovedResultRecord :approvedData="approvedItemRecord" isCoach="1"></ApprovedResultRecord>
+                <div id="bottom" v-if="perms.edit">         
+                    <ApprovedCoachAction :approvedItemRecord="approvedItemRecord" :supplierData="supplierInfo" v-if="askForCoach"></ApprovedCoachAction>       
+                    <ApprovedAction :approvedItemRecord="approvedItemRecord" v-if="!askForCoach"></ApprovedAction>
+                </div>
+            </Card>
+        </Row>
+    </div>
+</template>
+
+<script>
+import Cookies from 'js-cookie';
+import Upload from '../../components/Upload.vue';
+import ApprovedAction from '../../components/approvedAction.vue';
+import ApprovedCoachAction from '../../components/ApprovedCoachAction.vue';
+import ApprovedResultRecord from '../../components/approvedResultRecord.vue';
+export default {
+    components: {      
+        ApprovedAction,    
+        Upload,
+        ApprovedCoachAction,
+        ApprovedResultRecord
+    },
+    data() {
+        return {
+            dialogImageUrl: '',
+            dialogVisible: false,
+            file:{},
+            perms:{},
+            approvedItemRecord: {},
+            askForCoach: false,
+            supplierInfo:{bsSuppGrade:0},
+            records: [],
+        }
+    },
+    created(){
+        this.approvedItemRecord = this.$store.getters.getItemRecordData;
+        this.records = this.$store.getters.getFlowRecordData;
+        // this.records.slice()
+
+        //判断是否可以进行辅导,只有初期审核才需要这个功能
+        this.askForCoach = this.approvedItemRecord.bsStep == this.approvedItemRecord.users.length;
+        
+        this.supplierInfo = this.$store.getters.getSupplierData;
+        
+        if(this.approvedItemRecord.fileSet == undefined) this.approvedItemRecord.fileSet = [];
+
+        this.perms.edit = 
+            (this.approvedItemRecord.users[this.approvedItemRecord.bsStep-1] == Cookies.get('user')||
+                    this.$Util.hasPerm('EDIT')) && this.approvedItemRecord.bsStatus == 1;
+    },
+    methods: {    
+        handleRemove(file, fileList) {  
+            var params = {
+                fsFileId:file.fsFileId
+            };      
+            this.api.approvedItemsRecordFile.delete(params).then((res)=>{
+                this.fileList.remove();
+                this.$Message.info('删除成功');
+            });
+        },     
+        handleUpload (file) {
+            this.file = file            
+            this.getData();
+            return false;
+        },
+    }
+}
+</script>
+
+<style>
+    .approvedextrareports #other-body{
+        margin-top: 1px;background-color: white;
+    }
+    .approvedextrareports #other-body-div1{
+        font-size: 14px;
+        padding-top: 20px;padding-left: 1%;padding-right: 1%;
+    }
+    .approvedextrareports .td1{
+        width: 25%;
+        height: 50px;
+        text-align: center;
+    }
+    .approvedextrareports #bottom{
+        background-color: white;padding-top: 20px;padding-bottom:50px;padding-left: 5%;
+    }
+    .td{padding: 10px; text-align:center;}
+ .td .el-upload--text{
+        border: none;
+        display: inline-block;
+        width: 90px;
+        height: 50px;
+        float: left;
+        margin-left: 10px;
+    }
+    .upload  .el-upload--text{
+        border: none;
+        display: inline-block;
+        height:50px;
+        width: 20%;
+        background: none;   
+        position: absolute;
+        right:8%;
+        top:10px;
+        margin-left: 10px;
+    }
+    .fileList2 .el-upload-list{
+        margin-top:35px;    
+        
+         padding: 10px;
+         border: 1px dashed #ccc;
+         width: 80%;
+    }
+
+    .fileList2 .el-upload-list__item{width:80%;}
+</style>

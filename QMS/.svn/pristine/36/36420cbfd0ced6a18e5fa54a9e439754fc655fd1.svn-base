@@ -1,0 +1,18 @@
+
+/admin/login = anon
+/admin/logout = anon
+/admin/logon = anon
+/admin/error/** = anon
+/admin/user/add = anon
+/admin/supplierInfo/getSrmApprovedSupp = anon
+/admin/supplierInfo/getSrmApprovedFile = anon
+/admin/fileQms/get = anon
+#/static/** = anon
+
+#/admin/** = anon
+/swagger-ui.html = anon
+/webjars/** = anon
+/v2/api-docs = anon
+/configuration/ui = anon
+/configuration/security = anon
+/swagger-resources/** = anon

@@ -1,0 +1,451 @@
+<template>
+    <form>
+        <table class="formed" align="left" valign="left">
+            <tr>
+                <td colspan="8" align=left style='height:25px;font-size:10px'>
+                    <font color=blue>
+                    此单包含了散货的订舱单格式和收费标准，希望能对您有所帮助！
+                    </font>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" style="height:40px">
+                    <p>
+                        <u>Shipper  发货人</u>
+                    </p>
+                </td>
+                <td colspan="2">
+
+                </td>
+                <td colspan="2" class="td2">
+                    <nobr>
+                      S/O No.(落货纸号）<input v-model='form.bsSoNo' style='width:100%;height:40px'> 
+                   </nobr>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" >
+                   <nobr>
+                    <textarea v-model='shipperName' rows="3" style="width:100%"></textarea>
+                    </nobr>
+                </td>
+                <td colspan='4'  style="border-bottom-style:none">
+                               
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" >
+                     <nobr>
+                       TEL:<input v-model='form.shipperTel' style='width:95%'> 
+                    </nobr>
+                </td>
+                <td colspan="4"  style="border-bottom-style:none">
+                    <nobr>
+                            &nbsp&nbsp&nbsp&nbsp&nbsp&nbspPIC: &nbsp&nbsp<input v-model='form.bsPic' style='width:250'> 
+                    </nobr>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" >
+                    <p>Consignee  收货人</p>
+                </td>
+                 <td colspan="4" style="border-bottom-style:none" >
+                        <nobr>
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbspMail: &nbsp<input v-model='form.bsMail' style='width:250'> 
+                       </nobr>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" style="border-bottom-style:none">                   
+                            <textarea v-model='ConsigneeName' rows="3" style="width:100%"></textarea>                
+                </td>
+                <td colspan="4" style="border-bottom-style:none" >
+                        <nobr>
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbspTel: &nbsp&nbsp&nbsp<input v-model='form.bsTel' style='width:250'> 
+                        </nobr>
+                        <nobr>
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbspFax: &nbsp  <input v-model='form.bsFax' style='width:250'> 
+                        </nobr>
+                        <nobr>
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbspDOC: <input v-model='form.bsDoc' style='width:250'> 
+                        </nobr>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+      
+                </td>
+                <td colspan="4" style="border-bottom-style:none">
+                   <nobr>
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbspTel:&nbsp&nbsp&nbsp   <input v-model='form.bsTel2' style='width:100%'> 
+                    </nobr>
+                </td>
+            </tr>
+
+
+            <tr >
+                <td colspan="2"  style="border-bottom-style:solid;border-bottom-color:#141414;">
+                    <nobr>
+                       TEL:<input v-model='form.ConsigneeTel' style='width:220px'> 
+                    </nobr>
+                </td>
+                <td colspan="2" style="border-bottom-style:solid;border-bottom-color:#141414;">
+                    <nobr>
+                       Fax:<input v-model='form.ConsigneeFax' style='width:250px'> 
+                    </nobr>
+                </td>
+                <td colspan="4" style="border-bottom-style:solid;border-bottom-color:#141414;">
+
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <p>Notify party   通知人</p>
+                </td>
+                <td colspan="1">
+                    <p>Sea Freight</p>
+                </td>
+                 <td colspan="3">
+                    <p>Service Type on </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" >
+                    <textarea  rows="4" v-model='form.notifyPartyName' style="width:100%"></textarea>
+                </td>
+                <td colspan="1">
+                     <textarea  rows="4" v-model='form.bsSeaFreight' style="width:100%"></textarea>
+                </td>
+                 <td colspan="3">
+                     <textarea  rows="4" v-model='form.bsServiceTypeOn' style="width:100%"></textarea>
+                </td>
+            </tr>
+            
+            <tr>
+                <td colspan="2">
+                    <p>Pre-Carriage by (前程运输)</p>
+                </td>
+                 <td colspan="2">
+                    <p>Place of Receipt(收货地点)</p>
+                </td>
+                 <td colspan="2">
+                    <p>取单地址（必选）：</p>
+                </td>
+                 <td colspan="2">
+                    <p>快递提单或发票(快递服务费RMB20/SET)</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                        <input v-model='form.bsPreCarryage'  style="width:100%"></input>
+                </td>
+                <td colspan="2">
+                        <input v-model='form.bsReceipt'  style="width:100%"></input>
+                </td>
+                <td colspan="2">
+                        <input v-model='form.bsAddress'  style="width:100%"></input>
+                </td>
+                <td colspan="2">
+                        <input v-model='form.bsExpress'  style="width:100%"></input>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p>Vessel / Voy. (船名/航次)</p>
+                </td>
+                <td colspan="2">
+                    <p>Port of Loading(装货港)</p>
+                </td>
+                <td colspan="4">
+                    <p>付款币种（必选）：</p>
+                </td>
+                     
+           </tr>
+           <tr>
+                <td colspan="2">
+                        <input v-model='form.bsVessel'  style="width:100%"></input>
+                </td>
+                <td colspan="2">
+                        <input v-model='form.bsLoading'  style="width:100%"></input>
+                </td>
+                <td colspan="4">
+                        <input v-model='form.bsCurrency'  style="width:100%"></input>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p>Port of Discharge(卸货港)</p>
+                </td>
+                <td colspan="2">
+                    <p>Place of Delivery(交货地)</p>
+                </td>
+                <td colspan="4">
+                    <p>出货后需要出仓报关清单：</p>
+                </td>
+                     
+           </tr>
+           <tr>
+                <td colspan="2">
+                        <input v-model='form.bsDischarge'  style="width:100%"></input>
+                </td>
+                <td colspan="2">
+                        <input v-model='form.bsDelivery'  style="width:100%"></input>
+                </td>
+                <td colspan="4">
+                        <input v-model='form.bsCustomsDeclarationList'  style="width:100%"></input>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" align=center >
+                    <p >Marks and numbers</p>
+                    <p>(箱 唛)</p>
+                </td>
+                <td colspan="1" align=center>
+                    <p>CTNS/PKGS</p>
+                    <p>（包装种类/箱数）</p>
+                </td>
+                <td colspan="3" align=center>
+                    <p> Description of Goods：</p>
+                    <p>(中英文货品名)</p>
+                </td>
+                <td colspan="1" align=center>
+                    <p>G.W.</p>
+                    <p>(毛重/公斤)</p>
+                </td>
+                <td colspan="1" align=center>
+                    <p>CBM</p>
+                    <p>(尺码/立方米)</p>
+                </td>
+                     
+           </tr>
+           <tr>
+                <td colspan="2">
+                        <input v-model='form.bsMarks'  style="width:100%"></input>
+                </td>
+                <td colspan="1">
+                        <input v-model='form.bsCtns'  style="width:100%"></input>
+                </td>
+                <td colspan="3">
+                        <input v-model='form.bsDescription'  style="width:100%"></input>
+                </td>
+                <td colspan="1">
+                        <input v-model='form.bsGw'  style="width:100%"></input>
+                </td>
+                <td colspan="1">
+                        <input v-model='form.bsCbm'  style="width:100%"></input>
+                </td>
+            </tr>
+
+            
+        </table>
+    </form>
+</template>
+
+<script>
+import Vue from "vue";
+export default {
+  props: {
+    customer: {
+      type: String
+    },
+    agent: {
+      type: String
+    },
+    cabinets: {
+      type: Array
+    }
+  }, //props
+  data() {
+    return {
+      receipts: [{ name: "", desc: "请选择" }],
+      deliveries: [{ name: "", desc: "请选择" }],
+      contentData:"",
+      form: {
+        shipperName: "",
+        bsSoNo: "",
+        shipperTel:'',
+        bsMail:'',
+        bsPic:'',
+        ConsigneeName:'',
+        bsTel:'',
+        bsDoc:'',
+        bsFax:'',
+        bsTel2:'',
+        ConsigneeTel:'',
+        ConsigneeFax:'',
+        notifyPartyName:'',
+        bsSeaFreight:'',
+        bsServiceTypeOn:'',
+        bsPreCarryage:'',
+        bsReceipt:'',
+        bsAddress:'',
+        bsVessel:'',
+        bsExpress:'',
+        bsCurrency:'',
+        bsCbm:'',
+        bsCtns:'',
+        bsLoading:'',
+        bsDescription:'',
+        bsGw:'',
+        bsMarks:'',
+        bsCustomsDeclarationList:'',
+        bsDischarge:'',
+        bsDelivery:""
+        
+      }
+    };
+  }, //data
+  methods: {
+    loadContextData: function() {
+      this.api.lmp.booking
+        .getContextData({
+          customer: this.customer,
+          agent: this.agent,
+          cabinets: this.cabinets
+        })
+        .then(res => {
+          if (res.result) {
+            //保留原数据
+            this.contentData =JSON.parse(JSON.stringify(res.data));
+            let formData = res.data;
+            let cabinets = [];
+            //转换成html能解析的
+            formData.cabinets.forEach(ele => {
+              ele.cabinetDetail.forEach((dele, index) => {
+                cabinets.push({
+                  partNo: dele.partNo,
+                  qty: dele.qty,
+                  cartonQty: dele.cartonQty,
+                  partNoDesc: dele.partNoDesc,
+                  loadingDate: dele.loadingDate,
+                  firstRow: index == 0 ? true : false,
+                  rowCount: ele.cabinetDetail.length,
+                  volume: ele.cabinetVolume,
+                  weight: ele.cabinetWeight
+                });
+              });
+            });
+            formData.cabinets = cabinets;
+            this.form = formData;
+            console.log(this.form);
+          }
+        });
+    }, //loadContextData
+    getFormData: function() {
+      let validSuccess = true;
+      if (this.form.receipt == undefined || this.form.receipt == "") {
+        this.$Message.error("请选择收货地点");
+        validSuccess = false;
+      }
+      if (this.form.delivery == undefined || this.form.delivery == "") {
+        this.$Message.error("请选择目的地");
+        validSuccess = false;
+      }
+      if (this.form.invoiceCode == undefined || this.form.invoiceCode == "") {
+        this.$Message.error("请输入发票号");
+        validSuccess = false;
+      }
+      this.$emit("validate", validSuccess);
+      if (validSuccess == false) return;
+      this.contentData.receipt = this.form.receipt;
+      this.contentData.delivery = this.form.delivery;
+      this.contentData.invoiceCode = this.form.invoiceCode;
+      return this.contentData;
+    } //getFormData
+  }, //methods
+  computed: {
+    total() {
+      let count = 0;
+      this.cabinets.forEach(element => {
+        count += element.qty;
+      });
+      return count;
+    }
+  }, //computed
+  watch: {}, //watch
+  mounted() {
+    //初始化
+    this.loadContextData();
+  } //mounted
+};
+</script>
+
+<style>
+table {
+  padding: 0;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0px;
+}
+.td2{
+    font-weight:bold
+}
+.formed {
+  margin: 6px 10px;
+  border: 2px solid #000;
+  line-height: 1.6em;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+.formed tr {
+  padding: 0px;
+}
+.formed tr td {
+  border: 0;
+  border-right: 1px solid #c1c1c3;
+  border-bottom: 1px dashed #c1c1c3;
+  padding: 0px;
+  padding: 1px 1px;
+}
+
+.formed > tr:last-child > td {
+  border-bottom: 0;
+}
+.formed .sperator {
+  border-top: 2px solid #000;
+}
+
+.formed p > u {
+  margin: 3px 5px;
+  font-size: 12px;
+  display: inline;
+  line-height: 12px;
+  text-decoration: none;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.formed input,
+select {
+  width: 100%;
+  border: 1px solid #c1c1c3;
+}
+.formed input {
+  background-color: #f8f9fa;
+  width:96%;
+}
+.formed label {
+  margin-left: 30px;
+  position: relative;
+}
+.formed input[type="checkbox"] {
+  margin-left: 2px;
+  position: absolute;
+  left: -20px;
+  bottom: 1px;
+}
+
+.formed textarea {
+  resize: none;
+  width: 100%;
+  border: 1px solid #c1c1c3;
+  background-color: #e1e2e3;
+}
+.f-blue {
+  background-color: #c0d9f1;
+}
+.f-white {
+  background-color: #fff;
+}
+.f-yellow {
+  background-color: #ff0;
+}
+</style>

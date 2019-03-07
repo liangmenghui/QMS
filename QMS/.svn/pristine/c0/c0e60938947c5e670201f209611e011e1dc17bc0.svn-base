@@ -1,0 +1,351 @@
+<template>
+        <div>
+    <div>
+        <Row>
+                <i-col>
+                    <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                            <Form-item >
+                                    <Input v-model="formQuery.testx" placeholder="请输入测试项" ></Input>
+                                </Form-item>
+                        <Form-item >
+                            <Button type="primary" @click="handleSubmit()">查 询</Button>
+                        </Form-item>
+                        <Form-item v-if="menuData.perms.ADD">
+                            <Button type="primary" @click="showAddDialog()" >新 增</Button>
+                        </Form-item>
+                    </Form>
+                </i-col>
+            </Row>
+        </div>
+        <Modal v-model="dialog.modal_dialog" title="" @on-ok="t" @on-cancel="cancel" >
+                <p>
+            <div >
+                <Row>
+                    <i-col>
+    <Form :model="formItem" :label-width="100" style="text-align:center" :ref="dialog.ruleForm" :rules="dialog.ruleForm">
+            <FormItem label="Part No" prop="bsPartNo" >
+                    <Row>
+                        <Col span="12" >
+                         <Input v-model="formItem.bsPartNo" placeholder="请输入Part No"></Input>
+                        </Col>
+                   </Row>
+            </FormItem>
+            <FormItem label="设备名称" prop="bsName" >
+                    <Row>
+                        <Col span="12" >
+                            <Select v-model="formItem.bsName"  >
+                                    <Option v-for="item in formItem.arry"  :key="item" :value="item"  >{{item}}</Option>
+                            </Select>
+                        </Col>
+                   </Row>
+                </FormItem>
+                <FormItem label="测试项" prop="testx" >
+                        <Row>
+                            <Col span="12" >
+                             <Input v-model="formItem.testx" placeholder="请输入测试项"></Input>
+                            </Col>
+                       </Row>
+                    </FormItem>
+                    <FormItem label="测试时间(分钟)"  >
+                            <Row>
+                                <Col span="12" >
+                                    <InputNumber v-model="formItem.testTime"  style="width: 200px"  placeholder="请输入测试时间" />
+                                </Col>
+                           </Row>
+                        </FormItem>
+    </Form> 
+     </i-col>
+    </Row>
+</div>
+</p>
+</Modal>
+
+
+<Modal v-model="dialog.modal_dialog1" title="" @on-ok="update" @on-cancel="cancel" >
+        <p>
+    <div >
+        <Row>
+            <i-col>
+<Form :model="formItem" :label-width="100" style="text-align:center" >
+        <FormItem label="Part No" prop="bsPartNo" >
+                <Row>
+                    <Col span="12" >
+                     <Input v-model="formItem.bsPartNo" placeholder="请输入Part No"></Input>
+                    </Col>
+               </Row>
+        </FormItem>
+        <FormItem label="设备名称"  >
+                <Row>
+                    <Col span="12" >
+                        <Select v-model="formItem.bsName"  >
+                                <Option v-for="item in formItem.arry"  :key="item" :value="item"  >{{item}}</Option>
+                        </Select>
+                    </Col>
+               </Row>
+            </FormItem>
+        
+         
+        <FormItem label="测试项"  >
+                <Row>
+                    <Col span="12" >
+                     <Input v-model="formItem.testx" placeholder="请输入测试项" ></Input>
+                    </Col>
+               </Row>
+            </FormItem>
+            <FormItem label="测试时间(分钟)"  >
+                    <Row>
+                        <Col span="12" >
+                         <InputNumber v-model="formItem.testTime"  style="width: 200px"  placeholder="请输入测试时间" />
+                        </Col>
+                   </Row>
+                </FormItem>
+</Form> 
+</i-col>
+</Row>
+</div>
+</p>
+</Modal>
+    <Row>
+            <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="height:auto;"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total"   @on-change="changePage"  @on-page-size-change="chageSize" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination"  show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+ </div>
+
+
+</template>
+<script>
+  import {mapState} from 'vuex'
+    export default {
+        created(){
+            this.getData();
+            this.api.equipment.selectbsName(this.formItem).then((res) => {
+                 this.formItem.arry=res.data;
+            });
+        },
+        computed:{
+        ...mapState({
+            menuData:state=>state.menuData  
+        })
+    },
+        data () {
+            return {
+                start:0,
+                end:15,
+                dialog: {
+                    ruleForm: {
+                    bsPartNo: [
+                        { required: true, message: '请填写编码', trigger: 'blur' }
+                    ],
+                    bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ],
+                    testx: [
+                        { required: true, message: '请填写测试项', trigger: 'blur' }
+                    ]
+                },
+                modal_dialog: false,
+                modal_dialog1:false
+                },
+                
+
+                formQuery:
+                {
+                bsCode: '',
+                bsName: '',
+                testx:''
+                },
+
+                formItem:{
+                isreadonly:false,
+                arry:[],
+                arry1:[],
+                bsName:"",
+                bsPartNo:'',
+                bsCode:"",
+                bsState:'',
+                bsManager:"",
+                bsPosition:"",
+                id:""
+                },
+                datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:15,
+                    pkParent:-1
+                },
+                pagination: [15, 50, 100],
+                data: {rows:[],total:0,rows1:[]},
+                columns: [
+                    {
+                        title: '产品编码',
+                        key: 'bsPartNo'
+                    },
+                    {
+                        title: '设备名称',
+                        key: 'bsName'
+                    },
+                    {
+                        title: '测试项',
+                        key: 'testx'
+                    },
+                    {
+                        title: '测试时间',
+                        key: 'testTime'
+                    },
+                   
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let ary = [];
+                            if(this.menuData.perms.EDIT) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditDialog(params)
+                                        }
+                                    }
+                                }, '编辑'));
+                            }
+                            if(this.menuData.perms.DELETE) {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.delete(params)
+                                        }
+                                    }
+                                }, '删除'))
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            },
+            }
+        },
+        
+        methods:{
+            getData(){
+                this.api.equipmenttime.list().then((res) => {
+                    if(res.result) {
+                        this.datagrid.data.rows = res.data.rows.slice(this.start,this.end);
+                        this.datagrid.data.total=res.data.total;
+                       }else {
+                        this.$Message.error(res.msg);
+                      }
+              });
+            },
+            
+            change(){       
+                
+            },
+            showAddDialog() {
+                this.formItem.bsName="";
+                this.formItem.testx="";
+                this.formItem.testTime="";
+                this.formItem.bsPartNo="";
+                this.dialog.modal_dialog = true;
+        },
+
+        cancel () {    
+        },
+
+        t(){
+            if(this.formItem.bsName==''||this.formItem.testx==''||this.formItem.bsPartNo==''){
+                return this.$Message.error('填写信息有误');
+            }else{
+                this.formItem.testx=this.formItem.testx.trim();
+            this.api.equipmenttime.add(this.formItem).then((res) =>{
+              
+                          this.getData();
+                          this.$Message.success("添加成功");
+                     
+            });
+        }
+        },
+
+        delete:function(params){
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.equipmenttime.delete(params.row).then((res)=>{
+                        if(res.result) {
+                            this.getData();
+                            this.$Message.success('删除成功');
+                            this.$Modal.remove();
+                        }else {
+                            this.$Message.error("删除失败");
+                        }
+                    });
+                }
+            });
+               },
+
+         showEditDialog(params){ 
+                this.dialog.modal_dialog1= true;
+                this.formItem.bsName=params.row.bsName;
+                this.formItem.bsCode=params.row.bsCode;
+                this.formItem.testx=params.row.testx;
+                this.formItem.testTime=params.row.testTime;
+                this.formItem.bsPartNo=params.row.bsPartNo;
+                this.formItem.id=params.row.id;
+                this.formItem.isreadonly=true;
+
+
+    },
+
+    update(){
+        if(this.formItem.bsName==''||this.formItem.testx==''||this.formItem.bsPartNo==''){
+                return this.$Message.error('填写信息有误');
+            }else{
+                this.api.equipmenttime.update(this.formItem).then((res) =>{
+                    this.getData();
+                            this.$Message.info('更新成功');
+                });
+              }
+         },
+ 
+    handleSubmit(){
+        this.formQuery.testx=this.formQuery.testx.trim();
+        this.api.equipmenttime.list(this.formQuery).then((res) =>{
+            if(res.result) {
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+                });
+        },
+        changePage (pageSize) {
+                    this.start=(pageSize-1)*this.datagrid.queryParams.rows;
+                    this.end=pageSize*this.datagrid.queryParams.rows;
+                    this.getData();
+                },
+                chageSize(pageSizeOpts){
+                    this.datagrid.queryParams.rows=pageSizeOpts;
+                    this.start=0;
+                    this.end=pageSizeOpts;
+                    this.getData();
+               }
+
+}   
+}
+</script>

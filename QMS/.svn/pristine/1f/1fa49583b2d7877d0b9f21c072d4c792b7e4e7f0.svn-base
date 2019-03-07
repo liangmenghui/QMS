@@ -1,0 +1,184 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：客诉列表
+    -->
+    <div class="feedbacklist" v-if="!showRooterView">   	
+    	<div>
+             <Select size="large" filterable style="width: 200px;display: inline-block;margin-top: -4px;" v-model="formQuery.bsStatus" placeholder="按客诉状态搜索">
+                <Option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
+                </Option>
+            </Select>        
+            <el-input size="medium" style="width: 200px;display: inline-block;" :placeholder="$t('Button.Keyword-search')" v-model="formQuery.keyWord"></el-input>               
+            <el-button style="padding: 10px 10px;" type="primary" slot="append" icon="el-icon-search" @click="getData">{{$t('Button.Inquire')}}</el-button>
+            <el-button style="padding: 10px 10px;" type="primary"  icon="el-icon-refresh" @click="cleargetData">{{$t('Button.Reset')}}</el-button>
+    	</div>    
+    <el-table :data="tableData" class="feedback-list mytable" row-key="id" :expand-row-keys="expands" @row-click="rowClick">
+    <el-table-column type="expand">
+      <template slot-scope="props">
+        <el-form label-position="left" inline class="demo-table-expand">
+            <el-button type="primary" size="small" @click="to('feedback/details',props.row.id)">{{$t('feedback.details')}}</el-button>
+            <el-button type="primary" size="small" @click="to('feedback/handle',props.row.id)">{{$t('feedback.dispose')}}</el-button>
+        </el-form>
+      </template>
+    </el-table-column>
+    <el-table-column
+      :label="$t('feedback.number')" 
+      prop="id">
+    </el-table-column>
+    <el-table-column
+      :label="$t('feedback.state')" >
+        <template scope="scope">
+            <span v-bind:class="{red:scope.row.bsStatus==1, blue:scope.row.bsStatus==2, green:scope.row.bsStatus==3}">{{$t('feedback.statusDesc['+(scope.row.bsStatus)+']')}}</span>
+        </template>
+    </el-table-column>
+    <el-table-column
+      :label="$t('feedback.type')">
+        <template scope="scope">
+            <span>{{$t('feedback.feedbacktype['+(scope.row.bsType)+']')}}</span>
+        </template>
+    </el-table-column>
+    <el-table-column
+      :label="$t('feedback.product')" 
+      prop="bsPrName">
+    </el-table-column>
+    <el-table-column
+      :label="$t('feedback.supplier')" 
+      prop="bsSuppCompanyName">
+    </el-table-column>
+    <el-table-column
+      :label="$t('feedback.time')" 
+      prop="bsCreatedTime">
+    </el-table-column>
+  </el-table>
+  <div class="block">   
+     <el-pagination
+            class="pull-right clearfix"                
+            @current-change="changePage"
+            @size-change="SizeChange"
+            :current="1"
+            :current-page.sync="queryParams.page"
+            :page-sizes="pageSizesList"
+            :page-size="queryParams.rows"
+            layout="total, sizes, prev, pager, next, jumper"                 
+            :page-size-opts="pageSizesList"
+            :total="totalCount">
+           
+       </el-pagination>
+
+</div> 
+
+  </div>
+
+  <div v-else-if="showRooterView">
+    <router-view></router-view>
+  </div>
+</template>
+
+<script>
+    export default {
+    data() {
+        return {
+        	formQuery:{},
+            showRooterView: false,
+            tableData: [],
+            expands: [],
+            showRooterView: false,
+            filters: {},
+         queryParams:{
+                page:1,
+                rows:10,
+                pkParent:-1
+            },
+            pageSizesList: [10, 20, 30, 40, 50, 100],
+            totalCount: 0,//数据的总条数,  
+            options: [{
+          value: '1',
+          label: this.$t('feedback.statusDesc[1]')
+        }, {
+          value: '2',
+          label: this.$t('feedback.statusDesc[2]')
+        }, {
+          value: '3',
+          label: this.$t('feedback.statusDesc[3]')
+        }],    
+        
+        }
+    },
+    created(){
+        this.showRooterView = this.$route.matched.length>2;
+        this.getData();
+    },
+    beforeUpdate:function(){
+        this.showRooterView = this.$route.matched.length>2;
+    },
+    watch: {
+        '$route' (to, from) {
+            if(to.matched.length == 2) {
+                this.getData();
+            }
+            this.showRooterView = to.matched.length>2;
+        }
+    },
+    methods: {
+        getData(){
+            let filter = Object.assign(this.formQuery,this.queryParams,this.$route.query);
+            this.api.feedback.getlist(filter).then((res) => {
+                this.tableData = res.data.rows;
+                this.totalCount= res.data.total;
+            });
+        },
+        rowClick(row, event, column) {
+                Array.prototype.remove = function (val) {
+                    let index = this.indexOf(val);
+                    if (index > -1) {
+                        this.splice(index, 1);
+                    }
+                };
+ 
+                if (this.expands.indexOf(row.id) < 0) {
+                    this.expands.push(row.id);
+                } else {
+                    this.expands.remove(row.id);
+                }
+        },
+        to(path,feedbackId){
+            this.$router.push({path:path,query:{feedbackId:feedbackId}});
+        },
+        changePage(page){         
+           this.queryParams.page = page;  
+                 
+           this.getData();
+        },
+        cleargetData(){
+        this.formQuery.keyWord='';
+        this.formQuery.bsStatus='';
+       
+
+      }
+    }
+  }
+</script>
+
+<style lang="less">
+	@import "../public.less";
+  .el-input-group__append, .el-input-group__prepend {
+    background-color: #409eff; color:#fff;
+  }
+	
+ .red{color:#fd5822;}
+.blue{color: #409EFF;}
+.green{color: #67C23A;}
+.orange{color: #fd5822;}
+.gray{color: #333;}
+	.feedback-list{
+		width: 100%;padding-top:10px;
+	}
+    .block{text-align: right;margin-top:10px;}
+    .mytable.el-table th{
+     background:#f0f0f0 !important;
+           
+  }
+  .main .single-page-con{background: #fff;}
+</style>

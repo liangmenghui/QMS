@@ -1,0 +1,48 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-02
+    	描述：质量和工艺文件
+    -->
+	<div style="height: 1000px;">
+		<div style="height: 60px;margin-top: 20px;font-size: 16px;"><center><h4>质量和工艺文件</h4></center></div>		
+		<div style="height: 200px;margin-left: 35%;">
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 80px;">产品名称：</div>
+				<div style="float: left;"><el-input v-model="input1" style="width: 260px;" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 80px;">产品类型：</div>
+				<div style="float: left;"><el-input v-model="input2" style="width: 260px;" placeholder="请输入内容"></el-input></div>
+			</div>
+			<div style="height: 50px;">
+				<div style="float: left;margin-top: 10px;width: 80px;">供应商：</div>
+				<div style="float: left;"><el-input v-model="input3" style="width: 260px;" placeholder="请输入内容"></el-input></div>
+			</div>
+		</div>
+		<div>
+			<center><el-button type="primary" style="width: 15%;">质量文件</el-button></center>			
+		</div>
+		<div style="margin-top: 20px;">
+			<center><el-button type="primary" style="width: 15%;">工艺文件</el-button></center>
+		</div>
+		<div style="margin-top: 20px;">
+			<center><el-button type="primary" style="width: 15%;">补充资料</el-button></center>
+		</div>
+	</div>
+</template>
+
+<script>
+	export default {
+  data() {
+    return {
+      input1: '',
+      input2: '',
+      input3: '',
+    }
+  }
+}
+</script>
+
+<style>
+</style>

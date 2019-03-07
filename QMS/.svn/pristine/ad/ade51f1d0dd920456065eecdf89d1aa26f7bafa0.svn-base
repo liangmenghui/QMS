@@ -1,0 +1,281 @@
+﻿<template>
+  <div>
+    <Row>
+      <i-col span="24">
+        <Form :model="form" :label-width="120" style="min-height:720px;">
+          <div style="padding: 0 0 24px;line-height:32px;font-size:12px;">
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">客户</p>
+              <Select v-model="form.customer" style="width:200px">
+                <Option v-for="item in customers" :value="item.customer" :key="item.customer">{{item.desc}}</Option>
+              </Select>
+            </div>
+            <div style="display:inline-block;">
+              <p style="width:100px;display:inline-block;text-align:right;margin-right:20px;">货代</p>
+              <i-select v-model="form.agent" style="width:200px">
+                <Option v-for="item in agents" :value="item.agent" :key="item.agent">{{item.desc}}</option>
+              </i-select>
+            </div>
+            <div style="float:right;">
+              <!-- <Button type="primary" @click="handleDownload" icon="ios-cloud-download" style="float:right;margin-right:20px;">下载模板</Button> -->
+              <Button type="primary" @click="handleLoadTemplate" icon="ios-loop-strong" style="float:right;margin-right:20px;">加载模板</Button>
+            </div>
+          </div>
+          <form-item label="Booking模板">
+            <div style="margin-right:140px;">
+              <i-input disabled v-model="templatePath"></i-input>
+            </div>
+            <Upload action="/admin/lmp/bookingagent/template/upload" :show-upload-list="false" :before-upload="handleUpload" :on-format-error="handleFormatError" :data="{customer:this.form.customer,agent:this.form.agent}" :on-success="handleUploadSuccess" :on-error="handleUploadError" :format="['xls','xlsx']" style="float:right;margin-right:20px;margin-top:-34px;">
+              <i-button type="primary" :loading="this.uploadState" icon="ios-cloud-upload-outline">{{this.uploadState?"上传中":"上传模板"}}</i-button>
+            </Upload>
+          </form-item>
+          <form-item label="模板详细信息">
+            <router-view></router-view>
+          </form-item>
+        </Form>
+      </i-col>
+    </Row>
+    <Row>
+      <i-col span="24">
+        <div style="height:86px;padding-top:24px;background-color:#f1f2f3;">
+          <Button type="success" @click="handsubmit" size="large" style="float:right;margin-right:60px;">保存</Button>
+        </div>
+      </i-col>
+    </Row>
+  </div>
+</template>
+<script>
+import { mapState } from "vuex";
+import Util from "@/libs/util";
+export default {
+  data() {
+    return {
+      customers: [{ customer: "", desc: "请选择客户" }],
+      agents: [{ agent: "", name, url: "", desc: "请选择货代" }],
+      uploadState: false,
+      file: null,
+      templatePath: "",
+      form: {
+        customer: "",
+        agent: undefined
+      }
+    };
+  },
+  created: function() {
+    this.$nextTick(function() {
+      this.loadCustomers();
+      //加载启动页面
+      this.loadPageView();
+    });
+  }, //mounted
+  methods: {
+    save(params) {
+      let response = [];
+      Object.keys(params).forEach(item => {
+        response.push({
+          key: item,
+          value: params[item]
+        });
+      });
+      response.push({ key: "customer", value: this.form.customer });
+      response.push({ key: "agent", value: this.form.agent });
+      //  var a = JSON.stringify(response);
+      this.api.lmp.booking.saveList(response).then(res => {
+        if (res.result) {
+          this.$Message.success("保存成功");
+        }
+      });
+    },
+    handsubmit() {
+      this.$store.commit("setBookingTemplateCommitState", 1);
+    },
+    loadPageView: function() {
+      let currentName = "";
+      let currentUrl = "";
+
+      if (this.form.agent == undefined || this.form.agent.length == 0) {
+        this.$router.replace("/lmp/booking/template/empty");
+        return;
+      }
+
+      Object.keys(this.agents).forEach(element => {
+        if (this.agents[element].agent == this.form.agent) {
+          currentUrl = this.agents[element].url;
+          currentName = this.agents[element].name;
+        }
+      });
+
+      if (currentUrl !== undefined && currentUrl.length > 0) {
+        currentUrl =
+          currentUrl + "/" + this.form.customer + "/" + this.form.agent;
+        this.$router.replace(currentUrl);
+      }
+    }, //loadPageView
+    loadCustomers: function() {
+      this.customers = [{ customer: "", desc: "请选择客户" }];
+
+      if (this.form.customer == undefined || this.form.customer.length == 0) {
+        // console.log("customer is empty");
+      }
+
+      this.api.lmp.booking.customers().then(res => {
+        if (res.result) {
+          let list = [{ customer: "", desc: "请选择客户" }];
+          res.data.forEach(element => {
+            list.push({
+              customer: element.BsAccountNumber,
+              desc: element.BsPartyName
+            });
+          });
+          this.customers = list;
+        }
+      });
+    }, //loadCustomers
+    loadAgents: function() {
+      this.agents = [{ agent: "", name, url: "", desc: "请选择货代" }];
+
+      if (this.form.agent == undefined || this.form.agent.length == 0) {
+        // console.log("agent is empty");
+      }
+
+      this.api.lmp.booking
+        .agents({ customer: this.form.customer })
+        .then(res => {
+          if (res.result) {
+            let list = [{ agent: "", name, url: "", desc: "请选择货代" }];
+            res.data.forEach(element => {
+              list.push({
+                agent: element.bsAgent,
+                desc: element.bsAgentDesc,
+                url: element.bsPageUrl,
+                name: element.bsPageName
+              });
+            });
+            this.agents = list;
+          }
+        });
+    }, //loadAgents
+    handleUpload: function(file) {
+      if (this.uploadState == true) {
+        this.$message.warning("正在处理上传文件，请稍后再试...");
+        return false;
+      }
+      this.file = null;
+      this.templatePath = "";
+      if (
+        this.form.customer === undefined ||
+        this.form.customer.length == 0 ||
+        (this.form.agent === undefined || this.form.agent.length == 0)
+      ) {
+        this.$Message.error("请先选择客户和货代。");
+        return false;
+      }
+      this.file = file;
+      this.templatePath = file.name;
+      this.uploadState = true;
+      return true;
+    }, //handleUpload
+    handleLoadTemplate: function() {
+      if (
+        this.form.customer === undefined ||
+        this.form.customer.length == 0 ||
+        (this.form.agent === undefined || this.form.agent.length == 0)
+      ) {
+        this.$Message.error("请先选择客户和货代。");
+        return false;
+      }
+
+      this.api.lmp.booking
+        .getTemplate({ customer: this.form.customer, agent: this.form.agent })
+        .then(res => {
+          if (res.result) {
+            let formData = {};
+            let json = res.data;
+            json.forEach(item => {
+              formData[item.bsName] = item.bsValue;
+            });
+            this.$store.commit("setBookingTemplateFormData", formData);
+            this.templatePath = formData["template"];
+          } else {
+            this.$Message.error(res.message);
+          }
+        });
+    }, //handLoadTemplate
+    handleDownload: function() {
+      if (
+        this.form.customer === undefined ||
+        this.form.customer.length == 0 ||
+        (this.form.agent === undefined || this.form.agent.length == 0)
+      ) {
+        this.$Message.error("请先选择客户和货代。");
+        return false;
+      }
+      this.api.lmp.booking.download({
+        customer: this.form.customer,
+        agent: this.form.agent
+      });
+    },
+    handleUploadSuccess: function(response, file) {
+      if (response.result == true) {
+        let formData = {};
+        response.data.forEach(item => {
+          formData[item.bsName] = item.bsValue;
+        });
+        this.$store.commit("setBookingTemplateFormData", formData);
+        this.$Message.info("文件" + file.name + "上传成功.");
+      } else {
+        this.$message.error(response.msg);
+      }
+      this.uploadState = false;
+    }, //handleUploadSuccess
+    handleUploadError: function(response, file) {
+      this.$message.error("文件" + file.name + "上传失败。");
+      this.uploadState = false;
+    }, //handleUploadError
+    handleFormatError: function(file) {
+      this.$Message.error("模板格式错误,请上传正确的Booking文档模板。");
+    }, //handleFormatError
+    loadTemplateData: function() {
+      //只有点了提交之后 监听才有效
+      let state = this.$store.getters.bookingTemplateCommitState;
+      if (state == 0) {
+        return;
+      }
+
+      this.$store.commit("setBookingTemplateCommitState", 0);
+      let commitData = this.$store.getters.bookingTemplateFormData;
+      if (commitData != null || commitData != undefined) {
+        this.save(commitData);
+      }
+    }
+  }, //methods
+  directives: {}, //directives
+  mounted() {
+    this.loadCustomers();
+    this.$store.commit("setBookingTemplateCommitState", 0);
+  }, //mounted
+  computed: {
+    commitData() {
+      //提交数据
+      return this.$store.getters.bookingTemplateFormData;
+    },
+    formCustomer: function() {
+      return this.form.customer;
+    },
+    formAgent: function() {
+      return this.form.agent;
+    }
+  },
+  watch: {
+    formCustomer: function() {
+      this.loadAgents();
+    },
+    formAgent: function() {
+      this.loadPageView();
+    },
+    commitData() {
+      this.loadTemplateData();
+    } //commitData
+  } //watch
+};
+</script>

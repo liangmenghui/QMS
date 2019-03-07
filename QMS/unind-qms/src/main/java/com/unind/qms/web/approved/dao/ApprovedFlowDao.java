@@ -1,0 +1,25 @@
+package com.unind.qms.web.approved.dao;
+
+import com.unind.qms.web.approved.entity.ApprovedFlow;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+/**
+ * 
+ * @author chen
+ *
+ */
+public interface ApprovedFlowDao extends CrudRepository<ApprovedFlow, Long>, JpaSpecificationExecutor<ApprovedFlow> {
+
+	public int countByBsName(String bsName);
+
+	public List<ApprovedFlow> findByBsName(String bsName);
+
+	@Modifying
+	@Query(value = "select * from t_approved_flow t where t.bs_is_del = 0 and t.bs_name like CONCAT(?1,'%')", nativeQuery = true)
+	public List<ApprovedFlow> findByBsNameLike(String bsName);
+}

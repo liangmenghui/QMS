@@ -1,0 +1,95 @@
+	.font{font-size: 14px;font-family: "Microsoft YaHei"}
+	.productinspectconfirmapproved #topbody:after{
+	content:".";
+        visibility:hidden;
+        display:block; 
+        clear:both; 	
+	}
+	.productinspectconfirmapproved #topbody .topbody-div{
+	float: left;height: 50px;	
+	}
+	.productinspectconfirmapproved #topbody .topbody-text{
+	float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;
+	}
+	.productinspectconfirmapproved #topbody .topbody-input{
+	float: left;	
+	}
+	.productinspectconfirmapproved #topbody .topbody-input .el-input{
+	width: 300px;	
+	}
+	.productinspectconfirmapproved #filebody{
+	background-color:white;padding-left: 5%;padding-top: 30px;padding-bottom: 50px;	
+	}
+	.productinspectconfirmapproved #filebody p{
+	font-size: 14px;color: #20A0FF;	
+	}
+	.productinspectconfirmapproved #filebody .el-button{
+	 width: 110px;height: 110px;margin-top: 20px;	
+	}
+	.productinspectconfirmapproved #filebody hr{
+	width:80%;border: none;height: 1px;color: #DDDDDD;margin-top: 30px;margin-bottom: 30px;	
+	}
+	.productinspectconfirmapproved #tablebody{
+	padding-top: 10px;padding-bottom: 30px;padding-left: 5%;padding-right: 5%;
+	}
+	.productinspectconfirmapproved #packbody{
+	background-color: white;padding-top: 30px;padding-bottom: 20px;padding-left: 5%;	
+	}
+	.productinspectconfirmapproved .packbody-div1{
+	height: 50px;	
+	}
+	.productinspectconfirmapproved #packbody .text{
+	padding-top: 10px;font-size: 14px;color: #20A0FF;	
+	}	
+	.productinspectconfirmapproved .packbody-div2{
+	margin-top: 20px;	
+	}
+	.productinspectconfirmapproved .packbody-div2 .el-button{
+	width: 110px;height: 110px;	
+	}
+	.productinspectconfirmapproved #packbody hr{
+	width:80%;border: none;height: 1px;color: #DDDDDD;margin-top: 30px;margin-bottom: 30px;	
+	}
+	.productinspectconfirmapproved #otherbody{
+	background-color: white;padding-top: 30px;padding-bottom: 50px;padding-left: 5%;	
+	}
+	.productinspectconfirmapproved #testbody{
+	background-color: white;padding-top: 30px;padding-bottom: 50px;padding-left: 5%;	
+	}
+	.productinspectconfirmapproved #checkbody{
+	background-color: white;padding-top: 30px;padding-bottom: 25px;padding-left: 5%;
+	font-family: "Microsoft YaHei";font-size: 14px;	line-height: 30px;
+    border-bottom:1px dashed #ccc;
+	}
+	.productinspectconfirmapproved #bottom{
+	height:150px;margin-top: 20px;margin-bottom: 20px;background-color: white;padding-top: 50px;padding-left: 5%;	
+	}
+	 #documentbody{
+	background-color:white;padding-top: 30px;padding-bottom: 20px;	
+	}
+
+	#documentbody .el-row{  
+	box-sizing: border-box;
+ 
+    line-height: 45px;
+	}
+
+	#documentbody .el-row p{color:#606266; font-size: 14px;font-family:"Microsoft YaHei";text-align: right;}
+
+	.fileBtn{position: relative;margin-bottom: 10px;}
+    .el-upload-list__item {
+    margin-top: 10px;
+
+    padding: 10px;
+    border: 1px dashed #ccc;
+}
+hr{border:none;}
+#documentbody .el-col-16{margin-left:20px;}
+.No{width: 20px;height: 20px;display: inline-block;
+			background: url(../images/No.png) left center no-repeat;width:20%;padding-left:25px;
+
+}
+.ok{width: 20px;height: 20px;display: inline-block;
+			background: url(../images/OK.png) left center no-repeat;width:20%;padding-left:25px;
+
+}

@@ -1,0 +1,232 @@
+<template>
+    <form>
+        <table class="formed" align="left" valign="left">
+            <tr>
+                <td colspan="5">
+                    <p>
+                        <u>Shipper:</u>
+                    </p>
+                </td>
+                <td colspan="5" rowspan="5">
+
+                </td>
+            </tr>
+            <tr>
+                <td colspan="5" >
+                    <textarea rows="4" v-model="form.shipper"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>PIC:</p>
+                </td>
+                <td><input type="text" v-model="form.shipperPic" /></td>
+                <td>Tel:</td>
+                <td><input type="text" v-model="form.shipperTel" /></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="5">
+                    <p>
+                        <u>Consignee (if 'order' state notify party)</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="5" >
+                    <textarea rows="4" v-model="form.consignee"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="5">
+                    <p>
+                        <u> Notify Party:</u>
+                    </p>
+                </td>
+                <td colspan="5"  style="text-align:center;" >
+                    <p>
+                        <u>SHIPPING ORDER (OCEAN)</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="5">
+                    <textarea rows="4" v-model="form.notify"></textarea>
+                </td>
+                <td colspan="5">
+
+                </td>
+            </tr>
+            <tr>
+                <td >
+                    <p>
+                        <u>Ocean Vessel/Voyage No.:</u>
+                    </p>
+                </td>
+                <td colspan="2"><input type="text" v-model="form.vessel" /></td>
+                <td>
+                    <p>
+                        <u>Port of loading:</u>
+                    </p>
+                </td>
+                <td><input type="text" v-model="form.loading" /></td>
+                <td colspan="5"></td>
+            </tr>
+            <tr>
+                <td >
+                    <p>
+                        <u> Port of Discharge:</u>
+                    </p>
+                </td>
+                <td colspan="2">
+                    <input type="text" v-model="form.discharge" />
+                </td>
+                <td>
+                    <p>
+                        <u>Place of delivery:</u>
+                    </p>
+                </td>
+                <td>
+                    <input type="text" v-model="form.delivery" />
+                </td>
+                <td>
+                    <p>
+                        <u>Freight Payable at</u>
+                    </p>
+                </td>
+                <td></td>
+                <td colspan="2">
+                    <p>
+                        <u>Number of Original B/L required</u>
+                    </p>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </form>
+</template>
+
+<script>
+import Vue from "vue";
+export default {
+  props: {
+    formData: {
+      type: [Number, Object, Array, String]
+    },
+    customer: {
+      type: [Number, String]
+    },
+    agent: {
+      type: [Number, String]
+    }
+  },
+  data() {
+    return {
+      form: {
+        shipper: "",
+        shipperPic: "",
+        shipperTel: "",
+        consignee: "",
+        notify: "",
+        vessel: "",
+        loading: "",
+        discharge: "",
+        delivery: ""
+      }
+    };
+  }, //data
+  methods: {
+    getData() {
+      //校验
+      this.$emit("on-commit", this.form);
+    }
+  }, //methods
+  computed: {}, //computed
+  watch: {
+    formData(value) {
+      let val = JSON.stringify(value);
+      if (!val) return;
+      this.form = JSON.parse(val);
+    }
+  } //watch
+};
+</script>
+
+<style>
+table {
+  padding: 0;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0px;
+}
+
+.formed {
+  margin: 6px 10px;
+  border: 2px solid #000;
+  line-height: 1.6em;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+.formed tr {
+  padding: 0px;
+}
+.formed tr td {
+  border: 0;
+  border-right: 1px solid #c1c1c3;
+  border-bottom: 1px dashed #c1c1c3;
+  padding: 0px;
+  width: 140px;
+  padding: 1px 1px;
+}
+
+.formed > tr:last-child > td {
+  border-bottom: 0;
+}
+.formed .sperator {
+  border-top: 2px solid #000;
+}
+
+.formed p > u {
+  margin: 3px 5px;
+  font-size: 12px;
+  display: inline;
+  line-height: 12px;
+  text-decoration: none;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.formed input,
+select {
+  width: 100%;
+  border: 1px solid #c1c1c3;
+}
+.formed input {
+  background-color: #e1e2e3;
+}
+.formed label {
+  margin-left: 30px;
+  position: relative;
+}
+.formed input[type="checkbox"] {
+  margin-left: 2px;
+  position: absolute;
+  left: -20px;
+  bottom: 1px;
+}
+
+.formed textarea {
+  resize: none;
+  width: 100%;
+  border: 1px solid #c1c1c3;
+  background-color: #e1e2e3;
+}
+.f-blue {
+  background-color: #c0d9f1;
+}
+.f-white {
+  background-color: #fff;
+}
+.f-yellow {
+  background-color: #ff0;
+}
+</style>
+

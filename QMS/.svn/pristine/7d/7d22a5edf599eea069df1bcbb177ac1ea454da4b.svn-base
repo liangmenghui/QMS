@@ -1,0 +1,276 @@
+<template>
+  <div class="ivu-booking">
+    <Row>
+      <Form :model="form" :label-width="120" inline>
+        <i-col span="12">
+          <Form-item label="Booking 日期:">
+            <DatePicker type="date" @on-change="handleSelectDay" placeholder="请选择日期"></DatePicker>
+          </Form-item>
+        </i-col>
+        <i-col span="12" class="btngroup">
+          <Button type="primary" @click="handleSubmit">查 询</Button>
+          <Button type="primary" @click="handleBooking">Booking</Button>
+        </i-col>
+      </Form>
+    </Row>
+    <Row>
+      <i-col span="24">
+        <Table :data="datagrid.data.rows" :columns="datagrid.columns" ref="datagrid" height="700" stripe></Table>
+        <div style="margin: 10px;overflow: hidden">
+          <div style="float: right;">
+            <Page :total="datagrid.data.total" :current="1" @on-change="changePage" @on-page-size-change="chageSize" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" :default-file-list="defaultFileList" show-total show-elevator show-sizer></Page>
+          </div>
+        </div>
+      </i-col>
+    </Row>
+
+    <Modal v-model="modal_dialog" title="" @on-ok="ok()" @on-cancel="handleCancel">
+      <p slot="header" style="color:rgb(99, 168, 168);text-align:center">
+        <Icon type="information-circled"></Icon>
+        <span>添加SO信息</span>
+      </p>
+      <div>
+        <Row>
+          <i-col>
+            <Form :model="formItem" :label-width="80" style="padding:24px 6px 0px 6px;">
+              <Row>
+                <i-col span="24">
+                  <FormItem label="SO" prop='bsSO'>
+                    <Input v-model="formItem.bsSO" placeholder="请输入SO" />
+                  </FormItem>
+                </i-col>
+              </Row>
+              <Row>
+                <i-col span="24">
+                  <FormItem label="已上传附件">
+                    <i-input readonly="readonly" disabled v-model="formItem.bsSOAttachment" />
+                  </FormItem>
+                </i-col>
+              </Row>
+              <Row>
+                <i-col span="24">
+                  <FormItem>
+                    <Upload type="drag" ref='upload' action="admin/lmp/booking/updateSOFile" :data="{id:this.formItem.id}" :before-upload="uploadBefore" :on-success='uploadSuccess' :on-error='uploadError'>
+                      <div style="padding: 20px 0">
+                        <Icon type="ios-cloud-upload" size="40" style="color: #3399ff"></Icon>
+                        <p>请选择文件</p>
+                      </div>
+                    </Upload>
+                  </FormItem>
+                </i-col>
+              </Row>
+            </Form>
+          </i-col>
+        </Row>
+      </div>
+    </Modal>
+  </div>
+</template>
+
+<script>
+import { mapState } from "vuex";
+export default {
+  data() {
+    return {
+      modal_dialog: false,
+      form: {
+        day: ""
+      },
+      defaultFileList: [],
+      formItem: {},
+      datagrid: {
+        queryParams: {
+          page: 1,
+          rows: 15,
+          pkParent: -1
+        },
+        pagination: [15, 50, 100],
+        data: { rows: [], total: 0 },
+        columns: [
+          {
+            title: " ",
+            key: "Id",
+            type: "index",
+            width: 60,
+            align: "center"
+          },
+          {
+            title: "Booking 日期",
+            key: "bsBookingDay"
+          },
+          {
+            title: "客户",
+            key: "bsCustomer"
+          },
+          {
+            title: "货代",
+            key: "bsAgent"
+          },
+          {
+            title: "运输路线",
+            key: "bsRouter"
+          },
+          {
+            title: "柜子数量",
+            key: "bsContainerQty"
+          },
+          {
+            title: "SO",
+            key: "bsSO"
+          },
+          {
+            title: "状态",
+            key: "bsState",
+            width: 120,
+            align: "center",
+            render: (h, param) => {
+              let stateText = "";
+              if (param.row.bsState == 0) stateText = "已保存";
+              else if (param.row.bsState == 3) stateText = "已确认";
+
+              return h("b", stateText);
+            }
+          },
+          {
+            title: " ",
+            key: "action",
+            width: 160,
+            align: "center",
+            render: (h, param) => {
+              return h("div", [
+                h(
+                  "Button",
+                  {
+                    props: {
+                      type: "primary",
+                      size: "small"
+                    },
+                    style: {
+                      marginRight: "5px"
+                    },
+                    on: {
+                      click: () => {
+                        this.handleUpdateSO(param.row);
+                      }
+                    }
+                  },
+                  "更新SO"
+                ),
+                h(
+                  "Button",
+                  {
+                    props: {
+                      type: "primary",
+                      size: "small"
+                    },
+                    style: {
+                      marginRight: "5px"
+                    },
+                    on: {
+                      click: () => {
+                        this.handleDownload(param.row);
+                      }
+                    }
+                  },
+                  "下载"
+                )
+              ]);
+            }
+          }
+        ]
+      } //datagrid
+    };
+  },
+  methods: {
+    uploadBefore(file) {
+      if (this.formItem.bsSO == "" || this.formItem.bsSO == undefined) {
+        this.$Message.error("请填写SO信息");
+        return false;
+      }
+      if (
+        this.formItem.bsSOAttachment !== undefined &&
+        this.formItem.bsSOAttachment.length > 0
+      ) {
+        this.$Message.error("附件已存在，请选择其他Booking订单");
+        return false;
+      }
+    },
+    uploadSuccess(response, file, filelist) {
+      if (response.result) {
+        this.formItem.bsSOAttachment = response.data;
+        this.handleSubmit();
+      }
+    },
+    uploadError() {
+      this.$Message.error("上传文件失败，请重新上传");
+    },
+    //确定
+    ok() {
+      if (this.formItem.bsSO == "" || this.formItem.bsSO == undefined) {
+        this.$Message.error("请填写SO信息");
+        return;
+      }
+      if (this.formItem.bsState >= 3) {
+        this.$Message.error("SO 已设置,请选择其他Booking订单");
+        return;
+      }
+
+      this.api.lmp.booking.updateSO(this.formItem).then(res => {
+        if (res.result) {
+          this.handleSubmit();
+          this.$Message.success("更新成功");
+        }
+      });
+    },
+    //查 询
+    handleSubmit: function() {
+      let queryData = {};
+      Object.assign(queryData, this.form);
+      Object.assign(queryData, this.datagrid.queryParams);
+      this.api.lmp.booking.paging(queryData).then(res => {
+        if (res.result) {
+          this.datagrid.data = res.data;
+        }
+      });
+    },
+    handleSelectDay: function(day) {
+      this.form.day = day;
+    }, //
+    handleDownload: function(row) {
+      this.api.lmp.booking.download({ Id: row.id }).then(res => {
+        if (res.result == false) {
+          this.$Message.error(res.msg);
+        }
+      });
+    }, //handleDownload
+    handleUpdateSO: function(row) {
+      Object.assign(this.formItem, row);
+      this.$refs.upload.clearFiles();
+      this.defaultFileList.push({
+        name: this.formItem.bsSOAttachment
+      });
+      this.modal_dialog = true;
+    }, //handleUpdateSO
+    handleBooking: function() {
+      this.$Util.open("CHJH");
+    }, //handleBooking
+    handleCancel: function() {},
+    //换页
+    changePage(page) {
+      this.datagrid.queryParams.page = page;
+      this.handleSubmit();
+    },
+    //改变每页显示数据
+    chageSize(pageSize) {
+      this.datagrid.queryParams.rows = pageSize;
+      this.datagrid.queryParams.page = 1;
+      this.handleSubmit();
+    }
+  }
+};
+</script>
+<style>
+.ivu-booking .btngroup .ivu-btn {
+  margin-left: 12px;
+}
+</style>

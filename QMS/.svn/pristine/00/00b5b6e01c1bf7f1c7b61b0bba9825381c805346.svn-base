@@ -1,0 +1,388 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-13
+    	描述：审核流程管理
+    -->
+    <div class="ApprovedFlowManagement" v-if="!showRooterView">
+            <div>
+                <el-Row style="margin-bottom: 10px;">                                 		
+                  	<el-input size="medium" style="width:200px;display: inline-block;" v-model="datagrid.queryParams.keyWord" :placeholder="$t('Button.Keyword-search')"></el-input>   
+                	<el-button style="padding: 10px 10px;" type="primary" icon="el-icon-search" @click="handleSubmit('formQuery')">
+                		{{$t('Button.Inquire')}}
+                	</el-button>
+					<el-button style="padding: 10px 10px;" type="primary" icon="el-icon-plus" v-perm-add="" @click="showAddDialog()">
+						{{$t('Button.addPpm')}}
+					</el-button>             		
+                </el-Row>
+                <el-Row>
+                    <el-col :span="24">
+                        <Table :data="datagrid.data.rows" :columns="datagrid.columns">                  
+                        </Table>
+                        <div style="margin: 10px;overflow: hidden">
+                            <div style="float: right;">
+                                <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+                            </div>
+                        </div>
+                    </el-col>
+                </el-Row>
+            <Modal v-model="dialog.modal_dialog" :title="$t('Button.addPpm')" @on-ok="ok" @on-cancel="cancel" >
+                    <p>
+                        <el-form ref="dialog.formItem" :model="dialog.formItem" label-position="right" :rules="dialog.ruleForm" label-width="100px" class="form-modal">
+							<el-form-item :label="$t('product.name')" prop="bsPrName">
+								<el-autocomplete v-model="dialog.formItem.bsPrName" 
+									:fetch-suggestions="queryProduct" @select="handleSelectProduct">
+								</el-autocomplete>
+							</el-form-item>
+							
+							<el-form-item :label="$t('product.SuppChieseName')" prop="bsSuppChieseName">
+								<el-input v-model="dialog.formItem.bsSuppChieseName"></el-input>
+							</el-form-item>
+						
+                            <el-form-item :label="'1'+$t('risk.month')" prop="bsMonthResult1" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult1"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'2'+$t('risk.month')" prop="bsMonthResult2" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult2"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'3'+$t('risk.month')" prop="bsMonthResult3" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult3"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'4'+$t('risk.month')" prop="bsMonthResult4" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult4"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'5'+$t('risk.month')" prop="bsMonthResult5" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult5"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'6'+$t('risk.month')" prop="bsMonthResult6" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult6"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'7'+$t('risk.month')" prop="bsMonthResult7" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult7"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'8'+$t('risk.month')" prop="bsMonthResult8" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult8"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'9'+$t('risk.month')" prop="bsMonthResult9" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult9"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'10'+$t('risk.month')" prop="bsMonthResult10" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult10"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'11'+$t('risk.month')" prop="bsMonthResult11" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult11"></el-input>
+                            </el-form-item>
+							<el-form-item :label="'12'+$t('risk.month')" prop="bsMonthResult12" >
+                                <el-input type="number" v-model="dialog.formItem.bsMonthResult12"></el-input>
+                            </el-form-item>
+                        </el-form>
+                    </p>
+                </Modal>
+            </div>
+    </div>
+    <div v-else-if="showRooterView">
+        <router-view></router-view>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            selecedtUser:{},
+            showRooterView: false,
+            dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                /*ruleForm: {
+                    bsPrName: [
+                        { required: true, message: '请选择产品', trigger: 'blur' }
+                    ],
+                }*/
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:25,
+                    pkParent:-1
+                },
+                pagination: [25, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title:this.$t('product.name'),
+                        key: 'bsPrName',
+						fixed: 'left',
+						width:200,
+						render: (h, params) => {
+                            return h('span', params.row.productBy.bsPrName)
+                        }
+                    },                   
+                    {
+                        title: this.$t('product.SuppChieseName'),
+                        key: 'bsSuppChieseName', 
+						fixed: 'left',
+						width:200,
+						render: (h, params) => {
+                            return h('span', params.row.productBy.bsSuppChieseName)
+                        }
+                    },
+                    {
+                        title: '1'+this.$t('risk.month'),
+                        key: 'bsMonthResult1',
+						width: 70,
+                    },
+					{
+                        title: '2'+this.$t('risk.month'),
+                        key: 'bsMonthResult2',
+						width: 70,
+                    },
+					{
+                        title: '3'+this.$t('risk.month'),
+                        key: 'bsMonthResult3',
+						width: 70,
+                    },
+					{
+                        title: '4'+this.$t('risk.month'),
+                        key: 'bsMonthResult4',
+						width: 70,
+                    },
+					{
+                        title: '5'+this.$t('risk.month'),
+                        key: 'bsMonthResult5',
+						width: 70,
+                    },
+					{
+                        title: '6'+this.$t('risk.month'),
+                        key: 'bsMonthResult6',
+						width: 70,
+                    },
+					{
+                        title: '7'+this.$t('risk.month'),
+                        key: 'bsMonthResult7',
+						width: 70,
+                    },
+					{
+                        title: '8'+this.$t('risk.month'),
+                        key: 'bsMonthResult8',
+						width: 70,
+                    },
+					{
+                        title: '9'+this.$t('risk.month'),
+                        key: 'bsMonthResult9',
+						width: 70,
+                    },
+					{
+                        title: '10'+this.$t('risk.month'),
+                        key: 'bsMonthResult10',
+						width: 70,
+                    },
+					{
+                        title: '11'+this.$t('risk.month'),
+                        key: 'bsMonthResult11',
+						width: 70,
+                    },
+					{
+                        title: '12'+this.$t('risk.month'),
+                        key: 'bsMonthResult12',
+						width: 70,
+                    },
+                    {
+                        title: this.$t('ApprovedFlow.Operating'),
+                        key: 'action',
+						fixed: 'right',
+						width: 128,
+                        render: (h, params) => {
+                            let ary = [];
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('EDIT')
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditDialog(params)
+                                        }
+                                    }
+                                }, this.$t('Button.Edit')));
+                            }
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('DELETE')
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.delete(params)
+                                        }
+                                    }
+                                }, this.$t('Button.Delete')));
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            },
+            users :[],
+			productInfo:{}, 
+        }
+    },
+    created(){
+        this.getData();
+        this.showRooterView = this.$route.matched.length>2;
+    },
+    beforeUpdate:function(){
+        this.showRooterView = this.$route.matched.length>2;
+    },
+    watch: {
+        '$route' (to, from) {
+            this.showRooterView = to.matched.length>2;
+        }
+    },
+    methods: {
+        handleSubmit(name) {         
+            this.getData();
+        },
+        getData() {
+            this.api.productPpm.getlist(this.datagrid.queryParams).then((res) => {
+                this.datagrid.data = res.data;
+            });
+
+			/*this.api.admin.user.getlist().then((res)=>{               
+                this.users = res.data.rows;
+            });*/
+        },
+        reloadData() {
+            this.getData();
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.datagrid.data = this.getData();
+        },
+		queryProduct(queryString, cb) {
+            this.api.productinfo.getlist({page:1,rows:200,keyWord:queryString}).then((res) => {
+                var products = res.data.rows.map(function (row) {
+                    row.value = row.bsPrName + '('+row.bsSuppChieseName+')';
+                    return row;
+                });
+                cb(products);
+            });
+        },
+		handleSelectProduct(item) {
+            this.dialog.formItem.bsPrId = item.id;
+            this.dialog.formItem.bsPrName = item.bsPrName;
+            this.dialog.formItem.bsSuppChieseName = item.bsSuppChieseName;
+        },
+        delete(params) {
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                onOk: () => {
+                    this.api.productPpm.delete({id:params.row.id}).then((res)=>{
+                        if(res.result) {
+                            this.reloadData();
+                            this.$Modal.remove();
+                            this.$Message.info('删除成功');
+                        }else {
+                            this.$Message.error(res.msg);   
+                        }
+                    });
+                }
+            });
+        },
+        showAddDialog() {
+			this.dialog.formItem = {};
+            this.dialog.modal_dialog = true;    
+        },
+        showEditDialog(params) {   
+            this.dialog.formItem = this.$Util.formattedParams(params.row);
+			//this.dialog.formItem.bsPrId = this.dialog.formItem.productBy.id;
+			this.dialog.formItem.bsPrName = this.dialog.formItem.productBy.bsPrName;
+			this.dialog.formItem.bsSuppChieseName = this.dialog.formItem.productBy.bsSuppChieseName;
+			
+            this.dialog.formItem.index=params.index;
+            delete this.dialog.formItem.productBy;
+            this.dialog.modal_dialog = true;
+        },
+        ok () {
+            //this.dialog.formItem.bsApprovederId = this.selecedtUser.id;
+            this.$refs["dialog.formItem"].validate((valid) => {
+                if (valid) {
+                    if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                        this.api.productPpm.edit(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                this.getData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                    }else {
+                        this.api.productPpm.add(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                this.getData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                    }
+                } else {
+                    this.$Message.info(this.$t('Error.ParamsRequire'));
+                }
+            });
+        },
+        cancel () {
+            
+        },
+    }
+}
+</script>
+<style lang="less">
+	@import "../public.less";
+  .el-textarea__inner{
+    width: 85%;
+  }
+
+  .el-form-item {
+    margin-bottom: 14px;
+}
+
+.searchbox{  
+  width: 100%;
+  height: 40px;
+}
+
+.form-modal input{
+	width:300px;
+}
+
+.ivu-input {
+    margin-top: 14px;
+    display: inline-block;
+    width: 200px;
+    height: 38px;
+    padding: 11px 10px;
+    font-size: 12px;
+    border: 1px solid #dddee1;
+    /*border-radius: 4px;*/
+    color: #495060;
+    background-color: #fff;
+    background-image: none;
+    position: relative;
+    cursor: text;
+    /*margin-top:16px;*/
+    transition: border .2s ease-in-out,background .2s ease-in-out,box-shadow .2s ease-in-out;}
+    .addform{
+        width: 480px;
+    }
+    .addform .el-input{width: 300px}
+.searchbtn .el-button{border-radius: 0px;padding: 11px 14px;}
+.toolbar .el-form--inline .el-form-item{vertical-align: baseline;}
+.tip{margin-left:70px; color:#777;}
+</style>

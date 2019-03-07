@@ -1,0 +1,269 @@
+package com.unind.qms.web.product.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.base.domain.admin.user.SysUser;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+import java.util.Date;
+
+/**
+ * @author Shen
+ */
+@Entity
+@Table(name = ProductExtra.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class ProductExtra extends BaseEntity {
+    private static final long serialVersionUID = -9196348972886375727L;
+    public static final String TABLE_NAME = "t_product_extra";
+
+    /**
+     * 产品ID
+     */
+    @ApiModelProperty(name = "bsPrId", value = "产品ID")
+    @Column
+    protected Long bsPrId;
+
+    @ApiModelProperty(name = "productInfo", hidden = true, value = "产品基本信息")
+    @OneToOne
+    @JoinColumn(name = "bsPrId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected ProductInfo productInfo;
+
+    /**
+     * 过程审核流程记录ID
+     */
+    @ApiModelProperty(name = "bsProcessRecordId", value = "过程审核流程记录ID")
+    @Column
+    protected Long bsProcessRecordId;
+
+    /**
+     * 成品检验流程记录ID
+     */
+    @ApiModelProperty(name = "bsProductRecordId", value = "成品检验流程记录ID")
+    @Column
+    protected Long bsProductRecordId;
+
+    /**
+     * 风险等级
+     */
+    @ApiModelProperty(name = "bsRiskLevel", value = "风险等级")
+    @Column
+    protected int bsRiskLevel;
+
+    /**
+     * 风险等级得分
+     */
+    @ApiModelProperty(name = "bsRiskScore", value = "风险等级得分")
+    @Column
+    protected int bsRiskScore;
+
+    /**
+     * 手动管理风险等级
+     */
+    @ApiModelProperty(name = "bsRiskManual", value = "手动管理风险等级")
+    @Column
+    protected int bsRiskManual;
+
+    /**
+     * 是否审核中
+     */
+    @ApiModelProperty(name = "bsIsApprove", value = "是否审核中")
+    @Column
+    protected int bsIsApprove;
+
+    /**
+     * 风险等级(系统)
+     */
+    @ApiModelProperty(name = "bsRiskLevelSys", value = "风险等级(系统)")
+    @Column
+    protected int bsRiskLevelSys;
+
+    /**
+     * 风险等级评定时间(系统)
+     */
+    @ApiModelProperty(name = "bsRiskTimeSys", value = "风险等级评定时间(系统)")
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+08:00")
+    protected Date bsRiskTimeSys;
+
+    /**
+     * 风险等级(user)
+     */
+    @ApiModelProperty(name = "bsRiskLevelUser", value = "风险等级(user)")
+    @Column
+    protected int bsRiskLevelUser;
+
+    /**
+     * 风险等级评定时间(user)
+     */
+    @ApiModelProperty(name = "bsRiskTimeUser", value = "风险等级评定时间(user)")
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+08:00")
+    protected Date bsRiskTimeUser;
+
+    /**
+     * 风险等级备注(user)
+     */
+    @ApiModelProperty(name = "bsRiskDescUser", value = "风险等级备注(user)")
+    @Column(length = 500)
+    protected String bsRiskDescUser;
+
+    /**
+     * 产品产值
+     */
+    @ApiModelProperty(name = "bsPrValue", value = "产品产值")
+    @Column
+    protected int bsPrValue;
+
+    /**
+     * 修改人
+     */
+    @ApiModelProperty(name = "pkModifiedBy", hidden=true, value = "修改人")
+    @Column
+    protected Long pkModifiedBy;
+
+    @ApiModelProperty(name = "modifiedBy", hidden=true, value="修改人--user")
+    @ManyToOne
+    @JoinColumn(name = "pkModifiedBy", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser modifiedBy;
+
+    public Long getBsPrId() {
+        return bsPrId;
+    }
+
+    public void setBsPrId(Long bsPrId) {
+        this.bsPrId = bsPrId;
+    }
+
+    public ProductInfo getProductInfo() {
+        return productInfo;
+    }
+
+    @JsonBackReference
+    public void setProductInfo(ProductInfo productInfo) {
+        this.productInfo = productInfo;
+    }
+
+    public Long getBsProcessRecordId() {
+        return bsProcessRecordId;
+    }
+
+    public void setBsProcessRecordId(Long bsProcessRecordId) {
+        this.bsProcessRecordId = bsProcessRecordId;
+    }
+
+    public Long getBsProductRecordId() {
+        return bsProductRecordId;
+    }
+
+    public void setBsProductRecordId(Long bsProductRecordId) {
+        this.bsProductRecordId = bsProductRecordId;
+    }
+
+    public int getBsRiskLevel() {
+        return bsRiskLevel;
+    }
+
+    public void setBsRiskLevel(int bsRiskLevel) {
+        this.bsRiskLevel = bsRiskLevel;
+    }
+
+    public int getBsRiskScore() {
+        return bsRiskScore;
+    }
+
+    public void setBsRiskScore(int bsRiskScore) {
+        this.bsRiskScore = bsRiskScore;
+    }
+
+    public int getBsRiskManual() {
+        return bsRiskManual;
+    }
+
+    public void setBsRiskManual(int bsRiskManual) {
+        this.bsRiskManual = bsRiskManual;
+    }
+
+    public int getBsIsApprove() {
+        return bsIsApprove;
+    }
+
+    public void setBsIsApprove(int bsIsApprove) {
+        this.bsIsApprove = bsIsApprove;
+    }
+
+    public int getBsRiskLevelSys() {
+        return bsRiskLevelSys;
+    }
+
+    public void setBsRiskLevelSys(int bsRiskLevelSys) {
+        this.bsRiskLevelSys = bsRiskLevelSys;
+    }
+
+    public Date getBsRiskTimeSys() {
+        return bsRiskTimeSys;
+    }
+
+    public void setBsRiskTimeSys(Date bsRiskTimeSys) {
+        this.bsRiskTimeSys = bsRiskTimeSys;
+    }
+
+    public int getBsRiskLevelUser() {
+        return bsRiskLevelUser;
+    }
+
+    public void setBsRiskLevelUser(int bsRiskLevelUser) {
+        this.bsRiskLevelUser = bsRiskLevelUser;
+    }
+
+    public Date getBsRiskTimeUser() {
+        return bsRiskTimeUser;
+    }
+
+    public void setBsRiskTimeUser(Date bsRiskTimeUser) {
+        this.bsRiskTimeUser = bsRiskTimeUser;
+    }
+
+    public String getBsRiskDescUser() {
+        return bsRiskDescUser;
+    }
+
+    public void setBsRiskDescUser(String bsRiskDescUser) {
+        this.bsRiskDescUser = bsRiskDescUser;
+    }
+
+    public int getBsPrValue() {
+        return bsPrValue;
+    }
+
+    public void setBsPrValue(int bsPrValue) {
+        this.bsPrValue = bsPrValue;
+    }
+
+    public Long getPkModifiedBy() {
+        return pkModifiedBy;
+    }
+
+    public void setPkModifiedBy(Long pkModifiedBy) {
+        this.pkModifiedBy = pkModifiedBy;
+    }
+
+    public SysUser getModifiedBy() {
+        return modifiedBy;
+    }
+
+    public void setModifiedBy(SysUser modifiedBy) {
+        this.modifiedBy = modifiedBy;
+    }
+}

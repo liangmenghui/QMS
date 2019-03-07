@@ -1,0 +1,22 @@
+@default-font:14px;
+.ApprovedFlowManagement{
+    .ivu-table{font-size: @default-font;}
+}
+.ApprovedTermsManagement{
+    .ivu-table-cell{font-size: @default-font;}
+}
+.SupplierList{
+    
+}
+.ProductList{
+    
+}
+.SampleManagement{
+    .ivu-table{font-size: @default-font;}
+}
+.SampleRegularManagement{
+    .ivu-table{font-size: @default-font;}
+}
+.feedbacklist{
+    
+}

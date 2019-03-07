@@ -1,0 +1,21 @@
+import elctrolux_dhl_full from "./elctrolux_dhl_full.vue"
+import elctrolux_dhl from "./elctrolux_dhl.vue"
+
+import template_pantos_mexico from "./template_pantos_mexico"
+
+
+import content_pantos_mexico from './content_pantos_mexico'
+
+
+const contextComponents = {
+    elctrolux_dhl_full,
+    content_pantos_mexico
+}
+
+const templateComponents = {
+    elctrolux_dhl,
+    template_pantos_mexico,
+}
+
+
+export {contextComponents,templateComponents}

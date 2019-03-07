@@ -1,0 +1,76 @@
+.login-box{
+    width:100%;
+    height:100%;
+    background:#fff;
+    .login{
+    width: 100%;
+    height: 100%;
+    background: #FFF;    
+    position: relative;
+    .logo{
+         width:100%;
+         height:100px;
+         margin-left:40px;
+         padding-top:20px;
+         display: -webkit-flex; 
+         display: flex;
+         box-sizing:border-box;
+        -moz-box-sizing:border-box; /* Firefox */
+        -webkit-box-sizing:border-box; /* Safari */
+
+    }       
+        .logo-img{
+            height:75px;
+            width:150px;
+            background:url(./img/logo.png) no-repeat;
+            background-size:100%;
+            text-align:center;        
+            border:none!important;            
+        }
+        .logo-title{               
+               line-height:55px;
+               display:inline-block;
+               margin-left:20px;
+               font-size:20px;
+               font-family:"Microsoft YaHei"
+        }
+    .login-banner{
+        height:600px;
+        width:100%;
+        background:url(./img/login_bg.jpg) no-repeat #6599fe;
+         background-position: left center;
+         background-size: 95%;
+        position:relative;
+        }
+    .login-footer{
+        width:100%;
+        height:90px;
+        margin-top:30px;
+        text-align:center;
+
+    }
+        &-con{
+        position: absolute;
+        right: 15%;
+        margin-right:-192px;
+        top: 50%;
+        transform: translateY(-60%);
+        width: 348px;
+        &-header{
+            font-size: 16px;
+            font-weight: 300;
+            text-align: center;
+            padding: 30px 0;
+        }
+        .form-con{
+            padding: 10px 0 0;
+        }
+        .login-tip{
+            font-size: 10px;
+            text-align: center;
+            color: #c3c3c3;
+        }
+     }
+    
+}
+}

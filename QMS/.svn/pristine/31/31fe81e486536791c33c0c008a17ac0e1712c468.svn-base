@@ -1,0 +1,234 @@
+<template>
+  <div class="ivu-plugin">
+    <Form class="query_area" ref="formQuery" :model="formQuery" :label-width="140" inline>
+      <Row>
+        <i-col span="12">
+          <Form-item label="货代编码">
+            <Input v-model="formQuery.bsAgent" placeholder="请输入货代编码" />
+          </Form-item>
+          <Form-item label="客户编码">
+            <Input v-model="formQuery.bsCustomer" placeholder="请输入客户" />
+          </Form-item>
+        </i-col>
+        <i-col span="12" class="btngroup">
+          <Button type="primary" @click="handleSubmit()">查 询</Button>
+          <Button type="primary" @click="contentVisible = true">添加插件</Button>
+          <Button type="primary" @click="bindVisible = true">绑定插件</Button>
+        </i-col>
+      </Row>
+    </Form>
+    <Row>
+      <i-col span="24">
+        <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="height:auto;"></Table>
+        <div style="margin: 10px;overflow: hidden">
+          <div style="float: right;">
+            <Page :total="datagrid.data.total" :current="1" @on-change="changePage" @on-page-size-change="chageSize" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" show-total show-elevator show-sizer></Page>
+          </div>
+        </div>
+      </i-col>
+    </Row>
+    <content-modal v-model="contentVisible"></content-modal>
+    <bind-modal v-model="bindVisible" @on-close="getData()"></bind-modal>
+    <update-modal :id="updateId" v-model="updateVisible" @on-close="getData()"></update-modal>
+  </div>
+</template>
+
+<script>
+import { mapState } from "vuex";
+import contentModal from "./addContent";
+import bindModal from "./bindPlugin";
+import updateModal from "./updateBindPlugin";
+
+export default {
+  components: {
+    contentModal,
+    bindModal,
+    updateModal
+  },
+  mounted() {
+    this.getData();
+  },
+  computed: {
+    ...mapState({
+      menuData: state => state.menuData
+    })
+  },
+  data() {
+    return {
+      start: 0,
+      end: 20,
+      contentVisible: false,
+      bindVisible: false,
+      updateVisible: false,
+      updateId: "",
+      formQuery: {
+        bsAgent: "",
+        bsCustomer: ""
+      },
+      datagrid: {
+        queryParams: {
+          page: 1,
+          rows: 20,
+          pkParent: -1
+        },
+        pagination: [20, 50, 100],
+        data: { rows: [], total: 0, rows1: [] },
+        columns: [
+          {
+            title: "货代编码",
+            key: "bsAgent"
+          },
+          {
+            title: "货代",
+            key: "bsAgentDesc"
+          },
+          {
+            title: "客户编码",
+            key: "bsCustomer"
+          },
+          {
+            title: "客户",
+            key: "bsCustomerDesc"
+          },
+          {
+            title: "模板页面 组件URL",
+            key: "bsTemplateComponentUrl"
+          },
+          {
+            title: "模板页面 组件",
+            key: "bsTemplateComponent"
+          },
+          {
+            title: "模板页面 解析组件",
+            key: "bsTemplateParseComponent"
+          },
+          {
+            title: "内容页面 组件",
+            key: "bsContentComponent"
+          },
+          {
+            title: "内容页面 解析组件",
+            key: "bsContentParseComponent"
+          },
+          {
+            title: "操作",
+            width: 120,
+            key: "action",
+            render: (h, params) => {
+              return h("Row", [
+                h(
+                  "i-col",
+                  {
+                    props: {
+                      span: "12"
+                    }
+                  },
+                  [
+                    h(
+                      "Button",
+                      {
+                        props: {
+                          type: "primary",
+                          size: "small"
+                        },
+                        on: {
+                          click: () => {
+                            this.updateId = params.row.id;
+                            this.updateVisible = true;
+                          }
+                        }
+                      },
+                      "编辑"
+                    )
+                  ]
+                ),
+                h(
+                  "i-col",
+                  {
+                    props: {
+                      span: "12"
+                    }
+                  },
+                  [
+                    h(
+                      "Button",
+                      {
+                        props: {
+                          type: "error",
+                          size: "small"
+                        },
+                        on: {
+                          click: () => {
+                            this.delete(params);
+                          }
+                        }
+                      },
+                      "删除"
+                    )
+                  ]
+                )
+              ]);
+            }
+          }
+        ]
+      }
+    };
+  },
+  methods: {
+    getData() {
+      this.api.lmp.bookingconfiguration
+        .selectList(this.datagrid.queryParams)
+        .then(res => {
+          if (res.result) {
+            this.datagrid.data.rows = res.data.rows;
+            this.datagrid.data.total = res.data.total;
+          } else {
+            this.$Message.error(res.msg);
+          }
+        });
+    },
+    delete(params) {
+      this.$Modal.confirm({
+        title: "提示信息",
+        content: "<p>是否确定删除？</p>",
+        loading: true,
+        onOk: () => {
+          this.$Modal.remove();
+          this.api.lmp.bookingconfiguration
+            .deleteBookingconfiguration(params.row)
+            .then(res => {
+              if (res.result) {
+                this.getData();
+                this.$Message.success("删除成功！");
+              } else {
+                this.$Message.error("删除失败！");
+              }
+            });
+        }
+      });
+    },
+    handleSubmit() {
+      this.api.lmp.bookingconfiguration.selectBy(this.formQuery).then(res => {
+        if (res.result) {
+          this.datagrid.data = res.data;
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
+    changePage(pageSize) {
+      this.datagrid.queryParams.page = pageSize;
+      this.getData();
+    },
+    chageSize(pageSizeOpts) {
+      this.datagrid.queryParams.rows = pageSizeOpts;
+      this.getData();
+    }
+  }
+};
+</script>
+<style>
+.ivu-plugin .btngroup .ivu-btn {
+  margin-left: 12px;
+}
+</style>

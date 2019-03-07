@@ -1,0 +1,92 @@
+<style scoped>
+        .expand-row{
+            margin-bottom: 16px;
+        }
+    </style>
+    <template>
+        <div >
+            <Row class="expand-row">
+            </Row>
+        
+           <Row>
+                <i-col span="24">
+                    <Table :data="datagrid.data.rows" border :columns="datagrid.columns" stripe style="height:auto;"></Table>
+                    <div style="margin: 10px;overflow: hidden">
+                    </div>
+                </i-col>
+           </Row>
+        </div>
+    </template>
+    <script>
+    export default {
+            props: {
+                row:Object
+            },
+            created(){
+                this.formQuery.cdSendDate=this.row.cdSendDate;
+                this.formQuery.cdCabinetModel=this.row.cdCabinetModel;
+                this.formQuery.cdTransCode=this.row.cdTransCode;
+                this.getData();
+         },
+
+     data(){
+          return {
+              formQuery:{
+                cdSendDate:'',
+                cdCabinetModel:'',
+                cdTransCode:''
+              },
+                    
+             datagrid:{
+                    queryParams:{
+                    page:1,
+                    rows:15,
+                },
+            pagination: [15, 50, 100],
+            data: {rows:[],total:0,rows1:[]},
+            columns: [
+                    {
+                        title: '柜子型号',
+                        key: 'cdCabinetModel'
+                    },
+                    {
+                        title: '客户编号',
+                        key: 'cdCustomerNo'
+                    }, 
+                    {
+                        title: '物料编号',
+                        key: 'cdItemNo'
+                    },  
+                    {
+                        title: '客户料号',
+                        key: 'cdCustomerItemNum'
+                    },
+                    {
+                        title:'物料的托数',
+                        key: 'cdBoxNum'
+                    },
+                    {
+                        title:'包装',
+                        key: 'cdBoxSize'
+                    },
+                    {
+                        title:'物料的数量',
+                        key: 'cdSendNum'
+                    },            
+                ]
+             }   
+            }
+         },
+
+        methods:{
+            //获取列表
+         getData(){
+                this.api.pmp.getShipmentPlanDetail(this.formQuery).then((res) =>{
+                if(res.result){
+                    this.datagrid.data = res.data;
+                  }
+               })
+             }
+           }
+        };
+    </script>

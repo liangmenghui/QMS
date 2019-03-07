@@ -1,0 +1,186 @@
+<template>
+  <div>
+    <Input v-model="query">
+    <Button slot="append" icon="ios-search" @click="onSearch"></Button>
+    </Input>
+    <Modal class-name="ivu-grid-search-wrap" v-model="searcherVisible" :width="700">
+      <p slot="header"></p>
+      <Form class="ivu-grid-search-form" v-show="filterable" :label-width="120">
+        <Row>
+          <i-col span="20">
+            <Form-Item :label="filterLabel">
+              <Input type="text" v-model="search" :placeholder="filterPlaceHolder" />
+            </Form-Item>
+          </i-col>
+          <i-col span="4">
+            <Button style="margin-left:20px;" icon="ios-search" @click="onFilter">检索</Button>
+          </i-col>
+        </Row>
+      </Form>
+      <Row>
+        <i-col>
+          <Table border :columns="columns" :data="pageDatas" @on-row-click="onRowClick" :height="400"></Table>
+        </i-col>
+      </Row>
+      <Row v-show="pageable">
+        <i-col>
+          <div style="float:right;margin-right:10px;margin-top:5px;">
+            <Page :total="total" :current="currentPage" :page-size="pagesize" size="small" @on-change="onPageChange" @on-page-size-change="onPageSizeChange"></Page>
+          </div>
+        </i-col>
+      </Row>
+      <p slot="footer"></p>
+    </Modal>
+  </div>
+</template>
+<script>
+export default {
+  name: "GridSelect",
+  props: {
+    value: {
+      type: [Number, String, Array]
+    },
+    text: {
+      type: [Number, String, Array]
+    },
+    modelField: {
+      type: String
+    },
+    textField: {
+      type: String
+    },
+    columns: {
+      type: Array
+    },
+    datas: {
+      type: Array
+    },
+    pageable: {
+      type: Boolean,
+      default: false
+    },
+    total: {
+      type: Number
+    },
+    pagesize: {
+      type: Number,
+      default: 10
+    },
+    currentPage: {
+      type: Number,
+      default: 1
+    },
+    filterable: {
+      type: Boolean,
+      default: false
+    },
+    filterLabel: {
+      type: String,
+      default: ""
+    },
+    filterValue: {
+      type: [Number, String]
+    }
+  },
+  data() {
+    return {
+      searcherVisible: false,
+      values: "",
+      query: "",
+      search: ""
+    };
+  },
+  computed: {
+    pageDatas() {
+      let pageData = Array.isArray(this.datas) ? this.datas : [this.datas];
+      const pagesize = this.size;
+      if (this.pageable && pageData.length > pagesize) {
+        return pageData.filter((curt, index) => index < pagesize);
+      } else {
+        return pageData;
+      }
+    },
+    filterPlaceHolder() {
+      return "请输入 " + this.filterLabel;
+    }
+  },
+  watch: {
+    value(val){
+      this.query = val;
+    },
+    values(now, before) {
+      const newValue = JSON.stringify(now);
+      const oldValue = JSON.stringify(before);
+      const shouldEmitInput = newValue !== oldValue;
+
+      if (shouldEmitInput) {
+        // v-model is always just the value, event with textInValue === true
+        const vModelValue =
+          this.modelField != null &&
+          this.modelField.length > 0 &&
+          Object.keys(this.values).indexOf(this.modelField) != -1
+            ? this.values[this.modelField]
+            : "";
+
+        this.$emit("input", vModelValue); // to update v-model
+
+        const vText =
+          this.textField &&
+          Object.keys(this.values).indexOf(this.textField) != -1
+            ? this.values[this.textField]
+            : "";
+        this.$emit("update:text", vText);
+      }
+    }
+  },
+  methods: {
+    toggleSearch(visible) {
+      this.searcherVisible = visible;
+    },
+    onSearch() {
+      this.toggleSearch(true);
+    },
+    onPageChange(nextPage) {
+      this.$emit("on-page-change", { page: nextPage, pageSize: this.pagesize });
+      return nextPage;
+    },
+    onPageSizeChange(newPageSize) {
+      this.pageSize = newPageSize;
+    },
+    onRowClick(row, index) {
+      if (index == -1 || row === undefined) return;
+      this.values = row;
+      let column = this.textField;
+
+      if (
+        column.length > 0 &&
+        Object.keys(row).filter(({ column }) => column)
+      ) {
+        this.query = this.values[column];
+      } else {
+        this.query = this.values[Object.keys(row)[0]];
+      }
+
+      this.toggleSearch(false);
+      this.$emit("on-row-click");
+    },
+    onFilter() {
+      const { search } = this;
+      this.$emit("on-filter", search);
+    }
+  }
+};
+</script>
+<style>
+.ivu-modal-body {
+  padding: 0px;
+}
+.ivu-grid-search-form {
+  padding-top: 24px;
+  background-color: #f3f3f3;
+}
+.ivu-grid-search-wrap {
+  z-index: 9000;
+  background-color: rgba(55, 55, 55, 0.7);
+}
+</style>

@@ -1,0 +1,167 @@
+<template>
+  <div class="ivu-fs-doc">
+    <Row>
+      <i-col span="3">
+        <Tree ref="tree" :data="tree.data" class="left-tree" @on-select-change="selectNode"></Tree>
+      </i-col>
+      <i-col span="21">
+        <Row>
+          <i-col>
+            <div class="folder-list"></div>
+          </i-col>
+        </Row>
+        <Row>
+          <i-col>
+            <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe height="560"></Table>
+          </i-col>
+        </Row>
+        <Row type="flex" justify="end">
+          <i-col>
+            <Page class="paging" :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+          </i-col>
+        </Row>
+      </i-col>
+    </Row>
+  </div>
+</template>
+
+<script>
+import fsExtend from "./extend";
+
+function closeNode(nodes) {
+  if (!nodes) return;
+  nodes.forEach(item => {
+    item.expand = false;
+    item.selected = false;
+    if (item.children) {
+      closeNode(item.children);
+    }
+  });
+}
+
+export default {
+  components: {
+    fsExtend
+  },
+  data() {
+    return {
+      formQuery: {
+        bsFolderId: -1
+      },
+      tree: {
+        data: []
+      },
+      datagrid: {
+        queryParams: {
+          page: 1,
+          rows: 25
+        },
+        pagination: [25, 50, 100],
+        data: { rows: [], total: 0 },
+        columns: [
+          {
+            title: "文件名称",
+            key: "bsFileName"
+          },
+          {
+            title: "文件路径",
+            key: "bsFilePath"
+          },
+          {
+            title: "文档状态",
+            key: "bsStatus",
+            width: 70,
+            align: "center"
+          },
+          {
+            title: "上传日期",
+            key: "bsCreatedTime",
+            width: 160,
+            render: (h, params) => {
+              return h("div", "2018-06-14 10:38:46");
+            }
+          },
+          {
+            title: "当前审核节点",
+            key: "bsAudit",
+            width: 120
+          },
+          {
+            title: "下一审核节点",
+            key: "bsNextPoint",
+            width: 120
+          },
+          {
+            title: "审核时间",
+            key: "bsAuditTime",
+            width: 160
+          },
+          {
+            title: "操作",
+            key: "action",
+            width: 120,
+            render: (h, params) => {
+              return h(fsExtend, { props: { row: params.row } });
+            }
+          }
+        ]
+      }
+    };
+  },
+  created() {
+    this.getTree();
+  },
+  computed: {},
+  methods: {
+    changePage(page) {
+      this.datagrid.queryParams.page = page;
+      this.datagrid.data = this.getData();
+    },
+    getTree() {
+      this.api.fs.document.folder.getTree().then(res => {
+        this.folderList = [];
+        if (res.result) {
+          let data = [{ id: -1, expand: false, title: "目录", children: [] }];
+          data[0].children = res.data;
+          this.folderList = data;
+          closeNode(data);
+          data[0].expand = true;
+          this.tree.data = data;
+        }
+      });
+    },
+    getData() {
+      let params = this.datagrid.queryParams;
+      this.api.fs.document.release.getListByFolder(this.formQuery.bsFolderId, params).then(res => {
+        if (res.result) {
+          this.datagrid.data = res.data;
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
+    selectNode(node) {
+      this.formQuery.bsFolderId = node[0].id;
+      this.getData();
+    },
+    getSelectedNodes() {
+      this.dialog.formItem.pkFsCatalog = node[0].id;
+    }
+  }
+};
+</script>
+<style>
+.ivu-fs-doc .doc-query {
+  padding: 24px 0 0 0;
+  background-color: #f8f8f9;
+}
+.ivu-fs-doc .left-tree {
+  padding: 24px 16px;
+}
+.ivu-fs-doc .folder-list {
+  padding: 8px;
+}
+.ivu-fs-doc .paging {
+  /* margin: 8px 16px; */
+}
+</style>

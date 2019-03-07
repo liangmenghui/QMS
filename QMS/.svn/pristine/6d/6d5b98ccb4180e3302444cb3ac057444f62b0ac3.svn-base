@@ -1,0 +1,220 @@
+<template>
+  <ul :class="classes">
+    <li v-if="fileInfo.showProgress">
+      <transition name="fade">
+        <i-progress :stroke-width="2" :percent="parsePercentage(fileInfo.percentage)" :status="fileInfo.status === 'finished' && fileInfo.showProgress ? 'success' : 'normal'"></i-progress>
+      </transition>
+    </li>
+    <li :class="textCls">
+      <Tooltip>
+        <span>{{message}}</span>
+        <div slot="content" style="white-space: normal;">
+          {{message}}
+        </div>
+      </Tooltip>
+    </li>
+  </ul>
+</template>
+<script>
+import ajax from "@/libs/ajax";
+import emitter from "../mixins/emitter";
+const prefixCls = "fs-release-upload";
+
+export default {
+  name: "fsReleaseDoUpload",
+  mixins: [emitter],
+  props: {
+    permission: String,
+    folderId: [String, Number],
+    folder: String,
+    fileName: String,
+    publish: Boolean,
+    file: File,
+    format: {
+      type: String,
+      default: ""
+    },
+    maxSize: {
+      type: Number
+    },
+    name: {
+      type: String,
+      default: "file"
+    },
+    headers: {
+      type: Object,
+      default() {
+        return {};
+      }
+    },
+    action: {
+      type: String,
+      required: true
+    }
+  },
+  mounted() {
+    if (this.permission) this.data.permission = this.permission;
+    if (this.folderId) this.data.folderId = this.folderId;
+    if (this.folder) this.data.folder = this.folder;
+    if (this.filename) this.data.filename = this.filename;
+    if (this.publish) this.data.publish = this.publish;
+  },
+  data() {
+    return {
+      fileInfo: {},
+      data: {}
+    };
+  },
+  computed: {
+    message() {
+      let msg = "";
+      if (this.fileInfo.status === "finished") {
+        msg = "上传成功";
+      } else if (this.fileInfo.status === "fail") {
+        msg = "上传失败";
+        if (this.fileInfo.exception)
+          msg += ",失败原因:" + this.fileInfo.exception;
+      }
+      return msg;
+    },
+    classes() {
+      return `${prefixCls}`;
+    },
+    textCls() {
+      return [
+        `${prefixCls}-text`,
+        {
+          [`${prefixCls}-success`]: this.fileInfo.status === "finished",
+          [`${prefixCls}-error`]: this.fileInfo.status === "fail",
+          [`${prefixCls}-normal`]:
+            this.fileInfo.status !== "finished" &&
+            this.fileInfo.status !== "fail"
+        }
+      ];
+    }
+  },
+  methods: {
+    handleProgress(e, file) {
+      this.fileInfo.percentage = e.percent || 0;
+    },
+    handleSuccess(res, file) {
+      const _file = this.fileInfo;
+
+      if (_file) {
+        if (res.result) {
+          _file.status = "finished";
+        } else {
+          _file.status = "fail";
+          _file.exception = res.msg;
+        }
+        _file.response = res;
+
+        this.dispatch("FormItem", "on-form-change", _file);
+
+        setTimeout(() => {
+          _file.showProgress = false;
+        }, 1000);
+      }
+    },
+    handleError(err, response, file) {
+      const _file = this.fileInfo;
+      _file.status = "fail";
+      _file.exception = err;
+    },
+    post() {
+      let { file } = this.data;
+      if (!file) return;
+      // check format
+      if (this.format.length) {
+        const _file_format = file.name
+          .split(".")
+          .pop()
+          .toLocaleLowerCase();
+        const checked = this.format.some(
+          item => item.toLocaleLowerCase() === _file_format
+        );
+        if (!checked) {
+          this.$Message.error("文件格式错误");
+          return false;
+        }
+      }
+
+      // check maxSize
+      if (this.maxSize) {
+        if (file.size > this.maxSize * 1024) {
+          this.$Message.error("文件太大");
+          return false;
+        }
+      }
+
+      this.handleStart(file);
+      let formData = new FormData();
+      formData.append(this.name, file);
+
+      ajax({
+        headers: this.headers,
+        withCredentials: false,
+        file: file,
+        data: this.data,
+        filename: this.name,
+        action: this.action,
+        onProgress: e => {
+          this.handleProgress(e, file);
+        },
+        onSuccess: res => {
+          this.handleSuccess(res, file);
+        },
+        onError: (err, response) => {
+          this.handleError(err, response, file);
+        }
+      });
+    },
+    handleStart(file) {
+      file.uid = Date.now() + this.tempIndex++;
+      const _file = {
+        status: "uploading",
+        name: file.name,
+        size: file.size,
+        percentage: 0,
+        uid: file.uid,
+        showProgress: true
+      };
+
+      this.fileInfo = _file;
+    },
+    parsePercentage(val) {
+      return parseInt(val, 10);
+    }
+  }
+};
+</script>
+<style>
+.fs-release-upload {
+  list-style: none;
+  box-sizing: border-box;
+  display: flex;
+}
+.fs-release-upload li:first-child {
+  padding: 10px 0 12px 0;
+  flex: 1;
+}
+.fs-release-upload .fs-release-upload-text {
+  width: 70px;
+  padding: 10px 0 12px 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -ms-text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-release-upload .fs-release-upload-success {
+  color: #19be6b;
+}
+.fs-release-upload .fs-release-upload-error {
+  color: #ed3f14;
+}
+.fs-release-upload .fs-release-upload-normal {
+  color: #495060;
+}
+</style>

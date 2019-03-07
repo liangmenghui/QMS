@@ -1,0 +1,49 @@
+/*全局样式文件*/
+body {
+  margin: 0px;
+  padding: 0px;
+  /*background: url(assets/bg1.jpg) center !important;
+		background-size: cover;*/
+  font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, SimSun, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+}
+#app {
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  width: 100%;
+}
+.router-view {
+  margin: 1px;
+}
+.layout {
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  width: 100%;
+  min-height: 100%;
+  border: 1px solid #d7dde4;
+  background: #f5f7f9;
+}
+.layout-content {
+  min-height: 100%;
+  margin: 2px;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 4px;
+}
+.layout-conent-nav {
+  min-width: 240px;
+  width: 100%;
+}
+.layout-content-main {
+  padding: 2px;
+}
+.layout-copy {
+  border: 1px solid #d7dde4;
+  text-align: center;
+  padding: 10px 0 20px;
+  color: #9ea7b4;
+}

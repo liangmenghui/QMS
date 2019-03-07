@@ -1,0 +1,216 @@
+<template>
+	<!--
+    	描述：样品规格设置
+    -->
+	<div class="SampleRegularManagement">		
+		<div>
+			<Table :data="datagrid.data.rows" :columns="datagrid.columns">                  
+            </Table>           
+		</div>
+        <div style="margin-top: 50px;margin-bottom: 100px;">
+            <center>           
+            <el-button style="padding: 10px 10px;" type="primary" icon="el-icon-plus" @click="showAddDialog()">{{$t('sample.NewSampleRegular')}}
+            </el-button> 
+            </center>           
+        </div>
+        <Modal v-model="dialog.modal_dialog" :title="$t('sample.NewSampleRegular')" @on-ok="ok" @on-cancel="cancel" >
+            <el-form :ref="dialog.formItem" :model="dialog.formItem" :rules="dialog.ruleForm" label-width="80">
+                <el-form-item :label="$t('sample.RegularName')" prop="bsName" >
+                    <el-input v-model="dialog.formItem.bsName" placeholder="请输入"></el-input>
+                </el-form-item>
+                 <el-form-item :label="$t('sample.upLimit')" prop="bsUpLimit" >
+                    <el-input type="number" v-model="dialog.formItem.bsUpLimit" placeholder="请输入"></el-input>
+                </el-form-item>
+                 <el-form-item :label="$t('sample.lowLimit')" prop="bsLowLimit" >
+                    <el-input type="number" v-model="dialog.formItem.bsLowLimit" placeholder="请输入"></el-input>
+                </el-form-item>
+                <el-form-item :label="$t('sample.Tool')" prop="bsTool" >
+                    <el-input v-model="dialog.formItem.bsTool" placeholder="请输入"></el-input>
+                </el-form-item>
+                <el-form-item :label="$t('sample.Unit')" prop="bsUnit" >
+                    <el-input v-model="dialog.formItem.bsUnit" placeholder="请输入"></el-input>
+                </el-form-item>
+                <el-form-item prop="bsSampleId" >
+                    <el-input v-if="seen" v-model="dialog.formItem.bsSampleId"></el-input>
+                </el-form-item>
+            </el-form>
+        </Modal>
+	</div>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+        	seen: false,
+        	productData:{},
+        	formQuery: {
+                bsName: ''
+            },
+            dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: { 
+                    bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ],                   
+                }
+            },
+            datagrid: {
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title: this.$t('sample.RegularName'),
+                        key: 'bsName'
+                    },  
+                    {
+                        title: this.$t('sample.upLimit'),
+                        key: 'bsUpLimit'
+                    }, 
+                    {
+                        title: this.$t('sample.lowLimit'),
+                        key: 'bsLowLimit'
+                    },                  
+                    {
+                        title: this.$t('sample.Tool'),
+                        key: 'bsTool',
+                    },
+                    {
+                        title: this.$t('sample.Unit'),
+                        key: 'bsUnit',
+                    },
+                    /*{
+                        title: this.$t('sample.Remark'),
+                        key: 'bsRemark',
+                    },*/
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let ary = [];
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditDialog(params)
+                                        }
+                                    }
+                                }, '设置'));
+                            }
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.delete(params)
+                                        }
+                                    }
+                                }, '删除'));
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    created(){
+    	this.productData=this.$store.getters.getProductData;
+        this.getData();
+    },
+    methods: {
+        handleSubmit(name) {         
+            this.getData();
+        },
+        getData() {
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+          
+            this.api.sampleRegular.getlist({bsPrId:this.productData.id}).then((res) => {
+                if(res.result) {
+
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.datagrid.data = this.getData();
+        },
+        edit(params) {           
+            this.api.sampleRegular.edit(params.row).then((res)=>{
+                if(res.result) {
+                    this.getData();
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        delete(params) {
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                onOk: () => {
+                    this.api.sampleRegular.delete({id:params.row.id}).then((res)=>{
+                        if(res.result) {
+                            this.getData();
+                            this.$Modal.remove();
+                            this.$Message.info('删除成功');
+                        }else {
+                            this.$Message.error(res.msg);   
+                        }
+                    });
+                }
+            });
+        },
+        showAddDialog() {       
+            this.dialog.modal_dialog = true;            
+            this.dialog.formItem = {
+            	bsPrId:this.productData.id
+            };
+        },
+        showEditDialog(params) {
+            this.dialog.modal_dialog = true;    
+            this.dialog.formItem = {
+                bsPrId:this.productData.id,
+                id : params.row.id,
+                bsName : params.row.bsName,
+                bsUnit : params.row.bsUnit,
+                bsTool : params.row.bsTool,
+                bsUpLimit:params.row.bsUpLimit,
+                bsLowLimit:params.row.bsLowLimit
+            };
+        },
+        ok () {
+            if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                    this.api.sampleRegular.edit(this.dialog.formItem).then((res) => {
+                        this.getData();
+                    });
+            }else {
+                this.api.sampleRegular.add(this.dialog.formItem).then((res) => {
+                    this.getData();
+                });
+            }
+        },
+        cancel () {
+            
+        },
+    }
+}	
+</script>
+
+<style lang="less">
+	@import "../public.less";
+</style>

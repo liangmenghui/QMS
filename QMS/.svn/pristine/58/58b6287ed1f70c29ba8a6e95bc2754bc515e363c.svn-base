@@ -1,0 +1,27 @@
+import content_elctrolux_dhl from "./content_elctrolux_dhl.vue"
+import template_elctrolux_dhl from "./template_elctrolux_dhl.vue"
+
+import template_pantos_mexico from "./template_pantos_mexico"
+import template_damca_ningbo from "./template_damca_ningbo"
+import template_damco_shanghai from './template_damco_shanghai'
+
+import content_pantos_mexico from './content_pantos_mexico'
+import content_damca_ningbo from "./content_damca_ningbo"
+import content_damco_shanghai from "./content_damco_shanghai"
+
+const contextComponents = {
+    content_elctrolux_dhl,
+    content_pantos_mexico,
+    content_damca_ningbo,
+    content_damco_shanghai,
+}
+
+const templateComponents = {
+    template_elctrolux_dhl,
+    template_pantos_mexico,
+    template_damca_ningbo,
+    template_damco_shanghai,
+}
+
+
+export {contextComponents,templateComponents}

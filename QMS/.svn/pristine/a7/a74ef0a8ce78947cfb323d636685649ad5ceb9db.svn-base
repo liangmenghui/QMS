@@ -1,0 +1,162 @@
+package com.unind.qms.provider;
+
+import com.unind.base.components.file.FtpClientService;
+import com.unind.base.configure.AppConfig;
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.provider.BusinessException;
+import com.unind.fs.dao.file.FsFileDao;
+import com.unind.fs.domain.file.FsFile;
+import com.unind.qms.web.approved.dao.ApprovedItemsRecordDao;
+import com.unind.qms.web.approved.entity.ApprovedItemsRecord;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hssf.usermodel.*;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.DecimalFormat;
+import java.util.List;
+
+@Component
+public class ExcelService {
+    @Autowired
+    private FsFileDao fsFileDao;
+    @Autowired
+    private FtpClientService ftpClientService;
+    @Autowired
+    private AppConfig appConfig;
+    @Autowired
+    private ApprovedItemsRecordDao approvedItemsRecordDao;
+
+    /**
+     * 导出初期审核报告
+     * @param response
+     * @return
+     * @throws BusinessException
+     */
+    public ApiResponseResult writeInitialReview(HttpServletResponse response) throws BusinessException {
+        FsFile fsFile = fsFileDao.findOne(Long.valueOf((long)5302));
+        String path = appConfig.getString("fs.qms.path")+fsFile.getBsFilePath();
+        ApiResponseResult result = ftpClientService.downloadFile(path, fsFile.getBsFileName()+fsFile.getBsFileType());
+
+        InputStream inputStream = (InputStream) result.getData();
+        try {
+            HSSFWorkbook workbook = null;
+            HSSFSheet sheet = null;
+            HSSFSheet sheet1 = null;
+            HSSFRow row = null;
+            HSSFCell cell = null;
+            HSSFCellStyle cellStyle = null;
+            //按照模板COPY一份EXCEL文件
+
+            workbook = new HSSFWorkbook(inputStream);
+
+            sheet = workbook.getSheetAt(2); //sheet3，审核报告
+
+            HSSFFont font = workbook.createFont();
+            font.setFontName("微软雅黑");
+            font.setFontHeightInPoints((short)8);// 设置字体大小
+
+//            cellStyle = workbook.createCellStyle();
+//            HSSFDataFormat format = workbook.createDataFormat();
+//            cellStyle.setDataFormat(format.getFormat("@"));
+//            cellStyle2.setBorderBottom((short)1);   //设置下边框
+//            cellStyle2.setBorderLeft((short)1);   //设置左边框
+//            cellStyle2.setBorderRight((short)1);   //设置有边框
+//            cellStyle2.setBorderTop((short)1); //设置上边框
+//            cellStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);//居中
+//            cellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);//填充单元格
+//            cellStyle.setFillForegroundColor(HSSFColor.WHITE.index);//填充颜色
+//            cellStyle.setWrapText(true); //设置自动换行
+//            cellStyle.setFont(font);
+
+            List<ApprovedItemsRecord> approvedItemsRecordList = approvedItemsRecordDao.findByBsFlowRecordIdOrderByBsPriorityAsc(Long.valueOf((long)5200));
+
+            for(int i=0;i<approvedItemsRecordList.size()-1;i++){
+                sheet.addMergedRegion(new CellRangeAddress(15+i*2, 15+i*2, 1, 6));
+                sheet.addMergedRegion(new CellRangeAddress(15+i*2, 15+i*2, 17, 18));
+                sheet.addMergedRegion(new CellRangeAddress(15+i*2, 15+i*2, 19, 20));
+                row = sheet.createRow(15+i*2);
+
+                cell = row.createCell(1);
+                cell.setCellType(HSSFCell.CELL_TYPE_STRING);
+                cell.setCellValue((i+1)+"--"+approvedItemsRecordList.get(i).getItemsBy().getBsName());
+                cellStyle = workbook.createCellStyle();
+                cellStyle.setFont(font);
+                cell.setCellStyle(cellStyle);
+
+                String[] scoreNum = approvedItemsRecordList.get(i).getBsScoreNum().split("/");
+                int scoreFieldNum = 10*Integer.parseInt(scoreNum[0])/Integer.parseInt(scoreNum[1]);
+
+                cellStyle = workbook.createCellStyle();
+                cellStyle.setFont(font);
+                cellStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);//居中
+                if(scoreFieldNum<=2){
+                    cellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);//填充单元格
+                    cellStyle.setFillForegroundColor(HSSFColor.RED.index);
+                }else if(scoreFieldNum<=4){
+                    cellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);//填充单元格
+                    cellStyle.setFillForegroundColor(HSSFColor.YELLOW.index);
+                }else{
+                    cellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);//填充单元格
+
+                    String color = "00b050";
+                    //转为RGB码
+                    int r = Integer.parseInt((color.substring(0,2)),16);   //转为16进制
+                    int g = Integer.parseInt((color.substring(2,4)),16);
+                    int b = Integer.parseInt((color.substring(4,6)),16);
+
+                    HSSFPalette palette = workbook.getCustomPalette();//自定义cell颜色
+                    palette.setColorAtIndex((short)9, (byte) r, (byte) g, (byte) b);//这里的9是索引
+
+                    cellStyle.setFillForegroundColor((short)9);
+                }
+
+                cell = row.createCell(17);
+                cell.setCellType(HSSFCell.CELL_TYPE_NUMERIC);
+                cell.setCellValue(scoreNum[0]);
+                cell.setCellStyle(cellStyle);
+
+                DecimalFormat df = new DecimalFormat("0.00");
+
+                String scoreRate = df.format((float)(100*Integer.parseInt(scoreNum[0])/Integer.parseInt(scoreNum[1])));
+                cell = row.createCell(19);
+                cell.setCellType(HSSFCell.CELL_TYPE_NUMERIC);
+                cell.setCellValue(scoreRate+"%");
+                cell.setCellStyle(cellStyle);
+
+                for(int j=1;j<=10;j++){
+                    HSSFCellStyle cellStyleBg = workbook.createCellStyle();
+                    cell = row.createCell(6+j);
+                    cellStyleBg.setBorderBottom((short)1);   //设置下边框
+                    cellStyleBg.setBorderLeft((short)1);   //设置左边框
+                    cellStyleBg.setBorderRight((short)1);   //设置有边框
+                    cellStyleBg.setBorderTop((short)1); //设置上边框
+                    if(j<=scoreFieldNum){
+                        cellStyleBg.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);//填充单元格
+                        cellStyleBg.setFillForegroundColor(cellStyle.getFillForegroundColor());//填充颜色
+                    }
+                    cell.setCellType(HSSFCell.CELL_TYPE_BLANK);
+                    cell.setCellStyle(cellStyleBg);
+                }
+            }
+
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            response.setContentType(fsFile.getBsContentType());
+            response.setHeader("Content-disposition", "attachment; filename=details.xls");
+            workbook.write(output);
+            output.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ApiResponseResult.success();
+    }
+}

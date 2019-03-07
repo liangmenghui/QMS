@@ -1,0 +1,400 @@
+<template>
+        <div>
+    <div>
+        <Row>
+                <i-col>
+                    <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                        <Form-item >
+                             <Input v-model="formQuery.eqName" placeholder="请输入设备名称" ></Input>
+                        </Form-item>
+                        <Form-item >
+                            <Button type="primary" @click="handleSubmit('formQuery')">查 询</Button>
+                        </Form-item> 
+                        <Form-item v-if="menuData.perms.ADD">
+                            <Button type="primary" @click="showAddDialog()" >{{message}}</Button>
+                        </Form-item>
+                    </Form>
+                </i-col>
+            </Row>
+        </div>
+        <Modal v-model="dialog.modal_dialog"  title="" @on-ok="t" @on-cancel="cancel" >
+                <p>
+            <div >
+                <Row>
+                    <i-col>
+    <Form :model="formItem" :label-width="80" style="text-align:center"  :ref="dialog.ruleForm" :rules="dialog.ruleForm" >
+            <FormItem label="id"  v-show="false" >
+                    <Row>
+                        <Col span="12" >
+                         <Input v-model="formItem.id" placeholder="请输入设备名称" ></Input>
+                        </Col>
+                   </Row>
+                </FormItem>
+        <FormItem label="设备名称"  prop='eqName'>
+            <Row>
+                <Col span="12" >
+                 <Input v-model="formItem.eqName" placeholder="请输入设备名称" ></Input>
+                </Col>
+           </Row>
+        </FormItem>
+        <!-- <FormItem label="设备编码" prop='eqCode' >
+                <Row>
+                    <Col span="12" >
+                     <Input v-model="formItem.eqCode" placeholder="请输入设备编码" ></Input>
+                    </Col>
+               </Row>
+        </FormItem>
+        <FormItem label="设备地址" >
+                <Row>
+                    <Col span="12" >
+                     <Input v-model="formItem.eqPosition" placeholder="请输入设备地址"></Input>
+                    </Col>
+               </Row>
+        </FormItem>
+        <FormItem label="设备管理员" >
+                <Row>
+                    <Col span="12" >
+                     <Input v-model="formItem.eqManager" placeholder="请输入设备管理员"></Input>
+                    </Col>
+               </Row>
+        </FormItem> -->
+        <FormItem label="设备状态" >
+                <Row>
+                    <Col span="12" >
+                        <Select v-model="formItem.eqState"  >
+                                <Option value="0" >可用</Option>
+                                <Option value="1">不可用</Option>
+                        </Select>
+                    </Col>
+               </Row>
+        </FormItem>
+
+    </Form> 
+     </i-col>
+    </Row>
+</div>
+</p>
+</Modal>
+
+<Modal v-model="dialog.modal_dialog1" title="" @on-ok="update(formItem)" @on-cancel="cancel" >
+    <p>
+<div >
+    <Row>
+        <i-col>
+<Form :model="formItem" :label-width="80" style="text-align:center" >
+<FormItem label="id"  v-show="false">
+        <Row>
+            <Col span="12" >
+             <Input v-model="formItem.id" placeholder="请输入设备名称"></Input>
+            </Col>
+       </Row>
+    </FormItem>
+<FormItem label="设备名称"  >
+<Row>
+    <Col span="12" >
+     <Input v-model="formItem.eqName" placeholder="请输入设备名称"></Input>
+    </Col>
+</Row>
+</FormItem>
+<FormItem label="原设备设备名称"   >
+<Row>
+    <Col span="12" >
+     <Input v-model="formItem.eqNameY"  disabled="disabled" placeholder="请输入设备名称"></Input>
+    </Col>
+</Row>
+</FormItem>
+<!-- <FormItem label="设备编码" >
+    <Row>
+        <Col span="12" >
+         <Input v-model="formItem.eqCode" placeholder="请输入设备编码" disabled="disabled"></Input>
+        </Col>
+   </Row>
+</FormItem>
+<FormItem label="设备地址" >
+    <Row>
+        <Col span="12" >
+         <Input v-model="formItem.eqPosition" placeholder="请输入设备地址"></Input>
+        </Col>
+   </Row>
+</FormItem>
+<FormItem label="设备管理员" >
+    <Row>
+        <Col span="12" >
+         <Input v-model="formItem.eqManager" placeholder="请输入设备管理员"></Input>
+        </Col>
+   </Row>
+</FormItem> -->
+<FormItem label="设备状态" >
+    <Row>
+        <Col span="12" >
+            <Select v-model="formItem.eqState"  >
+                    <Option value="0" >可用</Option>
+                    <Option value="1">不可用</Option>
+            </Select>
+        </Col>
+   </Row>
+</FormItem>
+
+</Form> 
+</i-col>
+</Row>
+</div>
+</p>
+</Modal>
+
+    <Row>
+            <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="height:auto;"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" @on-change="changePage"  @on-page-size-change="chageSize"  :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination"  show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+ </div>
+
+
+</template>
+<script>
+  import {mapState} from 'vuex'
+    export default {
+        created(){
+          this.getDate();
+        },
+        computed:{
+        ...mapState({
+            menuData:state=>state.menuData  
+        })
+    },
+        data () {
+            return {
+                start:0,
+                end:15,
+                dialog: {
+                    ruleForm: {
+                    eqCode: [
+                        { required: true, message: '请填写编码', trigger: 'blur' }
+                    ],
+                    eqName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ]
+                },
+                modal_dialog: false,
+                modal_dialog1:false
+                },
+                message: '新增',
+                dict: {
+                bsStatus:[{value: 0, name:'可用'},{value: 1, name:'不可用'}]
+                },
+                formQuery:
+                {
+                    eqCode: '',
+                    eqName: ''
+                },
+                isShow:false,
+                formItem:{
+                    eqNameY:'',
+                    id:"",
+                    eqName:"",
+                    eqCode:"",
+                    eqState:0,
+                    eqManager:"",
+                    eqPosition:""
+                },
+                datagrid: {
+                    queryParams:{
+                        page:1,
+                        rows:15,
+                        pkParent:-1
+                    },
+                    pagination: [15, 50, 100],
+                    data: {rows:[],total:0,rows1:[]},
+                    columns: [
+                        // {
+                        //     title: '设备编码',
+                        //     key: 'eqCode'
+                        // },
+                        {
+                            title: '设备名称',
+                            key: 'eqName'
+                        },
+                    
+                        // {
+                        //     title: '设备管理员',
+                        //     key: 'eqManager'
+                        // },
+                        
+                        {
+                            title: '设备状态',
+                            key: 'eqState',
+                            render: (h, params) => {
+                                return h('span', this.dict.bsStatus[params.row.eqState].name);
+                            }
+                        },
+                        {
+                            title: '创建时间',
+                            key: 'bsCreatedTime'
+                        },
+                        {
+                            title: '操作',
+                            key: 'action',
+                            render: (h, params) => {
+                                let ary = [];
+                                if(this.menuData.perms.EDIT) {
+                                    ary.push(h('Button', {
+                                        props: {
+                                            type: 'primary',
+                                            size: 'small'
+                                        },
+                                        style: {
+                                            marginRight: '5px'
+                                        },
+                                        on: {
+                                            click: () => {
+                                                this.showEditDialog(params)
+                                            }
+                                        }
+                                    }, '编辑'));
+                                }
+                                if(this.menuData.perms.DELETE) {
+                                    ary.push(h('Button', {
+                                        props: {
+                                            type: 'error',
+                                            size: 'small'
+                                        },
+                                        on: {
+                                            click: () => {
+                                                this.delete(params)
+                                            }
+                                        }
+                                    }, '删除'))
+                                }
+                                return h('div', ary);
+                            }
+                        }
+                    ]
+                },
+                }
+        },
+        
+        methods:{
+            toggle:function(){
+                this.isShow = !this.isShow;
+                if(this.message=='新增'){
+                    this.message="隐藏";
+                }else{
+                    this.message="新增";
+                }
+             },
+             getDate(){
+                this.api.equipment.selectEquipmet().then((res) => {
+                    if(res.result) {
+                        this.datagrid.data.rows1=this.datagrid.data.rows;
+                        this.datagrid.data.rows = res.data.rows.slice(this.start,this.end);
+                        this.datagrid.data.total=res.data.total;
+                       }else {
+                        this.$Message.error(res.msg);
+                      }
+        });
+             },
+               t:function(){
+                if(this.formItem.eqName==''){
+                 return this.$Message.error('填写信息有误');
+                 }else{
+                    this.formItem.eqName= this.formItem.eqName.trim();
+                    
+                   this.api.equipment.saveMachine(this.formItem).then((res) =>{
+                       if(res.result){
+                          this.getDate();
+                          this.$Message.success("添加成功");
+                       }else{
+                        this.$Message.error("名称已存在，请重新添加");
+                       }
+                   });
+                 }
+               },
+
+               showAddDialog() {
+               this.dialog.modal_dialog = true;
+               this.dialog.formItem ={};
+        },
+
+        cancel () {
+            
+        },
+
+               delete:function(params){
+                this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.equipment.deleteEquipmet(params.row).then((res)=>{
+                        if(res.result) {
+                            this.getDate();
+                            this.$Message.info('删除成功');
+                            this.$Modal.remove();
+                        }else {
+                            this.$Message.error("删除失败");
+                        }
+                    });
+                }
+            });
+               },
+
+               showEditDialog(params){
+                this.dialog.modal_dialog1= true;
+                this.formItem.eqCode=params.row.eqCode;
+                this.formItem.eqName=params.row.eqName;
+                this.formItem.eqNameY=params.row.eqName;
+                this.formItem.eqPosition=params.row.eqPosition;
+                this.formItem.eqManager=params.row.eqManager;
+                this.formItem.eqState=params.row.eqState;
+                this.formItem.id=params.row.id;
+
+
+               },
+               
+               update(params){
+
+                this.api.equipment.update(params).then((res) =>{
+                    if(res.result){
+                        this.getDate();
+                        this.$Message.success("更新成功");
+                     }
+                     if(!res.result){
+                      this.$Message.error("名称已存在，请重新添加");
+                     }
+                    
+                });
+               
+               },
+               handleSubmit(){
+                if(this.formQuery.eqName==''){
+                    this.getDate();
+                }else{
+                    this.formQuery.eqName=this.formQuery.eqName.trim();
+                this.api.equipment.selectEquipmet1(this.formQuery).then((res) =>{
+                    if(res.result) {
+                            this.datagrid.data = res.data;
+                        }else {
+                            this.$Message.error(res.msg);
+                        }
+                        });
+                    }
+                },
+                changePage (pageSize) {
+                    this.start=(pageSize-1)*this.datagrid.queryParams.rows;
+                    this.end=pageSize*this.datagrid.queryParams.rows;
+                    this.getDate();
+                },
+                chageSize(pageSizeOpts){
+                    this.datagrid.queryParams.rows=pageSizeOpts;
+                    this.start=0;
+                    this.end=pageSizeOpts;
+                    this.getDate();
+               }
+        }
+    }
+</script>

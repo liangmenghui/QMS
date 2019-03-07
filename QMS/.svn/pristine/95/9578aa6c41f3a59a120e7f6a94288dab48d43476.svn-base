@@ -1,0 +1,154 @@
+<template>
+    <div class="component">
+        <center>
+            <el-button type="primary" style="padding: 7px 20px;" @click="saveRecord(0)">
+                <i class="el-icon-news"></i>&nbsp;&nbsp;{{$t('Button.SaveChanges')}}
+            </el-button>            
+            <el-button v-if="approvedItemRecord.bsStatus>0&&approvedItemRecord.bsStep>1" type="warning" style="padding: 7px 20px;margin-left: 3%;" @click="showModel(2)">
+                <i class="el-icon-warning"></i>&nbsp;&nbsp;{{$t('Button.DismissReview')}}
+            </el-button>         
+            <el-button  v-if="approvedItemRecord.bsStatus>0" type="danger" style="padding: 7px 20px;margin-left: 3%;" @click="showModel(3)">
+                <i class="el-icon-close"></i>&nbsp;&nbsp;{{$t('Button.AuditFailed')}}
+            </el-button>
+            <el-button  v-if="approvedItemRecord.bsStatus>0" type="success" style="padding: 7px 20px;margin-left: 3%;" @click="showModel(1)">
+                <i class="el-icon-check"></i>&nbsp;&nbsp;{{$t('Button.Approved')}}
+            </el-button>
+            <Modal v-model="showFailedModel"  @on-ok="saveRecord(3)">
+                <el-form label-width="80">
+                    <p style="font-size: 16px;color: #F56C6C;">{{$t('approved.failed_approved')}}</p>
+                    <el-form-item :label="$t('approved.result_comment')">
+                        <el-input v-model="flowDesc" type="textarea"></el-input>
+                    </el-form-item>         
+                    <el-form-item :label="$t('approved.item_comment')">
+                        <el-input v-model="resultDesc" type="textarea"></el-input>
+                    </el-form-item>                                    
+                </el-form>
+            </Modal>
+            <Modal v-model="showSuccessModel"  @on-ok="saveRecord(1)">
+                <el-form label-width="80">
+                    <p style="font-size: 16px;color: #67C23A;">{{$t('approved.comfirm_approved')}}</p>
+                    <el-form-item :label="$t('approved.result_comment')">
+                        <el-input v-model="flowDesc" type="textarea"></el-input>
+                    </el-form-item>         
+                    <el-form-item :label="$t('approved.item_comment')">
+                        <el-input v-model="resultDesc" type="textarea"></el-input>
+                    </el-form-item>                                  
+                </el-form>
+            </Modal>
+            <Modal v-model="showRejectModel"  @on-ok="saveRecord(2)">
+                <el-form label-width="80">
+                    <p style="font-size: 16px;color: #F56C6C;">{{$t('approved.reject_approved')}}</p>
+                    <el-form-item :label="$t('approved.result_comment')">
+                        <el-input v-model="flowDesc" type="textarea"></el-input>
+                    </el-form-item>         
+                    <el-form-item :label="$t('approved.item_comment')">
+                        <el-input v-model="resultDesc" type="textarea"></el-input>
+                    </el-form-item>                                    
+                </el-form>
+            </Modal>
+        </center>
+    </div>
+</template>
+
+<script>
+// var XLSX = require('xlsx')  //引入xlsx
+export default {
+    props:['approvedItemRecord','type','data','sampleRegularRecords'], //type: audits:条款审核 inspect:出货检验报告 quality:质量检验报告
+    data() {
+        return {
+            showFailedModel:false,
+            showSuccessModel:false,
+            showRejectModel: false,
+            isCoach: 1,
+            resultDesc: "",
+            flowDesc: "",
+        }
+    },
+    created(){
+    },
+    mounted () {
+       
+    },
+    methods: {    
+        showModel(result){
+            if(result == 3) this.showFailedModel = true;
+            else if(result == 2) this.showRejectModel = true;
+            else this.showSuccessModel = true;
+        },
+        approved(result) {
+            if(result != 0) {
+                var params = {
+                    bsItemsId: this.approvedItemRecord.itemsBy.id,
+                    bsItemsRecordId: this.approvedItemRecord.id,
+                    bsResult: result,
+                    itemsDesc : this.flowDesc,
+                    resultDesc : this.resultDesc
+                };
+                this.api.Audit.approved(params).then((res) => {
+                    this.$Message.info("提交审核结果完成");
+                    this.bsStatus = result;
+                    var path = this.$route.matched[this.$route.matched.length-2].path;
+                    var route = {path:path,query:{bsFlowRecordId:this.$route.query.bsFlowRecordId,refresh:true}};
+                    this.$router.replace(route);
+                });
+            }
+        },
+        saveRecord(result){
+            if(this.type == 'audits') {
+                var list = new Array();
+                var rows = this.data;
+                for (var i = 0;  i < rows.length; i++) {
+                    var data = {};
+                    data.bsItemsRecoreId = this.approvedItemRecord.id;
+                    data.bsTermsId = rows[i].ID,
+                    data.bsScore = rows[i].BS_SCORE;
+                    data.bsDesc = rows[i].BS_DESC;
+                    if(rows[i].SCORE_ID != undefined) data.id = rows[i].SCORE_ID;
+                    list.push(data);
+                }
+                var approvedTermsScoreList = JSON.stringify(list);
+                this.api.Audit.records({approvedTermsScoreStr:JSON.stringify(list)}).then((res) => {
+                    this.$emit('updateTermsRecord');
+                    this.$Message.info("保存成功");
+                    this.approved(result);
+                });
+            }
+            else if(this.type == 'inspect') {
+                var params = Object.assign({},this.data);
+                params = this.$Util.formattedParams(params);
+                this.api.shipmentInspect.edit(params).then((res) => {
+                    this.$Message.info("保存成功");
+                    this.approved(result);
+                });
+                
+                if(this.sampleRegularRecords!=undefined){
+                    var params = {bsShipmentInspectId:params.id};
+                    var records = [];
+                    for (var i = 0; i < this.sampleRegularRecords.length; i++) {
+                        var regular = this.sampleRegularRecords[i];
+                        for (var j = 0; j < regular.records.length ; j++) {
+                            var record = regular.records[j];
+                            records.push(this.$Util.formattedParams(record));
+                        }
+                    }
+                    params.sampleRegularRecordStr = JSON.stringify(records);
+                    this.api.sampleRegularRecord.add(params).then((res) => {
+                        this.$emit('saved');
+                    });
+                }
+            }
+            else if(this.type == 'quality') {
+                var params = Object.assign({},this.data);
+                params = this.$Util.formattedParams(params);
+                this.api.qualityInspect.edit(params).then((res) => {
+                    this.$Message.info("保存成功");
+                    this.approved(result);
+                });
+            }
+            else {
+                this.approved(result);
+            }
+        },
+    }
+ } 
+</script>

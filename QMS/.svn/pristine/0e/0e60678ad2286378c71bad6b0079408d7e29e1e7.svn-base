@@ -1,0 +1,104 @@
+package com.unind.qms.web.basic.service.internal;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.fs.dao.file.FsFileDao;
+import com.unind.fs.domain.file.FsFile;
+import com.unind.qms.web.basic.dao.ExcelTempDao;
+import com.unind.qms.web.basic.dao.FeedbackHandlerDao;
+import com.unind.qms.web.basic.entity.ExcelTemp;
+import com.unind.qms.web.basic.entity.FeedbackHandler;
+import com.unind.qms.web.basic.service.ExcelTempService;
+import com.unind.qms.web.basic.service.FeedbackHandlerService;
+import com.unind.qms.web.basic.service.FileQmsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class ExcelTempImpl extends BaseOprService implements ExcelTempService {
+    @Autowired
+    private ExcelTempDao excelTempDao;
+    @Autowired
+    private FileQmsService fileQmsService;
+    @Autowired
+    private FsFileDao fsFileDao;
+
+    @Transactional
+    public ApiResponseResult add(ExcelTemp excelTemp) throws BusinessException {
+        if (excelTemp.getBsType() == 0) {
+            return ApiResponseResult.failure("模板类型不能为空");
+        }
+        int count = excelTempDao.countByBsType(excelTemp.getBsType());
+        if(count>0){
+            return ApiResponseResult.failure("已存在此类型的模板，请编辑");
+        }
+
+        excelTemp.setBsCreatedTime(new Date());
+        excelTemp.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+        excelTempDao.save(excelTemp);
+
+        return ApiResponseResult.success().data(excelTemp);
+    }
+
+    @Transactional
+    public ApiResponseResult edit(ExcelTemp excelTemp) throws BusinessException {
+        if (null == excelTemp.getId()) {
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        ExcelTemp o = excelTempDao.findOne(excelTemp.getId());
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+
+        o.setFsFileId(excelTemp.getId());
+        o.setBsModifiedTime(new Date());
+        o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+        excelTempDao.save(o);
+
+        return ApiResponseResult.success("修改成功！").data(o);
+    }
+
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        ExcelTemp o = excelTempDao.findOne(id);
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除").status("error1");
+        }
+        if (o.getId() <= 0) {
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        excelTempDao.delete(o);
+        FsFile fsFile = fsFileDao.findOne(o.getFsFileId());
+        fsFile.setBsIsDel(BaseEnumConstants.TRUE);
+        fsFileDao.save(fsFile);
+        return ApiResponseResult.success("删除成功！");
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponseResult getlist(Long id, PageRequest pageRequest) {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+        if(null != id){
+            filters.add(new SearchFilter("id", SearchFilter.Operator.EQ, id));
+        }
+        Specifications<ExcelTemp> spec = Specifications.where(super.and(filters, ExcelTemp.class));
+        Page<ExcelTemp> page = excelTempDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+}

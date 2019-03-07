@@ -1,0 +1,48 @@
+package com.unind.qms.web.approved.dao;
+
+import com.unind.qms.web.approved.entity.ApprovedItemsRecord;
+import com.unind.qms.web.approved.entity.ApprovedRecorderMap;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 
+ * @author chen
+ *
+ */
+public interface ApprovedItemsRecordDao extends CrudRepository<ApprovedItemsRecord, Long>, JpaSpecificationExecutor<ApprovedItemsRecord> {
+
+//	public int countByBsName(String bsName);
+//
+//	public List<ApprovedFlow> findByBsName(String bsName);
+
+    public int countByBsStatus(int bsStatus);
+
+    public ApprovedItemsRecord findByBsStatus(int bsStatus);
+
+    //是否为项目最后审批人
+    @Query(value = "select count(1) from t_approved_items_record a where a.bs_step = " +
+            "(select count(1) from t_approved_recorder_map b where b.bs_items_record_id = ?1 and b.bs_is_del = '0') and a.id = ?1 and a.bs_is_del = '0'",nativeQuery = true)
+    public int countByBsItemsRecordId(Long bsItemsRecordId);
+
+    //返回当前项目记录后的项目记录
+	@Query(value = "select * from t_approved_items_record a where a.bs_flow_record_id = ?1 and a.bs_priority >?2 and a.bs_is_del = '0' order by a.bs_priority",nativeQuery = true)
+	public List<ApprovedItemsRecord> findByBsFlowRecordIdAndBsPriority(Long bsFlowRecordId, int bsPriority);
+
+	//关闭正在审核的项目记录
+    @Modifying
+    @Query("update ApprovedItemsRecord t set t.bsStatus='4' where t.bsStatus = '1' and t.bsFlowRecordId=?1")
+    public void closeByBsFlowRecordId(Long bsFlowRecordId);
+
+    public List<ApprovedItemsRecord> findByBsFlowRecordIdOrderByBsPriorityAsc(Long bsFlowRecordId);
+
+    //保存项目得分
+    @Modifying
+    @Query("update ApprovedItemsRecord t set t.bsScoreNum=?2 where t.id=?1")
+    public void updateBsScoreNumById(Long id,String bsScoreNum);
+}

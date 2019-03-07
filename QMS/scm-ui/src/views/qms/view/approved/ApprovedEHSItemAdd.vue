@@ -1,0 +1,222 @@
+<template>
+	<!--
+    	作者：fyx
+    	时间：2018-07-27
+    	描述：新增供应商EHS审核
+    -->
+	<div class="Ehsbox" style="height:100%;background-color: white;">
+		<div style="height: 20px;font-size: 16px;"><center><h4>EHS审核</h4></center></div>
+		<el-card class="box-card" shadow="hover">
+			<div v-if="approvedItemRecord.bsPrId">
+				<Col :md="8" class="productInfo"><h5 style="font-size: 14px;"><i class="el-icon-info"></i>{{$t('product.name')}}:{{productInfo.bsPrName}}</h5></Col> 
+				<Col :md="8" class="productInfo"><h5 style="font-size: 14px;">{{$t('product.code')}}:</b> {{productInfo.bsPrCode}}</h5></Col>
+			</div>
+			
+			<div v-if="approvedItemRecord.bsSuppId">
+				<Col :md="8" class="productInfo"><h5 style="font-size: 14px;"><i class="el-icon-info"></i>{{$t('product.SuppChieseName')}}: {{supplierInfo.bsSuppChieseName}}</h5></Col> 
+				<Col :md="8" class="productInfo"><h5 style="font-size: 14px;">{{$t('product.SuppCode')}}: {{supplierInfo.bsSuppCode}}</h5></Col>            
+			</div>
+        
+			<div>
+				<el-button type="primary" style="padding: 5px 5px;float: right;font-size:12px;" @click="showBsStandard()">
+					<i class="el-icon-d-arrow-right" v-if="show"></i><i class="el-icon-d-arrow-left" v-if="!show"></i>&nbsp;&nbsp;评分标准
+				</el-button>
+			
+				<el-table border :data="terms" class="itemRecord">
+					<el-table-column prop="BS_NO" :label="$t('New-audit.Article-number')" width="100" align="center" fixed>
+					</el-table-column>
+					<el-table-column prop="BS_CONTENT"  width="320" :label="$t('New-audit.Terms-conditions')" v-if="$i18n.locale=='zh-CN'" align="center">
+					</el-table-column>
+					<el-table-column prop="BS_CONTENT_EN"  width="320" :label="$t('New-audit.Terms-conditions')" v-if="$i18n.locale=='en-US'" align="center">
+					</el-table-column>
+					<el-table-column prop="BS_GRADE" :label="$t('New-audit.Grade')"  align="center" >
+					</el-table-column>
+					<el-table-column :label="$t('New-audit.approvedConclusion')" width='120' align="center">
+						<template slot-scope="scope" >
+							<el-select v-model="scope.row.EHS_EVAL"  :placeholder="$t('choose')" >
+								<el-option v-for="item in scoreOptions" :value="item.value" :key="item.value" :label="item.label"></el-option> 
+							</el-select>
+						</template>
+					</el-table-column> 
+					
+					<el-table-column prop="BS_STANDARD" width="320" :label="$t('New-audit.Grading')" v-if="$i18n.locale=='zh-CN'&&show" align="center">
+					</el-table-column>
+					<el-table-column prop="BS_STANDARD_EN" width="320" :label="$t('New-audit.Grading')" v-if="$i18n.locale=='en-US'&&show" align="center">
+					</el-table-column> 
+
+					<el-table-column prop="violation" :label="$t('New-audit.Violation')" align="center">
+					    <template slot-scope="scope">
+							<el-input type="textarea" :autosize="{ minRows: 5, maxRows: 5}"" v-model="scope.row.EHS_VIOLATION" ></el-input>			        
+						</template>
+					</el-table-column>
+					<el-table-column prop="correctiveAction" :label="$t('New-audit.CorrectiveAction')" align="center">
+					    <template slot-scope="scope">
+							<el-input type="textarea" :autosize="{ minRows: 5, maxRows: 5}"" v-model="scope.row.EHS_CORRECTIVE_ACTION" ></el-input>			        
+						</template>
+					</el-table-column>
+					<el-table-column prop="commentsReference" :label="$t('New-audit.CommentsReference')" align="center">
+					<template slot-scope="scope">
+							<el-input type="textarea" :autosize="{ minRows: 5, maxRows: 5}"" v-model="scope.row.EHS_COMMENTS_REFERENCE" ></el-input>			        
+						</template>
+					</el-table-column>
+				</el-table>	
+			</div>	
+		</el-card>
+		<div style="margin-top: 20px;margin-bottom: 50px;">
+			<center>
+				<el-button v-if="perms.edit" type="primary" style="padding: 7px 20px;" @click="saveRecord(0)" v-loading.fullscreen.lock="fullscreenLoading">
+                <i class="el-icon-news"></i>&nbsp;&nbsp;{{$t('Button.Save')}}
+            </el-button>
+			</center> 
+            <!--<el-button type="primary" style="padding: 7px 20px;" @click="saveRecord(0)" v-loading.fullscreen.lock="fullscreenLoading">
+                <i class="el-icon-news"></i>&nbsp;&nbsp;{{$t('Button.Submit')}}
+            </el-button> -->
+			<!-- <ApprovedAction type="audits" :data="terms" :approvedItemRecord="approvedItemRecord" @updateTermsRecord="updateTermsRecord" :perms="perms"></ApprovedAction> -->
+		</div>
+		
+	</div>
+</template>
+
+<script>
+import itemrecordupload from '../../components/itemrecordupload.vue';
+import ApprovedAction from '../../components/approvedAction.vue';
+import Cookies from 'js-cookie';
+import approvedResultRecord from '../../components/approvedResultRecord.vue';
+export default {
+	data() {
+		return {
+			AuditFailedModal:false,
+			AuditFailedForm:{},
+			ApprovedForm:{},
+			audits:{},
+			approvedItemData: {
+				itemsRecordId: 0,
+				itemsId: 0,
+			},
+            terms: [],
+            dialogImageUrl: '',
+            dialogVisible: false,
+            approvedItemRecord:{},
+            productInfo:{},
+            supplierInfo:{},
+            perms: {
+                edit: true,
+                verify: false
+            },
+            scoreOptions:[
+			{label:'请选择',value:-2},
+            {label:'Y',value:"Y"},
+            {label:'N',value:'N'},
+            {label:'-',value:'NA'}
+            ],
+			show:false
+        }
+	},
+	created(){
+		this.approvedItemRecord = this.$store.getters.getItemRecordData;
+        this.supplierInfo = this.$store.getters.getSupplierData;
+		
+		var params = this.$route.query;
+        this.params = params;
+		if( this.params.type== 'details'){
+            this.perms.edit = false;
+		}
+        // if(params.supplier != undefined) {
+		// }
+		 this.getData();
+        // var user = Cookies.get('user');
+        // this.perms.edit = 
+		// 	this.approvedItemRecord.users[this.approvedItemRecord.bsStep-1] == user &&
+        //     this.approvedItemRecord.bsStatus == 1;
+        // this.perms.verify = this.$Util.hasPerm('VERIFY');
+	},
+	beforeUpdate:function(){
+		this.showRooterView = this.$route.matched.length>3;
+	},
+    watch: {
+        '$route' (to, from) {
+            this.showRooterView = to.matched.length>3;
+        }
+    },
+	components: {          
+            itemrecordupload,
+            ApprovedAction,
+            approvedResultRecord
+        },
+	methods: {
+		getData() {
+			this.api.ApprovedEHSItems.getlist({mapId:this.params.mapId}).then((res) => {
+				 this.terms = res.data;						
+						});
+			
+		},
+        updateTermsRecord(records) {
+            this.getData();
+        },
+        formatter(){
+
+        },
+		showBsStandard() {
+			if(this.show){
+				this.show = false;
+			}else this.show = true;
+		},
+		saveRecord(result){
+			this.fullscreenLoading = true;
+			var list = new Array();
+			var rows = this.terms;
+			for (var i = 0;  i < rows.length; i++) {
+				var data = {};
+				debugger;
+				data.bsEHSItemsId = rows[i].ID;
+				data.supplierId = this.supplierInfo.id;
+				data.ehsEval = rows[i].EHS_EVAL;
+				//data.ehsConclusion = rows[i].ehsConclusion;
+				data.ehsCorrectiveAction = rows[i].EHS_CORRECTIVE_ACTION;
+				data.ehsViolation = rows[i].EHS_VIOLATION;
+				data.ehsCommentsReference = rows[i].EHS_COMMENTS_REFERENCE;
+				data.bsStatus = 0;//保存状态
+				list.push(data);				
+			}
+			//保存
+			this.api.ApprovedEHSItems.addEHSRecord({approvedEHSRecordStr:JSON.stringify(list),supplierId:this.supplierInfo.id,mapId:this.params.mapId}).then((res) => {
+				this.fullscreenLoading = false;
+				if(res.result){
+                    //返回
+					// var path = this.$route.matched[this.$route.matched.length-2].path;
+					// var route = {path:path,query:{bsFlowRecordId:'',refresh:true}};
+					// this.$router.replace(route);
+					this.$router.push({path: 'eHSManagement'});
+				}else{
+
+				}
+			});
+			this.fullscreenLoading = false;
+		}
+	}
+}
+</script>
+
+<style>
+	.Ehsbox{margin-top:26px;}
+	.uploadtext{float: left;margin-right: 20px;font-size: 14px;}
+	.uploadtxt .el-upload-dragger{border:none;}
+	.fileList .el-upload-list__item {
+    margin-top: 10px;
+    margin-left: 65px;
+    padding: 10px;
+   
+}
+.fltxt{float :left;display: inline-block;}
+.frtxt{float: right; text-align: right; margin-bottom: 10px;}
+.el-table .cell{font-family: "Microsoft YaHei"}
+.el-table th{background: #f2f7fb;}
+.productInfo{font-size: 14px;margin-bottom: 10px;}
+.productInfo .el-icon-info{font-size: 18px;color: #269ddd;margin-right: 10px;}
+.productInfo h5{font-family: "Microsoft YaHei"}
+.box-card{border:none;}
+.el-table .cell{font-family: "Microsoft YaHei"!important;white-space: pre-wrap !important;font-size:12px; width: 100%;}
+/*.itemRecord .cell{white-space: pre-wrap !important;font-family: "Microsoft YaHei",font-size:12px; width: 100%;}*/
+.show{display: none;}
+
+</style>

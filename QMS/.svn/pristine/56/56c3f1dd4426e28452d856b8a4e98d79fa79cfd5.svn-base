@@ -1,0 +1,11 @@
+package com.unind.qms.web.supplier.dao;
+
+import com.unind.qms.web.supplier.entity.SupplierPromote;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.CrudRepository;
+
+/**
+ * @author Shen
+ */
+public interface SupplierPromoteDao extends CrudRepository<SupplierPromote, Long>, JpaSpecificationExecutor<SupplierPromote> {
+}

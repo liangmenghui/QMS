@@ -1,0 +1,302 @@
+<template>
+    <div>
+      <div>
+        <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery"   inline>
+                    <Form-item >
+                        <Input v-model="formQuery.itemNo" placeholder="请输入物料号" style="width:200px"></Input>
+                    </Form-item>
+                    <Form-item >
+                        <Input v-model="formQuery.customerCode" placeholder="请输入客户编号" style="width:200px"></Input>
+                    </Form-item>
+                    <Form-item >
+                        <Input v-model="formQuery.customerItemNo" placeholder="请输入客户料号" style="width:200px"></Input>
+                    </Form-item>
+                    <Form-item >
+                        <Button type="primary" @click="handleSubmit()">查 询</Button>
+                    </Form-item> 
+                    <Form-item v-if="menuData.perms.ADD">
+                        <Button type="primary" @click="showAddPalletDialog()">新 增</Button>
+                    </Form-item> 
+                </Form>
+            </i-col>
+        </Row>  
+      </div>
+        <Row>
+            <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns"   stripe style="height:auto;"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" placement="top" :current="1" @on-change="changePage"  @on-page-size-change="chageSize" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination"  show-total show-elevator show-sizer ></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+        <Modal v-model="dialog.modal_dialog" :mask-closable="false" :closable="false" title="" >
+                <div slot="footer">
+                    <Button type="text" size="large" @click="editPalletCancel()">取消</Button>
+                    <Button type="primary" size="large" @click="saveEditPallet(dialog.formItem)">确定</Button>
+                </div>
+                <Form :model="dialog.formItem" :rules="dialog.ruleForm" :label-width="100" ref= "dialog.formItem">
+                    <Input v-model="dialog.formItem.id" type="hidden"></Input>
+                    <Form-item label="物料编码" prop="itemNo">
+                        <Input v-model="dialog.formItem.itemNo" :disabled="itemNoDisabled" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="客户编码" prop="customerCode">
+                        <Input v-model="dialog.formItem.customerCode" :disabled="customerCodeDisabled" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="客户料号" prop="customerItemNo">
+                        <Input v-model="dialog.formItem.customerItemNo" :disabled="customerItemNoDisabled" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="数量(/托)" prop="bsBoxSize">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsBoxSize" placeholder="请输入"></Input-number>
+                    </Form-item>
+                    <Form-item label="长(cm)" prop="bsLength">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsLength" placeholder="请输入"></Input-number>
+                    </Form-item>
+                    <Form-item label="宽(cm)" prop="bsWidth">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsWidth"  placeholder="请输入"></Input-number>
+                    </Form-item>
+                    <Form-item label="高(cm)" prop="bsHeight">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsHeight"  placeholder="请输入"></Input-number>
+                    </Form-item>
+                </Form>
+        </Modal>
+   </div>
+</template>
+
+<script>
+import {mapState} from 'vuex';
+export default {
+    created(){
+      this.getData();
+    },
+    computed:{
+        ...mapState({
+            menuData:state=>state.menuData  
+        })
+    },
+    data () {
+        return {
+            itemNoDisabled:false,
+            customerCodeDisabled:false,
+            customerItemNoDisabled:false,
+            formQuery:{
+                itemNo:'',
+                customerItemNo:'',
+                customerCode:''
+            },
+            dialog: {
+                ruleForm: {
+                    itemNo: [
+                            { required: true, message: '请填写物料编码', trigger: 'blur' }
+                    ],
+                    customerCode: [
+                        { required: true, message: '请填写客户编码', trigger: 'blur' }
+                    ],
+                    customerItemNo: [
+                        { required: true, message: '请填写客户料号', trigger: 'blur' }
+                    ]
+                },
+                modal_dialog: false,
+                formItem:{
+                    bsBoxSize:0,
+                    bsLength:0,
+                    bsWidth:0,
+                    bsHeight:0
+                },
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:14,
+                },
+                pagination: [14, 50, 100],
+                data: {rows:[],total:0,rows1:[]},
+                columns: [
+                   {
+                        title: '物料编号',
+                        key: 'itemNo'
+                    },
+                    {
+                        title: '客户编码',
+                        key: 'customerCode'
+                    },
+                    {
+                        title: '客户料号',
+                        key: 'customerItemNo'
+                    },
+                    {
+                        title: '数量(/托)',
+                        key: 'bsBoxSize'
+                    },
+                    {
+                        title: '长(cm)',
+                        key: 'bsLength'
+                    },
+                    {
+                        title: '宽(cm)',
+                        key: 'bsWidth'
+                    },
+                    {
+                        title: '高(cm)',
+                        key: 'bsHeight'
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let buttons = [];
+                            if (this.menuData.perms.EDIT) {
+                                buttons.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditPalletDialog(params)
+                                        }
+                                    }
+                                }, '编辑'));
+                            }
+                            if (this.menuData.perms.DELETE) {
+                                buttons.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.deletePallet(params)
+                                        }
+                                    }
+                                }, '删除'));
+                            }
+                            return h('div', buttons);
+                        }
+                    }
+                ]
+            },
+            }
+    },
+    
+    methods:{
+        //获取列表
+        getData(){
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+            this.api.pmp.getPallet(this.formQuery).then((res) =>{
+                if(res.result) {
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        //查 询
+        handleSubmit(){
+            this.getData();
+        },
+        //换页
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.getData();
+        },
+        //改变每页显示数据
+        chageSize(pageSize){    
+            this.datagrid.queryParams.rows = pageSize;
+            this.getData();
+        },
+        showAddPalletDialog(params){
+            this.dialog.modal_dialog = true;
+            this.itemNoDisabled = false;
+            this.customerCodeDisabled = false;
+            this.customerItemNoDisabled = false;
+            this.dialog.formItem.id = null;
+            this.$refs['dialog.formItem'].resetFields();
+        },
+        showEditPalletDialog(params){
+            this.dialog.modal_dialog = true;
+            this.itemNoDisabled = true;
+            this.customerCodeDisabled = true;
+            this.customerItemNoDisabled = true;
+            let r = params.row;
+            this.dialog.formItem = {
+                id:r.id,
+                itemNo:r.itemNo,
+                customerCode:r.customerCode,
+                customerItemNo:r.customerItemNo,
+                bsBoxSize:r.bsBoxSize,
+                bsLength:r.bsLength,
+                bsWidth:r.bsWidth,
+                bsHeight:r.bsHeight
+            }
+        },
+        editPalletCancel(){
+            this.dialog.modal_dialog = false;
+            this.itemNoDisabled = false;
+            this.customerCodeDisabled = false;
+            this.customerItemNoDisabled = false;
+            this.$refs['dialog.formItem'].resetFields();
+        },
+        deletePallet(params) {
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.pmp.deletePallet({id:params.row.id}).then((res)=>{
+                        if(res.result) {
+                            this.datagrid.data = res.data;
+                            this.$Message.info('删除成功');
+                            this.$Modal.remove();
+                        }else {
+                            this.$Message.error(res.msg);
+                        }
+                    });
+                }
+            });
+        },
+        saveEditPallet(params){
+            this.$refs['dialog.formItem'].validate((valid) => {
+                if (valid) {
+                     if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                        // //console.log("编辑1");
+                        this.api.pmp.editPallet(params).then((res) =>{
+                            // //console.log(res);
+                            if(res.result){
+                                this.dialog.modal_dialog = false;
+                                this.$refs['dialog.formItem'].resetFields();
+                                this.datagrid.data = this.getData();
+                            }else{
+                                this.$Message.info(res.msg);
+                            }
+                        });
+                     }else{
+                         // //console.log("增加1");
+                        this.api.pmp.addPallet(params).then((res) =>{
+                            // //console.log(res);
+                            if(res.result){
+                                this.dialog.modal_dialog = false;
+                                this.$refs['dialog.formItem'].resetFields();
+                                this.datagrid.data = this.getData();
+                            }else{
+                                this.$Message.info(res.msg);
+                            }
+                        });
+                     }
+                } else {
+                    this.$Message.error('表单验证失败!');
+                }
+            })
+        }
+ },
+}
+</script>

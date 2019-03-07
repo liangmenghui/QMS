@@ -1,0 +1,81 @@
+<template>
+    <div v-if="!showRooterView">
+   
+    <div style="border: 1px solid #DDDDDD;width: 95%;margin-left: 2%;margin-top: 30px;">
+    <el-table
+    :data="tableData"
+    style="width: 100%">
+    <el-table-column type="expand" style="width: 100%;">
+      <template slot-scope="props">
+        <el-form label-position="left" inline class="demo-table-expand">
+            <el-button type="primary" style="width: 13%;" @click="to('feedback/details',props.row.id)">详情</el-button>
+            <el-button type="primary" style="width: 13%;" @click="to('feedback/handle',props.row.id)">处理</el-button>
+        </el-form>
+      </template>
+    </el-table-column>
+    <el-table-column
+      label="编号"
+      prop="id">
+    </el-table-column>
+    <el-table-column
+      label="产品"
+      prop="bsPrName">
+    </el-table-column>
+    <el-table-column
+      label="供应商"
+      prop="bsSuppCompanyName">
+    </el-table-column>
+    <el-table-column
+      label="时间"
+      prop="bsCreatedTime">
+    </el-table-column>
+    <el-table-column
+      label="类型"
+      prop="bsType">
+    </el-table-column>
+    <el-table-column
+      label="状态"
+      prop="bsType">
+    </el-table-column>
+  </el-table>
+  </div>
+  <!-- <div style="margin-top: 100px;margin-bottom: 500px;">
+    <center><el-button type="primary" style="width: 13%;">提交客诉</el-button></center>
+  </div> -->
+  </div>
+
+  <div v-else-if="showRooterView">
+    <router-view></router-view>
+  </div>
+</template>
+
+<script>
+    export default {
+    data() {
+        return {
+            showRooterView: false,
+            tableData: [],
+        }
+    },
+    created(){
+        this.showRooterView = this.$route.matched.length>2;
+        this.getData();
+    },
+    beforeUpdate:function(){
+        this.showRooterView = this.$route.matched.length>2;
+    },
+    methods: {
+        getData(){
+            this.api.feedback.getlist().then((res) => {
+                this.tableData = res.data.rows;
+            });
+        },
+        to(path,feedbackId){
+            this.$router.push({path:path,query:{feedbackId:feedbackId}});
+        }
+    }
+  }
+</script>
+
+<style>
+</style>

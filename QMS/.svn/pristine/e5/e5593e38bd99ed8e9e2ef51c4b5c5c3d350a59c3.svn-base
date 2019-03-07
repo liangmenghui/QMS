@@ -1,0 +1,116 @@
+package com.unind.qms.web.product.service.internal;
+
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.qms.web.product.dao.ProductExtraDao;
+import com.unind.qms.web.product.entity.ProductExtra;
+import com.unind.qms.web.product.service.ProductExtraService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class ProductExtraImpl extends BaseOprService implements ProductExtraService {
+    @Autowired
+    private ProductExtraDao productExtraDao;
+
+    @Override
+    @Transactional
+    public ApiResponseResult add(ProductExtra productExtra) throws BusinessException {
+        if(productExtra.getBsPrId() == null){
+            return ApiResponseResult.failure("产品ID不能为空");
+        }
+        int counts = productExtraDao.countByBsPrIdAndAndBsIsDel(productExtra.getBsPrId(), BooleanStateEnum.FALSE.intValue());
+        if(counts > 0){
+            return ApiResponseResult.failure("产品已存在");
+        }
+        productExtra.setBsCreatedTime(new Date());
+        productExtraDao.save(productExtra);
+        return ApiResponseResult.success("新增成功！").data(productExtra);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult edit(ProductExtra productExtra) throws BusinessException {
+        if(productExtra.getId() == null){
+            return ApiResponseResult.failure("记录ID不能为空");
+        }
+        if(productExtra.getBsPrId() == null){
+            return ApiResponseResult.failure("产品ID不能为空");
+        }
+        ProductExtra o = productExtraDao.findOne(productExtra.getId());
+        if(o == null){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+
+        o.setBsProcessRecordId(productExtra.getBsProcessRecordId());
+        o.setBsProductRecordId(productExtra.getBsProductRecordId());
+        o.setBsRiskLevel(productExtra.getBsRiskLevel());
+        o.setBsRiskScore(productExtra.getBsRiskScore());
+        o.setBsRiskManual(productExtra.getBsRiskManual());
+        o.setBsIsApprove(productExtra.getBsIsApprove());
+        o.setBsPrValue(productExtra.getBsPrValue());
+        o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+        o.setBsModifiedTime(new Date());
+        productExtraDao.save(o);
+        return ApiResponseResult.success("修改成功！").data(o);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponseResult delete(Long id) throws BusinessException {
+        ProductExtra o = productExtraDao.findOne(id);
+        if(o == null){
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        if (o.getId() <= 0) {
+            return ApiResponseResult.failure("没有操作权限");
+        }
+        o.setBsIsDel(BooleanStateEnum.TRUE.intValue());
+        productExtraDao.save(o);
+        return  ApiResponseResult.success("删除成功！");
+    }
+
+    /**
+     * 获取产品详情列表
+     * @param keyWord
+     * @param id
+     * @param bsIsApprove
+     * @param bsRiskLevel
+     * @param pageRequest
+     * @return
+     * @throws BusinessException
+     */
+    @Override
+    @Transactional
+    public ApiResponseResult getlist(Long id, Integer bsIsApprove, Integer bsRiskLevel, PageRequest pageRequest) throws BusinessException {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+        if(null != id){
+            filters.add(new SearchFilter("id", SearchFilter.Operator.EQ, id));
+        }
+        if(bsIsApprove != null){
+            filters.add(new SearchFilter("bsIsApprove", SearchFilter.Operator.EQ, bsIsApprove));
+        }
+        if(bsRiskLevel != null){
+            filters.add(new SearchFilter("bsRiskLevel", SearchFilter.Operator.EQ, bsRiskLevel));
+        }
+        Specifications<ProductExtra> spec = Specifications.where(super.and(filters, ProductExtra.class));
+        Page<ProductExtra> page = productExtraDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+}

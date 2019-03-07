@@ -1,0 +1,196 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-04-02
+    	描述：试产场地审核
+    -->
+	<div class="layout-content" style="height:100%;background-color: white;">
+		<div style="height: 60px;font-size: 16px;"><center><h4>{{approvedItemRecord.itemsBy.bsName}}</h4></center></div>
+		<el-card class="box-card" shadow="hover">
+			<div v-if="approvedItemRecord.bsPrId">
+				<Col :md="8" class="productInfo"><h5 style="font-size: 14px;"><i class="el-icon-info"></i>{{$t('product.name')}}:{{productInfo.bsPrName}}</h5></Col> 
+				<Col :md="8" class="productInfo"><h5 style="font-size: 14px;">{{$t('product.code')}}:</b> {{productInfo.bsPrCode}}</h5></Col>
+				<!--  <Col :md="8">
+					<div class="frtxt" style="margin-top:-10px;" v-if="!perms.edit">
+						<Tag type="dot"  color="blue">{{$t('approved.statusLabel')}} : {{$t("approved.status["+approvedItemRecord.bsStatus+"]")}}</Tag>
+					</div>
+				</Col>  -->
+			</div>
+			
+			<div v-if="approvedItemRecord.bsSuppId">
+				<Col :md="8" class="productInfo"><h5 style="font-size: 14px;"><i class="el-icon-info"></i>{{$t('product.SuppChieseName')}}: {{supplierInfo.bsSuppChieseName}}</h5></Col> 
+				<Col :md="8" class="productInfo"><h5 style="font-size: 14px;">{{$t('product.SuppCode')}}: {{supplierInfo.bsSuppCode}}</h5></Col>            
+			</div>
+        
+			<div>
+				<el-button type="primary" style="padding: 5px 5px;float: right;font-size:12px;" @click="showBsStandard()">
+					<i class="el-icon-d-arrow-right" v-if="show"></i><i class="el-icon-d-arrow-left" v-if="!show"></i>&nbsp;&nbsp;评分标准
+				</el-button>
+			
+				<el-table border :data="terms" class="itemRecord">
+					<el-table-column prop="approvedTerms.bsNo" :label="$t('New-audit.Article-number')" width="50" align="center" fixed>
+					</el-table-column>
+					<el-table-column prop="approvedTerms.bsContent"  width="320" :label="$t('New-audit.Terms-conditions')" v-if="$i18n.locale=='zh-CN'" align="center">
+					</el-table-column>
+					<el-table-column prop="approvedTerms.bsContentEn"  width="320" :label="$t('New-audit.Terms-conditions')" v-if="$i18n.locale=='en-US'" align="center">
+					</el-table-column>
+					<el-table-column :label="$t('New-audit.Auditscore')" width='120' align="center">
+						<template slot-scope="scope" >
+							<el-select v-model="scope.row.bsScore"  :placeholder="$t('choose')" :disabled="!perms.edit&&!perms.verify">
+								<el-option v-for="item in scoreOptions" :value="item.value" :key="item.value" :label="item.label"></el-option> 
+							</el-select>
+						</template>
+					</el-table-column> 
+
+					<el-table-column :label="$t('New-audit.AuditInstructions')" width='250' align="center">
+						<template slot-scope="scope">
+							<el-input type="textarea" :autosize="{ minRows: 5, maxRows: 5}"" v-model="scope.row.bsDesc" :readonly="!perms.edit&&!perms.verify"></el-input>			        
+						</template>
+					</el-table-column>
+					<el-table-column :label="$t('New-audit.AuditFile')"  align="center">
+						<template slot-scope="scope" >
+							<itemrecordupload :fileList="scope.row.fileSet" :canUpload="perms.edit" :bsTermsScoreId="scope.row.id"></itemrecordupload>
+						</template>
+					</el-table-column>
+					
+					<el-table-column prop="approvedTerms.bsStandard" :label="$t('New-audit.Grading')" v-if="$i18n.locale=='zh-CN'&&show" align="center">
+					</el-table-column>
+					<el-table-column prop="approvedTerms.bsStandardEn" :label="$t('New-audit.Grading')" v-if="$i18n.locale=='en-US'&&show" align="center">
+					</el-table-column>
+
+					<!--	<template>
+						<el-table-column prop="approvedTerms.bsStandard" :label="$t('New-audit.Grading')" v-if="$i18n.locale=='zh-CN'" class="show">
+						</el-table-column>  
+						<el-table-column prop="approvedTerms.bsStandardEn" :label="$t('New-audit.Grading')"  v-if="$i18n.locale=='en-US'">
+					</el-table-column>
+					</template>  -->  
+				</el-table>	
+			</div>	
+		</el-card>
+
+	<!-- 	<el-card shadow="hover" style="margin-top:30px;">
+			<div style="margin:30px;" class="uploadtxt">
+			<h6 class="uploadtext" >{{$t('upcoming.UploadAttachment')}}</h6>
+			<div style="padding:0 15px;" class="fileList">
+				<upload :fileList="approvedItemRecord.fileSet" :canUpload="perms.edit"></upload>
+			</div>
+		</div>
+		</el-card> -->
+		<approvedResultRecord :approvedData="approvedItemRecord"></approvedResultRecord>
+		<div style="margin-top: 20px;margin-bottom: 50px;">
+			<ApprovedAction type="audits" :data="terms" :approvedItemRecord="approvedItemRecord" @updateTermsRecord="updateTermsRecord" :perms="perms"></ApprovedAction>
+		</div>
+
+		
+	</div>
+</template>
+
+<script>
+import itemrecordupload from '../../components/itemrecordupload.vue';
+import ApprovedAction from '../../components/approvedAction.vue';
+import Cookies from 'js-cookie';
+import approvedResultRecord from '../../components/approvedResultRecord.vue';
+export default {
+	data() {
+		return {
+			AuditFailedModal:false,
+			AuditFailedForm:{},
+			ApprovedForm:{},
+			audits:{},
+			approvedItemData: {
+				itemsRecordId: 0,
+				itemsId: 0,
+			},
+            terms: [],
+            dialogImageUrl: '',
+            dialogVisible: false,
+            approvedItemRecord:{},
+            productInfo:{},
+            supplierInfo:{},
+            perms: {
+                edit: false,
+                verify: false
+            },
+            scoreOptions:[
+			{label:'请选择',value:-2},
+            {label:'5',value:5},
+            {label:'4',value:4},
+            {label:'3',value:3},
+            {label:'2',value:2},
+            {label:'1',value:1},
+            {label:'0',value:0},
+            {label:'NA',value:-1}
+            ],
+			show:false
+        }
+	},
+	created(){
+		this.approvedItemRecord = this.$store.getters.getItemRecordData;
+        if(this.approvedItemRecord.bsSuppId) this.supplierInfo = this.$store.getters.getSupplierData;
+        else this.productInfo = this.$store.getters.getProductData;
+		//if(this.terms.fileSet == undefined) this.terms.fileSet = [];
+		this.approvedItemData = this.$route.query;
+		this.getData();
+        var user = Cookies.get('user');
+        this.perms.edit = 
+			this.approvedItemRecord.users[this.approvedItemRecord.bsStep-1] == user &&
+            this.approvedItemRecord.bsStatus == 1;
+        this.perms.verify = this.$Util.hasPerm('VERIFY');
+	},
+	beforeUpdate:function(){
+		this.showRooterView = this.$route.matched.length>3;
+	},
+    watch: {
+        '$route' (to, from) {
+            this.showRooterView = to.matched.length>3;
+        }
+    },
+	components: {          
+            itemrecordupload,
+            ApprovedAction,
+            approvedResultRecord
+        },
+	methods: {
+		getData() {
+			this.api.Audit.getTermsScore({bsItemsRecordId:this.approvedItemRecord.id}).then((res) => {
+            	this.terms = res.data.rows;
+           	});
+		},
+        updateTermsRecord(records) {
+            this.getData();
+        },
+        formatter(){
+
+        },
+		showBsStandard() {
+			if(this.show){
+				this.show = false;
+			}else this.show = true;
+		}
+	}
+}
+</script>
+
+<style>
+	.layout-content{padding:20px;background: #fff}
+	.uploadtext{float: left;margin-right: 20px;font-size: 14px;}
+	.uploadtxt .el-upload-dragger{border:none;}
+	.fileList .el-upload-list__item {
+    margin-top: 10px;
+    margin-left: 65px;
+    padding: 10px;
+   
+}
+.fltxt{float :left;display: inline-block;}
+.frtxt{float: right; text-align: right; margin-bottom: 10px;}
+.el-table .cell{font-family: "Microsoft YaHei"}
+.el-table th{background: #f2f7fb;}
+.productInfo{font-size: 14px;margin-bottom: 10px;}
+.productInfo .el-icon-info{font-size: 18px;color: #269ddd;margin-right: 10px;}
+.productInfo h5{font-family: "Microsoft YaHei"}
+.box-card{border:none;}
+.el-table .cell{font-family: "Microsoft YaHei"!important;white-space: pre-wrap !important;font-size:12px; width: 100%;}
+/*.itemRecord .cell{white-space: pre-wrap !important;font-family: "Microsoft YaHei",font-size:12px; width: 100%;}*/
+.show{display: none;}
+
+</style>

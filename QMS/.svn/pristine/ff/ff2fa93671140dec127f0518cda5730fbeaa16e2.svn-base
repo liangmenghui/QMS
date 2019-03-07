@@ -1,0 +1,393 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-05-22
+    	描述：退货处理
+    -->
+    <div>
+    	<Row :style="{marginBottom: '20px'}">
+			<center><h4 style="font-size: 16px;">生成退款单</h4></center>
+		</Row>
+		<Row :style="{marginBottom: '20px'}">
+			<Card>
+				<p slot="title">
+                    <Icon type="person" style="color: #ff9900;"></Icon>
+                    &nbsp;基本信息
+               	</p>
+               	<div>
+               		<div id="basic-body1">
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">供货公司：</div>
+               				<div class="basic-body-input">
+               					<el-autocomplete style="width: 200px;"
+                                v-model="form.bsSuppCompanyName"
+                                :fetch-suggestions="querySupplier"
+                                @select="handleSelectSupplier">
+                                </el-autocomplete>
+               				</div>
+               			</div>
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">扣款单号：</div>
+               				<div class="basic-body-input">
+               					<el-input></el-input>
+               				</div>
+               			</div>
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">扣款日期：</div>
+               				<div class="basic-body-input">
+                                <DatePicker size="large" type="date" placeholder="选择日期" style="width: 200px"></DatePicker>
+               				</div>
+               			</div>
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">质量事故发生日期：</div>
+               				<div class="basic-body-input">
+               					<DatePicker size="large" type="date" placeholder="选择日期" style="width: 200px"></DatePicker>
+               				</div>
+               			</div>
+               		</div>
+               		<div id="basic-body2">
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">通知人：</div>
+               				<div class="basic-body-input">
+               					<el-input></el-input>
+               				</div>
+               			</div>
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">邮箱：</div>
+               				<div class="basic-body-input">
+               					<el-input></el-input>
+               				</div>
+               			</div>
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">电话：</div>
+               				<div class="basic-body-input">
+               					<el-input></el-input>
+               				</div>
+               			</div>
+               		</div>
+               		<div id="basic-body3">
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">客户：</div>
+               				<div class="basic-body-input">
+               					<el-input></el-input>
+               				</div>
+               			</div>
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">邮箱：</div>
+               				<div class="basic-body-input">
+               					<el-input></el-input>
+               				</div>
+               			</div>
+               			<div class="basic-body-div">
+               				<div class="basic-body-text">电话：</div>
+               				<div class="basic-body-input">
+               					<el-input></el-input>
+               				</div>
+               			</div>
+               		</div>
+               	</div>
+            </Card>
+        </Row>
+        <Row :style="{marginBottom: '20px'}">
+			<Card>
+				<p slot="title">
+                    <Icon type="person" style="color: #ff9900;"></Icon>
+                    &nbsp;退款信息
+               	</p>
+               	<div id="refund-body">
+               		<el-table :data="refunddata" style="width: 100%;">
+      					<el-table-column prop="id" label="序号" align="center">
+		    			</el-table-column>
+		    			<el-table-column prop="bsReportNo" label="客户报告号">
+		    			</el-table-column>
+		    			<el-table-column prop="bsPrId" label="产品编号">
+		    			</el-table-column>
+		    			<el-table-column prop="bsNum" label="数量">
+		    			</el-table-column>
+		    			<el-table-column prop="bsPrice" label="单价">
+		    			</el-table-column>
+		    			<el-table-column prop="bsSum" label="扣款金额">
+		    			</el-table-column>
+		    			<el-table-column prop="bsReason" label="扣款原因">
+		    			</el-table-column>
+   						<el-table-column :label="$t('Button.operating')">
+			    			<template slot-scope="scope">
+			        			<el-button size="mini">{{$t('Button.Delete')}}</el-button>			        
+			    			</template>
+   		 				</el-table-column>
+   					</el-table>
+                    <div style="margin-top: 20px;">
+   					    <center>           
+            			     <el-button style="padding: 5px 10px;" type="primary" icon="el-icon-plus" @click="showrefundModal()">
+            				    添加退款项
+            			     </el-button> 
+            		    </center>
+                    </div>
+            		<Modal v-model="refundModal" title="退款信息" @on-ok="addrefundok" @on-cancel="cancel" >
+            			<div class="refund-body-div">
+            				<div class="refund-body-text">产品：</div>
+            				<div class="refund-body-input">
+            					<el-autocomplete style="width: 250px;"
+                                v-model="form.bsPrName"
+                                :fetch-suggestions="queryProduct"
+                                @select="handleSelectProduct">
+                                </el-autocomplete>
+  							</div>
+  						</div>
+  						<div class="refund-body-div">
+            				<div class="refund-body-text">产品编号：</div>
+            				<div class="refund-body-input">
+            					<el-input v-model="form.bsPrCode"></el-input>
+  							</div>
+  						</div>
+  						<div class="refund-body-div">
+            				<div class="refund-body-text">数量：</div>
+            				<div class="refund-body-input">
+            					<el-input v-model="form.bsNum"></el-input>
+  							</div>
+  						</div>
+  						<div class="refund-body-div">
+            				<div class="refund-body-text">单价：</div>
+            				<div class="refund-body-input">
+            					<el-input v-model="form.bsPrice"></el-input>
+  							</div>
+  						</div>
+  						<div class="refund-body-div">
+            				<div class="refund-body-text">扣款金额：</div>
+            				<div class="refund-body-input">
+            					<el-input v-model="form.bsSum"></el-input>
+  							</div>
+  						</div>
+  						<div style="width: 380px;margin-left: 60px;font-size: 14px;">
+            				<div>扣款原因：</div>
+            				<div>
+            					<el-input type="textarea" v-model="form.bsReason"></el-input>
+  							</div>
+  						</div>
+        			</Modal>
+        			<div style="margin-top: 20px;margin-bottom: 10px;">
+                        <Alert show-icon>尊敬的供货公司，下述情况发生时，均将产生质量扣款：</Alert>
+    					<Checkbox>货物拒绝或报废</Checkbox>
+    					<Checkbox>货物紧急替换</Checkbox>
+    					<Checkbox>客户现场分选货物</Checkbox>
+    					<Checkbox>国外仓库分选货物</Checkbox>
+    					<Checkbox>标签错误</Checkbox>
+    					<Checkbox>客户让步接受差异</Checkbox>
+    					<Checkbox>空运费</Checkbox>
+    					<Checkbox>返工</Checkbox>
+    					<Checkbox>客户罚款</Checkbox>
+    					<Checkbox>货物退回供应商</Checkbox>
+    					<Checkbox>货物参杂质</Checkbox>
+    					<Checkbox>客户生产线断货</Checkbox>
+    					<Checkbox>箱内货品数量不符</Checkbox>
+    					<Checkbox>其他可能的费用(附件)</Checkbox>
+					</div>
+               	</div>
+            </Card>
+        </Row>
+        <Row :style="{marginBottom: '20px'}">
+			<Card>
+				<p slot="title">
+                    <Icon type="person" style="color: #ff9900;"></Icon>
+                    &nbsp;审批信息
+               	</p>
+                <div>
+                    <el-table :data="refunddata" style="width: 100%;">
+                        <el-table-column prop="" label="部门" align="center">
+                        </el-table-column>
+                        <el-table-column prop="" label="名称">
+                        </el-table-column>
+                        <el-table-column prop="" label="职位">
+                        </el-table-column>
+                        <el-table-column prop="" label="日期">
+                        </el-table-column>
+                        <el-table-column :label="$t('Button.operating')">
+                            <template slot-scope="scope">
+                                <el-button size="mini">{{$t('Button.Delete')}}</el-button>
+                                <el-button size="mini">{{$t('Button.Delete')}}</el-button>                   
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div style="margin-top: 20px;margin-bottom: 20px;">
+                        <center>           
+                            <el-button style="padding: 5px 10px;" type="primary" icon="el-icon-plus" @click="showApproverModal()">
+                            添加审批人
+                            </el-button> 
+                        </center>
+                    </div>
+                    <Modal v-model="approverModal" title="审批人信息" @on-ok="ok" @on-cancel="cancel" >
+                        <div class="refund-body-div">
+                            <div class="refund-body-text">审批人：</div>
+                            <div class="refund-body-input">
+                                <Select size="large" v-model="productNames" style="width: 250px;display: inline-block;" placeholder="选择">
+                                    <Option v-for="item in productNames" :key="item.value" :label="item.label" :value="item.value">
+                                    </Option>
+                                </Select>
+                            </div>
+                        </div>
+                        <div class="refund-body-div">
+                            <div class="refund-body-text">名称：</div>
+                            <div class="refund-body-input">
+                                <el-input></el-input>
+                            </div>
+                        </div>
+                        <div class="refund-body-div">
+                            <div class="refund-body-text">职位：</div>
+                            <div class="refund-body-input">
+                                <el-input></el-input>
+                            </div>
+                        </div>
+                    </Modal>
+                    <Alert show-icon>质量扣款超过10,000人名币需要商务部经理确认</Alert>
+                </div>
+            </Card>
+        </Row>
+    </div>
+</template>
+
+<script>
+export default {
+    data() {
+      return {
+        refunddata: [],
+        productData:[],
+        productNames:[],
+        form: {bsStatus:1},
+        suppliers:[],
+        products:[],
+        refundModal:false,
+        approverModal:false,
+      }
+    },
+    created(){
+        this.getData();
+    }, 
+    methods:{
+        getData(keyWord) {
+            this.api.supplierinfo.getlist({page:1,rows:100,keyWord:keyWord}).then((res) => {
+                this.suppliers = res.data.rows.map(function (row) {
+                    row.value = row.bsSuppChieseName;
+                    return row;
+                });
+            });
+            this.api.feedbackRefund.getlist().then((res) => {
+                this.refunddata = res.data.rows;
+            });
+        },
+        getProductData(suppCode){
+            this.api.productinfo.getlist({suppCode:suppCode}).then((res) => {
+                this.products = res.data.rows.map(function (row) {
+                    row.value = row.bsPrName;
+                    return row;
+                });
+            });
+        },
+        queryProduct(queryString, cb) {
+            var products = this.products;
+            var results = queryString ? products.filter(this.nameFilter(queryString)) : products;
+            cb(results);
+        },
+        querySupplier(queryString,cb) {
+            this.api.supplierinfo.getlist({page:1,rows:100,keyWord:queryString}).then((res) => {
+                this.suppliers = res.data.rows.map(function (row) {
+                    row.value = row.bsSuppChieseName;
+                    return row;
+                });
+                cb(this.suppliers);
+            });
+        },
+        supplierFilter(queryString) {
+            return (model) => {
+                return (model.bsSuppChieseName.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+            };
+        },
+        productFileter(queryString) {
+            return (model) => {
+                return (model.bsPrName.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+            };
+        },
+        handleSelectSupplier(item) {
+            this.form.bsSuppId = item.id;
+            this.form.bsSuppCompanyCode = item.bsSuppCode;
+            this.getProductData(item.bsSuppCode);
+        },
+        handleSelectProduct(item) {
+            this.form.bsPrId = item.id;
+            this.form.bsPrName = item.bsPrName;
+            this.form.bsPrCode = item.bsPrCode;
+        },
+    	showrefundModal(){
+    		this.refundModal=true;
+    	},
+        showApproverModal(){
+            this.approverModal=true;
+        },
+        addrefundok(){
+            if(this.form.id == undefined) {
+                this.api.feedback.add(this.form).then((res) => {
+                    this.form.id = res.data.id;
+                    // debugger
+                    // console.log(this.form.id);
+                });
+                this.api.feedbackRefund.add(this.form).then((res) => {
+                    debugger
+                    console.log(this.form.id);
+                });
+            }           
+        },
+        ok(){},
+        cancel(){},
+	}
+  }
+</script>
+
+<style>
+	#basic-body1:after{
+		content:".";
+		visibility:hidden;
+		display:block; 
+		clear:both;
+	}
+	#basic-body1 .basic-body-div{
+		float: left;height: 50px;
+	}
+	#basic-body1 .basic-body-text{
+		float: left;margin-top: 10px;width: auto;margin-left:20px;font-size: 14px;text-align: right;
+	}
+	#basic-body1 .basic-body-input{
+		float: left;width: 200px;
+	}
+	#basic-body2:after{
+		content:".";
+		visibility:hidden;
+		display:block; 
+		clear:both;
+	}
+	#basic-body3:after{
+		content:".";
+		visibility:hidden;
+		display:block; 
+		clear:both;
+	}
+	.basic-body-div{
+		float: left;height: 50px;
+	}
+	.basic-body-text{
+		float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;
+	}
+	.basic-body-input{
+		float: left;width: 250px;
+	}
+	.refund-body-div{
+		height: 50px;
+	}
+	.refund-body-text{
+		float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;
+	}
+	.refund-body-input{
+		float: left;width: 250px;
+	}
+    #refund-body .ivu-checkbox-wrapper{
+        width: 160px;margin-top: 10px;margin-left: 10px;font-size: 14px;
+    } 
+</style>

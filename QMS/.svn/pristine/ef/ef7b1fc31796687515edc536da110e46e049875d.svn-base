@@ -1,0 +1,265 @@
+<template>
+    <div>
+        <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                    <Form-item prop="bsCode">
+                        <Input type="text" v-model="formQuery.bsCode" placeholder="用户帐号" />
+                    </Form-item>
+                    <Form-item prop="bsName">
+                        <Input type="text" v-model="formQuery.bsName" placeholder="用户姓名" />
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="handleSubmit('formQuery')">查 询</Button>
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="showAddDialog()">新 增</Button>
+                    </Form-item>
+                </Form>
+            </i-col>
+        </Row>
+        <Row>
+            <i-col span="4">
+                <Tree ref="tree" :data="tree.data" class="layout-menu-left" style="height:500px;" @on-select-change="selectNode" ></Tree>
+            </i-col>
+            <i-col span="20">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="height:500px;"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+        <Modal v-model="dialog.modal_dialog" title="" @on-ok="ok" @on-cancel="cancel" >
+            <p>
+                <Form :model="dialog.formItem" :ref="dialog.ruleForm" :rules="dialog.ruleForm" :label-width="80">
+                    <Input v-model="dialog.formItem.id" type="hidden"></Input>
+                    <Input v-model="dialog.formItem.pkGroup" value="-1"  type="hidden"></Input>
+                    <Input v-model="dialog.formItem.pkOrg" value="-1"  type="hidden"></Input>
+                    
+                    <Form-item label="帐号" prop="bsCode">
+                        <Input v-model="dialog.formItem.bsCode" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="姓名" prop="bsName">
+                        <Input v-model="dialog.formItem.bsName" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="手机号" prop="bsMobile">
+                        <Input v-model="dialog.formItem.bsMobile" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="邮箱地址" prop="bsEmail">
+                        <Input v-model="dialog.formItem.bsEmail" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="备注">
+                        <Input v-model="dialog.formItem.bsComment" type="textarea" placeholder="请输入..."></Input>
+                    </Form-item>
+                </Form>
+            </p>
+        </Modal>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            formQuery: {
+                bsCode: '',
+                bsName: ''
+            },
+            tree: {
+                data: [{expand: true, title: '根目录', children:[]}]
+            },
+            dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: {
+                    bsCode: [
+                        { required: true, message: '请填写编码', trigger: 'blur' }
+                    ],
+                    bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ],
+                    bsEnableState: [
+                        { required: true, message: '请选择启用状态', trigger: 'blur' }
+                    ]
+                }
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:25,
+                    pkParent:-1
+                },
+                pagination: [25, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title: '用户帐号',
+                        key: 'bsCode'
+                    },
+                    {
+                        title: '用户姓名',
+                        key: 'bsName'
+                    },
+                    {
+                        title: '创建时间',
+                        key: 'bsCreatedTime'
+                    },
+                    {
+                        title: '更新时间',
+                        key: 'bsModifiedTime'
+                    }
+                ]
+            }
+        }
+    },
+    created(){
+        this.getTree();
+    },
+    methods: {
+        handleSubmit(name) {
+            this.getData();
+        },
+        getData() {
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+            console.log("after===>");
+            console.log(this.formQuery);
+            this.api.userrole.getlist(this.formQuery).then((res) => {
+                console.log("get list===>");
+                console.log(res.data);
+                if(res.result) {
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        reloadData() {
+            this.datagrid.data = this.getData();
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.datagrid.data = this.getData();
+        },
+        edit(params) {
+            console.log(params);
+            this.api.resrce.edit(params.row).then((res)=>{
+                console.log(res)
+                if(res.result) {
+                    //refresh
+                    this.reloadData();
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        delete(params) {
+            console.log(params);
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.resrce.delete({id:params.row.id}).then((res)=>{
+                        console.log(res)
+                        if(res.result) {
+                            //refresh
+                            this.getTree();
+                            this.reloadData();
+                            this.$Message.info('删除成功');
+                            this.$Modal.remove();
+                        }else {
+                            this.$Message.error(res.msg);
+                        }
+                    });
+                }
+            });
+        },
+        showAddDialog() {
+            this.dialog.modal_dialog = true;
+
+            let node = this.$refs["tree"].getSelectedNodes();
+            if(node.length==0) {
+                this.dialog.formItem = {pkParent: -1, parentName: "根目录"};
+            }else {
+                this.dialog.formItem = {pkParent: node[0].id, parentName: node[0].title};
+            }
+            // let configs = Object.assign({okText: "保存", cancelText:"取消", width: "500px"}, config);
+            // this.$Modal.confirm(configs);
+        },
+        showEditDialog(params) {
+            this.dialog.modal_dialog = true;
+            let r = params.row;
+            this.dialog.formItem = {id:r.id,bsCode:r.bsCode, bsName:r.bsName, bsUrl:r.bsUrl, bsIconCls:r.bsIconCls,bsSortNo:r.bsSortNo, bsComment:r.bsComment,bsEnableState:r.bsEnableState};
+
+            let node = this.$refs["tree"].getSelectedNodes();
+            if(node.length==0) {    
+                Object.assign(this.dialog.formItem, {pkParent: -1, parentName: "根目录"});
+            }else {
+                Object.assign(this.dialog.formItem, {pkParent: node[0].id, parentName: node[0].title});
+            }
+            // let configs = Object.assign({okText: "保存", cancelText:"取消", width: "500px"}, config);
+            // this.$Modal.confirm(configs);
+        },
+        ok () {
+            console.log("this.dialog.formItem====>"+typeof(this.dialog.formItem.id));
+            if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                console.log("编辑1");
+                console.log(JSON.stringify(this.dialog.formItem));
+                this.$refs["dialog.ruleForm"].validate((valid) => {
+                    if (valid) {
+                        this.api.resrce.edit(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                //refresh
+                                this.getTree();
+                                this.reloadData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                    }
+                })
+            }else {
+                console.log("新增1");
+                this.$refs["dialog.ruleForm"].validate((valid) => {
+                    if (valid) {
+                        this.api.resrce.add(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                //refresh
+                                this.getTree();
+                                this.reloadData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                    }
+                });
+            }
+        },
+        cancel () {
+            
+        },
+        getTree() {
+            this.api.role.gettree({}).then((res) => {
+                if(res.result) {
+                    console.log(res.data);
+                    this.tree.data = res.data;
+                }
+            });
+        },
+        selectNode(node) {
+            console.log("selected:" + JSON.stringify(node));
+            if(node[0].bsLevel==1) {
+                return;
+            }
+            this.datagrid.queryParams.pkParent = node[0].id;
+            this.datagrid.data = this.getData();
+        },
+        getSelectedNodes() {
+            this.dialog.formItem.pkParent = node[0].id
+            console.log(JSON.stringify(this.dialog.formItem));
+        }
+    }
+}
+</script>

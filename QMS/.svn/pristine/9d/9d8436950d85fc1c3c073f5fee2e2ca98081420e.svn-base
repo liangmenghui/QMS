@@ -1,0 +1,370 @@
+<template>
+    <div class="approvedextrareports">
+       <Card class="InitialReview">
+        <div slot="title" class="title3">
+            <Icon type="pricetag" style="color: #ff9900;"></Icon>
+            &nbsp;{{approvedItemRecord.itemsBy.bsName}}
+            <el-button class="btn" type="primary" plain  size="small" icon="el-icon-warning" @click='exportExcel()' v-if="perms.edit">{{$t('approved.export')}}</el-button>
+        </div >
+           <el-table :data="records" style="width: 100%;">
+            <el-table-column prop="itemsBy.bsName" :label="$t('approved.AuditingItem')"  >
+            </el-table-column>
+            <el-table-column prop="" :label="$t('New-audit.score_percent')" width="250" >
+                <template slot-scope="scope">
+                    <el-progress :percentage="scope.row.percent" :show-text="false" :stroke-width="14" :color="scope.row.color"></el-progress>
+                </template>
+            </el-table-column>
+            <el-table-column prop="percent" :label="$t('New-audit.score_percent')" width="150"  :formatter="formatPercent">
+            </el-table-column>
+            <!-- <el-table-column prop="bsScoreNum" :label="$t('New-audit.Auditscore')" width="150">
+            </el-table-column> -->
+        </el-table> 
+       </Card>
+        <Row style="margin:15px 0">
+            <Card>
+                <p slot="title">
+                    <Icon type="pricetag" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.InitialReview')}}
+                </p>
+                <div id="other-body">  
+                    <!-- 初期评审才显示供应商等级 -->
+                    <div class="fltxt" v-if="approvedItemRecord.bsSuppId&&flowData.bsType==22">
+                        <Col :md="8"><p class="grade">{{$t('supplier.SuppLevel')}}: <span class="supplevel">{{$t('supplier.LevelDesc['+supplierInfo.bsGrade+']')}}</span></p></Col>   
+                        <Col :md="8"><p class="grade">{{$t('New-audit.score_percent')}}: <span class="supplevel">{{percentage.toFixed(2)+'%'}}</span></p></Col>         
+                    </div>
+
+                    <div class="fileList2">
+                        <upload :fileList="approvedItemRecord.fileSet" :canUpload="perms.edit"></upload>
+                    </div>
+          
+                   
+                </div>                
+               
+            </Card>
+<!--   不符合改进项 -->
+             <Card class="cards">
+                <div slot="title" class="title3">
+                    <Icon type="pricetag" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.ImprovementItems')}}
+                     <el-button  style="right: 256px" type="primary" plain  size="small" icon="el-icon-plus" @click='handleAdd()' >{{$t('approved.createPromoteItem')}}</el-button>
+                      <el-button type="primary" plain  size="small" icon="el-icon-refresh" @click='getConditions()' >{{$t('approved.getConditions')}}</el-button>
+                </div>
+
+                <div id="other-body">  
+                    <el-table :data="promoteData" style="width: 100%;">
+                    <el-table-column prop="bsContent" :label="$t('supplier.Non_conformance')">
+                    </el-table-column>
+                    <el-table-column prop="bsAction" :label="$t('supplier.ImprovementMeasures')">
+                    </el-table-column>                   
+                    <el-table-column prop="bsDeadline" :label="$t('supplier.CompleteTime')">
+                    </el-table-column>            
+                    <el-table-column :label="$t('Button.operating')">
+                    <template slot-scope="scope">
+                    <el-button size="small" @click="handleEdit(scope.$index, scope.row)"  :disabled="!perms.edit">{{$t('Button.Edit')}}</el-button>
+                    <el-button
+                    size="mini" type="warning" plain @click="delpromote(scope)" :disabled="!perms.edit">{{$t('Button.Delete')}}</el-button>
+                    </template>
+                    </el-table-column>
+                    </el-table>                  
+                </div>                
+               
+            </Card>
+   <!--  新增 -->
+         <Modal class="promotModel" v-model="promoteModel.modal_dialog" :title="$t('supplier.addImprovementItems')"   okText='新增' cancelText="取消"  @on-ok="addSubmit" @on-cancel="cancel" >                
+           <el-form ref="addForm" :model="addForm" :rules="addFormRules" label-width="120px">
+              <el-form-item :label="$t('supplier.Non_description')">
+                <el-input type="textarea" v-model="addForm.bsContent"></el-input>
+              </el-form-item>
+              <el-form-item :label="$t('supplier.ImprovementMeasures')">
+                <el-input  type="textarea" v-model="addForm.bsAction"></el-input>
+              </el-form-item> 
+              <el-form-item :label="$t('supplier.FinishTime')">               
+                <el-date-picker 
+                      v-model="addForm.bsDeadline"
+                      type="date"
+                      :placeholder="$t('supplier.SelectDateTime')">
+                    </el-date-picker>
+              </el-form-item>                       
+
+            </el-form>                         
+        </Modal>
+  <!--   编辑 -->
+   <Modal class="promotModel" v-model="editFormVisible" :title="$t('supplier.addImprovementItems')"   okText='提交' cancelText="取消"  @on-ok="editSubmit" @on-cancel="cancel" >                
+           <el-form ref="editForm" :model="editForm" :rules="editFormRules" label-width="120px" >
+              <el-form-item :label="$t('supplier.Non_description')">
+                <el-input type="textarea" v-model="editForm.bsContent"></el-input>
+              </el-form-item>
+              <el-form-item :label="$t('supplier.ImprovementMeasures')">
+                <el-input  type="textarea" v-model="editForm.bsAction"></el-input>
+              </el-form-item> 
+              <el-form-item :label="$t('supplier.FinishTime')">               
+                <el-date-picker
+                      v-model="editForm.bsDeadline"
+                      type="date"
+                      :placeholder="$t('supplier.SelectDateTime')">
+                    </el-date-picker>
+              </el-form-item>                       
+
+            </el-form>                         
+    </Modal>
+
+             <ApprovedResultRecord :approvedData="approvedItemRecord" isCoach="1"></ApprovedResultRecord>
+             
+             <div id="bottom" v-if="perms.edit">         
+                    <ApprovedCoachAction :approvedItemRecord="approvedItemRecord" :supplierInfo="supplierInfo" :productInfo="productInfo" :flowData="flowData" v-if="isLastStep">                        
+                    </ApprovedCoachAction>
+                    <ApprovedAction :approvedItemRecord="approvedItemRecord" v-if="!isLastStep">
+                    </ApprovedAction>
+            </div>
+        </Row>
+    </div>
+</template>
+
+<script>
+import Cookies from 'js-cookie';
+import Upload from '../../components/upload.vue';
+import ApprovedAction from '../../components/approvedAction.vue';
+import ApprovedCoachAction from '../../components/approvedCoachAction.vue';
+import ApprovedResultRecord from '../../components/approvedResultRecord.vue';
+import moment from 'moment';
+export default {
+    components: {      
+        ApprovedAction,    
+        Upload,
+        ApprovedCoachAction,
+        ApprovedResultRecord
+    },
+    data() {
+        return {
+            dialogImageUrl: '',
+            dialogVisible: false,
+            file:{},
+            perms:{},
+            approvedItemRecord: {},
+            flowData: {},
+            supplierInfo:{},
+            productInfo:{},
+            records: [],
+            percentage: 0,
+            grade: 0,
+            isPreApproved: false,  //是否是初期评审
+            isLastStep:false,
+            editFormVisible:false,
+            promoteModel: {
+                modal_dialog: false,            
+               
+            },
+            addForm:{},
+            editForm:{},
+            promoteData:[],
+            addFormRules: {
+                    bsContent: [
+                        { required: true, message: '请输入内容描述', trigger: 'blur' }
+                    ]
+                },
+            editFormRules:{
+                bsContent: [
+                        { required: true, message: '请输入内容描述', trigger: 'blur' }
+                    ]
+            }            
+        }
+    },
+    created(){
+     
+        this.approvedItemRecord = this.$store.getters.getItemRecordData;
+        this.records = Object.assign([],this.$store.getters.getFlowRecordData);
+        
+        //获取流程信息，用于重建辅导审核
+        var lastRecord = this.records.pop();
+
+        this.flowData = lastRecord.itemsBy;
+         
+       this.getpromoteData();
+        if(this.flowData.bsType>20) this.supplierInfo = this.$store.getters.getSupplierData;
+        else if(this.flowData.bsType>10) this.productInfo = this.$store.getters.getProductData;
+
+        var totalScores = 0;
+        var getScores = 0;
+        for(var i = 0;i<this.records.length;i++){
+            var record = this.records[i];
+            record.percent=0;
+            if(record.bsScoreNum == undefined) continue;
+            var scores = record.bsScoreNum.split('/');
+            if(scores.length != 2) continue;
+            var getScore = parseFloat(scores[0]);
+            var totalScore = parseFloat(scores[1]);
+            record.percent = getScore/totalScore * 100;
+            if(record.percent>50) record.color ="green";
+            else if(record.percent>30) record.color="orange";
+            else record.color = "red";
+
+            getScores += getScore;
+            totalScores += totalScore;
+        }
+        if(totalScores>0) this.percentage = getScores/totalScores * 100;
+        if(this.percentage >= 50) this.supplierInfo.bsGrade = 3;
+        else if(this.percentage >= 30) this.supplierInfo.bsGrade = 2;
+        else if(this.percentage > 0) this.supplierInfo.bsGrade = 5;
+        else this.supplierInfo.bsGrade = 0;
+
+        //判断是否可以进行辅导,只有初期审核才需要这个功能
+        this.isPreApproved = this.flowData.bsType == 22;
+        //最后一步时,可以是否重新审核
+        this.isLastStep = this.approvedItemRecord.bsStep == this.approvedItemRecord.users.length;
+        
+        if(this.approvedItemRecord.fileSet == undefined) this.approvedItemRecord.fileSet = [];
+
+        this.perms.edit = 
+            (this.approvedItemRecord.users[this.approvedItemRecord.bsStep-1] == Cookies.get('user')||
+                    this.$Util.hasPerm('EDIT')) && this.approvedItemRecord.bsStatus == 1;
+    },
+    methods: {    
+        formatPercent(row){
+            return (row.percent != undefined)?(row.percent.toFixed(2)+'%'):'';
+        },
+        getpromoteData(){
+                var params={
+                    bsItemsRecordId:this.$store.getters.getItemRecordData.id
+                }
+                 this.api.promote.getlist(params).then((res) => {                
+                        this.promoteData = res.data.rows.map(function(row){
+                             row.bsDeadline = row.bsDeadline?moment(row.bsDeadline).format('YYYY-MM-DD'):'';
+                            return row;
+                        });   
+                                       
+                    }); 
+            },
+     //显示新增
+        handleAdd(){
+            this.promoteModel.modal_dialog=true; 
+            this.addForm={
+                bsItemsRecordId:this.$store.getters.getItemRecordData.id,
+                bsContent:this.addForm.bsContent,
+                bsAction:this.addForm.bsAction
+            }             
+        },
+    //新增提交
+        addSubmit(){
+
+                this.api.promote.add(this.addForm).then((res) => {                   
+                        this.promoteData = res.data.rows;
+                          this.getpromoteData();
+                    });              
+        },
+     //显示编辑
+        handleEdit(index, row){
+            this.editFormVisible=true;
+            this.editForm = Object.assign({}, row);          
+            },
+    //编辑提交       
+        editSubmit(){
+            this.$refs.editForm.validate((valid) => {
+                   this.api.promote.edit(this.editForm).then((res) => {
+                           this.getpromoteData();
+                            
+                        });
+                });
+        },
+    //删除列表
+        delpromote(params){    
+              this.$Modal.confirm({
+                    title: '提示信息',
+                    content: '<p>是否确定删除？</p>',
+                    onOk: () => {
+                        this.api.promote.delete({id:params.row.id}).then((res)=>{
+                            if(res.result) {                                
+                                this.getpromoteData();                           
+                                this.$Modal.remove();
+                                this.$Message.info('删除成功');
+                            }else {
+                                this.$Message.error(res.msg);   
+                            }
+                        });
+                    }
+                });
+        },
+       
+        cancel(){
+                
+        },
+    //导出
+        exportExcel(){
+            this.api.fileQms.getReviewExcel({bsFlowRecordId:this.$route.query.bsFlowRecordId}).then((link)=>{
+                link.click(); 
+            });
+        },   
+//从条款获取
+         getConditions(){
+            this.api.promote.updateContent().then((res)=>{
+                  this.promoteData = res.data.map(function(row){                    
+                             row.bsDeadline,
+                             row.bsContent,
+                             row.id,
+                             row.bsAction;
+                             return row;
+                        });
+            });
+        }  
+    }
+}
+</script>
+
+<style>
+.promotModel .ivu-modal-body{width: 90%;font-family: "Microsoft YaHei"}
+ .approvedextrareports{padding:0 15px;}
+
+    .approvedextrareports #other-body{
+        margin-top: 1px;background-color: white; padding:0 20px;margin-bottom: 10px;
+    }
+    .approvedextrareports #other-body-div1{
+        font-size: 14px;
+        padding-top: 20px;padding-left: 1%;padding-right: 1%;
+    }
+    .approvedextrareports .td1{
+        width: 25%;
+        height: 50px;
+        text-align: center;
+    }
+    .approvedextrareports #bottom{
+        background-color: white;padding-top: 20px;padding-bottom:50px;padding-left: 5%;
+    }
+    .td{padding: 10px; text-align:center;}
+ .td .el-upload--text{
+        border: none;
+        display: inline-block;
+        width: 90px;
+        height: 50px;
+        float: left;
+        margin-left: 10px;
+    }
+    .upload  .el-upload--text{
+        border: none;
+        display: inline-block;
+        height:50px;
+        width: 20%;
+        background: none;   
+        position: absolute;
+        right:8%;
+        top:10px;
+        margin-left: 10px;
+    }
+    .fileList2 {
+        margin-top:20px;
+        padding-top:20px;   
+        /*border-top:1px solid #f0f0f0;*/
+        width: 100%;
+    }
+    .fltxt{display: inline-block; width:100%; }
+    .fltxt .grade{line-height: 35px;font-family: "Microsoft YaHei";font-size:16px;}
+
+    .fileList2 .el-upload-list{border:1px dashed  #f0f0f0;margin-top:20px;}
+    .fileList2 .upload-demo{width:80% }
+    .supplevel{color:#fd5822;margin-left: 15px;}
+    .cards{margin-top:20px;}
+    .title3{position: relative;}
+    .title3 .el-button{position: absolute; right: 120px;top:-9px;}
+    .cards .ivu-card-head{padding:17px 16px;}
+    .InitialReview .el-table:before{height: 0}
+    .InitialReview .ivu-card-body{padding-bottom: 35px;}
+    .title3 .btn{position: absolute; right: 100px;top:-9px;}
+</style>

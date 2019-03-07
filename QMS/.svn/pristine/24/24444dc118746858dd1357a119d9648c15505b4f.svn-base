@@ -1,0 +1,740 @@
+package com.unind.qms.web.product.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.base.domain.admin.user.SysUser;
+import com.unind.qms.web.approved.entity.ApprovedFlowRecord;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.util.Date;
+
+/**
+ * @author chen
+ */
+@Entity
+@Table(name = ProductInfo.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class ProductInfo extends BaseEntity {
+    private static final long serialVersionUID = 7151771262953316256L;
+    public static final String TABLE_NAME = "qms_product_info";
+
+    /**
+     * 产品编号
+     */
+    @ApiModelProperty(name="bsPrCode",required=true,value="产品编号")
+    @NotNull
+    @Column(length = 50)
+    protected String bsPrCode;
+
+    /**
+     * 产品名称
+     */
+    @ApiModelProperty(name="bsPrName",required=true,value="产品名称")
+    @NotNull
+    @Column(length = 80)
+    protected String bsPrName;
+
+    /**
+     * erp产品ID
+     */
+    @ApiModelProperty(name="bsItemId",value="erp产品ID")
+    @Column(length = 50)
+    protected String bsItemId;
+
+    /**
+     * erp产品状态
+     */
+    @ApiModelProperty(name="bsItemStatus",value="erp产品状态")
+    @Column(length = 150)
+    protected String bsItemStatus;
+
+//    /**
+//     * 产品状态
+//     */
+//    @ApiModelProperty(name="bsStatus",value="产品状态")
+//    @Column
+//    protected int bsStatus;
+
+    /**
+     * erp产品大类
+     */
+    @ApiModelProperty(name="bsCateDesc",required=true,value="erp产品大类")
+    @Column(length = 150)
+    protected String bsCateDesc;
+
+    /**
+     * 供应商编号
+     */
+    @ApiModelProperty(name="bsSuppCode",value="供应商编号")
+    @Column(length = 50)
+    protected String bsSuppCode;
+
+    /**
+     * 供应商名称
+     */
+    @ApiModelProperty(name="bsSuppChieseName",value="供应商名称")
+    @Column(length = 150)
+    protected String bsSuppChieseName;
+
+    /**
+     * erp供应商ID
+     */
+    @ApiModelProperty(name="bsVendorId",value="erp供应商ID")
+    @Column(length = 50)
+    protected String bsVendorId;
+
+    /**
+     * erp供应商简称
+     */
+    @ApiModelProperty(name="bsVendorSite",value="erp供应商简称")
+    @Column(length = 150)
+    protected String bsVendorSite;
+
+    /**
+     * erp供应商状态
+     */
+    @ApiModelProperty(name="bsVendorStatus",value="erp供应商状态")
+    @Column(length = 150)
+    protected String bsVendorStatus;
+
+    /**
+     * erp组织ID
+     */
+    @ApiModelProperty(name="bsOrganizationId",value="erp组织ID")
+    @Column(length = 50)
+    protected String bsOrganizationId;
+
+    /**
+     * erp组织名称
+     */
+    @ApiModelProperty(name="bsOrganizationName",value="erp组织名称")
+    @Column(length = 50)
+    protected String bsOrganizationName;
+
+    /**
+     * erp图号
+     */
+    @ApiModelProperty(name="bsPaperNum",value="erp图号")
+    @Column(length = 50)
+    protected String bsPaperNum;
+
+    /**
+     * erp图纸版本号
+     */
+    @ApiModelProperty(name="bsPaperVersion",value="erp图纸版本号")
+    @Column(length = 50)
+    protected String bsPaperVersion;
+
+    /**
+     * 过程审核流程记录ID
+     */
+    @ApiModelProperty(name="bsProcessRecordId",value="过程审核流程记录ID")
+    @Column
+    protected Long bsProcessRecordId;
+
+    @ApiModelProperty(name="approvedFlowRecordBy",hidden=true,value="过程审核流程记录")
+    @OneToOne
+    @JoinColumn(name = "bsProcessRecordId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected ApprovedFlowRecord approvedFlowRecordBy;
+
+    /**
+     * 成品检验流程记录ID
+     */
+    @ApiModelProperty(name="bsProductRecordId",value="成品检验流程记录ID")
+    @Column
+    protected Long bsProductRecordId;
+
+    /**
+     * 风险等级
+     */
+    @ApiModelProperty(name="bsRiskLevel",value="风险等级")
+    @Column
+    protected int bsRiskLevel;
+
+    /**
+     * 风险等级得分
+     */
+    @ApiModelProperty(name="bsRiskScore",value="风险等级得分")
+    @Column
+    protected int bsRiskScore;
+
+    /**
+     * 手动管理风险等级
+     */
+    @ApiModelProperty(name="bsRiskManual",value="手动管理风险等级")
+    @Column
+    protected int bsRiskManual;
+
+    /**
+     * 是否审核中
+     */
+    @ApiModelProperty(name="bsIsApprove",value="是否审核中")
+    @Column
+    protected int bsIsApprove;
+
+    /**
+     * 风险等级(系统)
+     */
+    @ApiModelProperty(name="bsRiskLevelSys",value="风险等级(系统)")
+    @Column
+    protected int bsRiskLevelSys;
+
+    /**
+     * 风险等级评定时间(系统)
+     */
+    @ApiModelProperty(name="bsRiskTimeSys",value="风险等级评定时间(系统)")
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+08:00")
+    protected Date bsRiskTimeSys;
+
+    /**
+     * 风险等级(user)
+     */
+    @ApiModelProperty(name="bsRiskLevelUser",value="风险等级(user)")
+    @Column
+    protected int bsRiskLevelUser;
+
+    /**
+     * 风险等级评定时间(user)
+     */
+    @ApiModelProperty(name="bsRiskTimeUser",value="风险等级评定时间(user)")
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+08:00")
+    protected Date bsRiskTimeUser;
+
+    /**
+     * 风险等级备注(user)
+     */
+    @ApiModelProperty(name="bsRiskDescUser",value="风险等级备注(user)")
+    @Column(length = 500)
+    protected String bsRiskDescUser;
+
+    /**
+     * 产品产值
+     */
+    @ApiModelProperty(name="bsPrValue",value="产品产值")
+    @Column
+    protected int bsPrValue;
+
+    /**
+     *质检员
+     */
+    @ApiModelProperty(name="bsQc",value="")
+    @Column(length = 50)
+    protected String bsQc;
+
+    /**
+     *供应商质量工程师
+     */
+    @ApiModelProperty(name="bsSqe",value="")
+    @Column(length = 50)
+    protected String bsSqe;
+
+    /**
+     *供应商质量经理
+     */
+    @ApiModelProperty(name="bsQcManager",value="")
+    @Column(length = 50)
+    protected String bsQcManager;
+
+    /**
+     * 修改人
+     */
+    @ApiModelProperty(name="pkModifiedBy",hidden=true,value="修改人")
+    @Column
+    protected Long pkModifiedBy;
+
+    @ApiModelProperty(name="modifiedBy",hidden=true,value="修改人--user")
+    @ManyToOne
+    @JoinColumn(name = "pkModifiedBy", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser modifiedBy;
+
+    public String getBsPrCode() {
+        return bsPrCode;
+    }
+
+    public void setBsPrCode(String bsPrCode) {
+        this.bsPrCode = bsPrCode;
+    }
+
+    public String getBsPrName() {
+        return bsPrName;
+    }
+
+    public void setBsPrName(String bsPrName) {
+        this.bsPrName = bsPrName;
+    }
+
+    public String getBsItemId() {
+        return bsItemId;
+    }
+
+    public void setBsItemId(String bsItemId) {
+        this.bsItemId = bsItemId;
+    }
+
+    public String getBsItemStatus() {
+        return bsItemStatus;
+    }
+
+    public void setBsItemStatus(String bsItemStatus) {
+        this.bsItemStatus = bsItemStatus;
+    }
+
+    public String getBsCateDesc() {
+        return bsCateDesc;
+    }
+
+    public void setBsCateDesc(String bsCateDesc) {
+        this.bsCateDesc = bsCateDesc;
+    }
+
+    public String getBsSuppCode() {
+        return bsSuppCode;
+    }
+
+    public void setBsSuppCode(String bsSuppCode) {
+        this.bsSuppCode = bsSuppCode;
+    }
+
+    public String getBsSuppChieseName() {
+        return bsSuppChieseName;
+    }
+
+    public void setBsSuppChieseName(String bsSuppChieseName) {
+        this.bsSuppChieseName = bsSuppChieseName;
+    }
+
+    public String getBsVendorId() {
+        return bsVendorId;
+    }
+
+    public void setBsVendorId(String bsVendorId) {
+        this.bsVendorId = bsVendorId;
+    }
+
+    public String getBsVendorSite() {
+        return bsVendorSite;
+    }
+
+    public void setBsVendorSite(String bsVendorSite) {
+        this.bsVendorSite = bsVendorSite;
+    }
+
+    public String getBsVendorStatus() {
+        return bsVendorStatus;
+    }
+
+    public void setBsVendorStatus(String bsVendorStatus) {
+        this.bsVendorStatus = bsVendorStatus;
+    }
+
+    public String getBsOrganizationId() {
+        return bsOrganizationId;
+    }
+
+    public void setBsOrganizationId(String bsOrganizationId) {
+        this.bsOrganizationId = bsOrganizationId;
+    }
+
+    public String getBsOrganizationName() {
+        return bsOrganizationName;
+    }
+
+    public void setBsOrganizationName(String bsOrganizationName) {
+        this.bsOrganizationName = bsOrganizationName;
+    }
+
+    public String getBsPaperNum() {
+        return bsPaperNum;
+    }
+
+    public void setBsPaperNum(String bsPaperNum) {
+        this.bsPaperNum = bsPaperNum;
+    }
+
+    public String getBsPaperVersion() {
+        return bsPaperVersion;
+    }
+
+    public void setBsPaperVersion(String bsPaperVersion) {
+        this.bsPaperVersion = bsPaperVersion;
+    }
+
+    public Long getBsProcessRecordId() {
+        return bsProcessRecordId;
+    }
+
+    public void setBsProcessRecordId(Long bsProcessRecordId) {
+        this.bsProcessRecordId = bsProcessRecordId;
+    }
+
+    public ApprovedFlowRecord getApprovedFlowRecordBy() {
+        return approvedFlowRecordBy;
+    }
+
+    public void setApprovedFlowRecordBy(ApprovedFlowRecord approvedFlowRecordBy) {
+        this.approvedFlowRecordBy = approvedFlowRecordBy;
+    }
+
+    public Long getBsProductRecordId() {
+        return bsProductRecordId;
+    }
+
+    public void setBsProductRecordId(Long bsProductRecordId) {
+        this.bsProductRecordId = bsProductRecordId;
+    }
+
+    public int getBsRiskLevel() {
+        return bsRiskLevel;
+    }
+
+    public void setBsRiskLevel(int bsRiskLevel) {
+        this.bsRiskLevel = bsRiskLevel;
+    }
+
+    public int getBsRiskScore() {
+        return bsRiskScore;
+    }
+
+    public void setBsRiskScore(int bsRiskScore) {
+        this.bsRiskScore = bsRiskScore;
+    }
+
+    public int getBsRiskManual() {
+        return bsRiskManual;
+    }
+
+    public void setBsRiskManual(int bsRiskManual) {
+        this.bsRiskManual = bsRiskManual;
+    }
+
+    public int getBsIsApprove() {
+        return bsIsApprove;
+    }
+
+    public void setBsIsApprove(int bsIsApprove) {
+        this.bsIsApprove = bsIsApprove;
+    }
+
+    public int getBsRiskLevelSys() {
+        return bsRiskLevelSys;
+    }
+
+    public void setBsRiskLevelSys(int bsRiskLevelSys) {
+        this.bsRiskLevelSys = bsRiskLevelSys;
+    }
+
+    public Date getBsRiskTimeSys() {
+        return bsRiskTimeSys;
+    }
+
+    public void setBsRiskTimeSys(Date bsRiskTimeSys) {
+        this.bsRiskTimeSys = bsRiskTimeSys;
+    }
+
+    public int getBsRiskLevelUser() {
+        return bsRiskLevelUser;
+    }
+
+    public void setBsRiskLevelUser(int bsRiskLevelUser) {
+        this.bsRiskLevelUser = bsRiskLevelUser;
+    }
+
+    public Date getBsRiskTimeUser() {
+        return bsRiskTimeUser;
+    }
+
+    public void setBsRiskTimeUser(Date bsRiskTimeUser) {
+        this.bsRiskTimeUser = bsRiskTimeUser;
+    }
+
+    public String getBsRiskDescUser() {
+        return bsRiskDescUser;
+    }
+
+    public void setBsRiskDescUser(String bsRiskDescUser) {
+        this.bsRiskDescUser = bsRiskDescUser;
+    }
+
+    public int getBsPrValue() {
+        return bsPrValue;
+    }
+
+    public void setBsPrValue(int bsPrValue) {
+        this.bsPrValue = bsPrValue;
+    }
+
+    public String getBsQc() {
+        return bsQc;
+    }
+
+    public void setBsQc(String bsQc) {
+        this.bsQc = bsQc;
+    }
+
+    public String getBsSqe() {
+        return bsSqe;
+    }
+
+    public void setBsSqe(String bsSqe) {
+        this.bsSqe = bsSqe;
+    }
+
+    public String getBsQcManager() {
+        return bsQcManager;
+    }
+
+    public void setBsQcManager(String bsQcManager) {
+        this.bsQcManager = bsQcManager;
+    }
+
+    public Long getPkModifiedBy() {
+        return pkModifiedBy;
+    }
+
+    public void setPkModifiedBy(Long pkModifiedBy) {
+        this.pkModifiedBy = pkModifiedBy;
+    }
+
+    public SysUser getModifiedBy() {
+        return modifiedBy;
+    }
+
+    public void setModifiedBy(SysUser modifiedBy) {
+        this.modifiedBy = modifiedBy;
+    }
+    //    /**
+//     * 组织ID
+//     */
+//    @ApiModelProperty(name = "organizationId", value = "组织ID")
+//    @Column
+//    protected Long organizationId;
+//
+//    /**
+//     * 组织名称
+//     */
+//    @ApiModelProperty(name = "orgName", value = "组织名称")
+//    @Column(length = 150)
+//    protected String orgName;
+//
+//    /**
+//     * 产品ID
+//     */
+//    @ApiModelProperty(name = "itemId", value = "产品ID")
+//    @Column
+//    protected Long itemId;
+//
+//
+//    /**
+//     * 产品编码
+//     */
+//    @ApiModelProperty(name="itemNum",required=true,value="产品编码")
+//    @Column(length = 50)
+//    protected String itemNum;
+//
+//    /**
+//     * 产品名称
+//     */
+//    @ApiModelProperty(name="itemDesc",required=true,value="产品名称")
+//    @Column(length = 150)
+//    protected String itemDesc;
+//
+//    /**
+//     * 产品类别
+//     */
+//    @ApiModelProperty(name="cateDesc",value="产品类别")
+//    @Column(length = 50)
+//    protected String cateDesc;
+//
+//    /**
+//     * 产品图纸版本
+//     */
+//    @ApiModelProperty(name = "paperVersion", value = "产品图纸版本")
+//    @Column(length = 50)
+//    protected String paperVersion;
+//
+//    /**
+//     * 产品图纸号
+//     */
+//    @ApiModelProperty(name = "paperNum", value = "产品图纸号")
+//    @Column(length = 50)
+//    protected String paperNum;
+//
+//    /**
+//     * 供应商ID
+//     */
+//    @ApiModelProperty(name = "vendorId", value = "供应商ID")
+//    @Column
+//    protected Long vendorId;
+//
+//    /**
+//     * 供应商名称
+//     */
+//    @ApiModelProperty(name="vendorName",value="供应商名称")
+//    @Column(length = 150)
+//    protected String vendorName;
+//
+//    /**
+//     * 供应商编码
+//     */
+//    @ApiModelProperty(name = "vendorNum", value = "供应商编码")
+//    @Column(length = 50)
+//    protected String vendorNum;
+//
+//    /**
+//     * 供应商简称
+//     */
+//    @ApiModelProperty(name = "vendorSite", value = "供应商简称")
+//    @Column(length = 50)
+//    protected String vendorSite;
+//
+//    /**
+//     * 修改人
+//     */
+//    @ApiModelProperty(name = "pkModifiedBy", hidden = true, value="修改人")
+//    @Column
+//    protected Long pkModifiedBy;
+//
+//    @ApiModelProperty(name = "modifiedBy", hidden = true, value = "修改人--user")
+//    @ManyToOne
+//    @JoinColumn(name = "pkModifiedBy", insertable = false, updatable = false)
+//    @NotFound(action = NotFoundAction.IGNORE)
+//    protected SysUser modifiedBy;
+//
+//    @ApiModelProperty(name = "productExtra", hidden=true, value = "产品信息详情")
+//    @OneToOne(mappedBy = "productInfo")
+//    @NotFound(action = NotFoundAction.IGNORE)
+//    protected ProductExtra productExtra;
+//
+//    public Long getOrganizationId() {
+//        return organizationId;
+//    }
+//
+//    public void setOrganizationId(Long organizationId) {
+//        this.organizationId = organizationId;
+//    }
+//
+//    public String getOrgName() {
+//        return orgName;
+//    }
+//
+//    public void setOrgName(String orgName) {
+//        this.orgName = orgName;
+//    }
+//
+//    public Long getItemId() {
+//        return itemId;
+//    }
+//
+//    public void setItemId(Long itemId) {
+//        this.itemId = itemId;
+//    }
+//
+//    public String getItemNum() {
+//        return itemNum;
+//    }
+//
+//    public void setItemNum(String itemNum) {
+//        this.itemNum = itemNum;
+//    }
+//
+//    public String getItemDesc() {
+//        return itemDesc;
+//    }
+//
+//    public void setItemDesc(String itemDesc) {
+//        this.itemDesc = itemDesc;
+//    }
+//
+//    public String getCateDesc() {
+//        return cateDesc;
+//    }
+//
+//    public void setCateDesc(String cateDesc) {
+//        this.cateDesc = cateDesc;
+//    }
+//
+//    public String getPaperVersion() {
+//        return paperVersion;
+//    }
+//
+//    public void setPaperVersion(String paperVersion) {
+//        this.paperVersion = paperVersion;
+//    }
+//
+//    public String getPaperNum() {
+//        return paperNum;
+//    }
+//
+//    public void setPaperNum(String paperNum) {
+//        this.paperNum = paperNum;
+//    }
+//
+//    public Long getVendorId() {
+//        return vendorId;
+//    }
+//
+//    public void setVendorId(Long vendorId) {
+//        this.vendorId = vendorId;
+//    }
+//
+//    public String getVendorName() {
+//        return vendorName;
+//    }
+//
+//    public void setVendorName(String vendorName) {
+//        this.vendorName = vendorName;
+//    }
+//
+//    public String getVendorNum() {
+//        return vendorNum;
+//    }
+//
+//    public void setVendorNum(String vendorNum) {
+//        this.vendorNum = vendorNum;
+//    }
+//
+//    public String getVendorSite() {
+//        return vendorSite;
+//    }
+//
+//    public void setVendorSite(String vendorSite) {
+//        this.vendorSite = vendorSite;
+//    }
+//
+//    public Long getPkModifiedBy() {
+//        return pkModifiedBy;
+//    }
+//
+//    public void setPkModifiedBy(Long pkModifiedBy) {
+//        this.pkModifiedBy = pkModifiedBy;
+//    }
+//
+//    public SysUser getModifiedBy() {
+//        return modifiedBy;
+//    }
+//
+//    public void setModifiedBy(SysUser modifiedBy) {
+//        this.modifiedBy = modifiedBy;
+//    }
+//
+//    public ProductExtra getProductExtra() {
+//        return productExtra;
+//    }
+//
+//    public void setProductExtra(ProductExtra productExtra) {
+//        this.productExtra = productExtra;
+//    }
+}

@@ -1,0 +1,458 @@
+package com.unind.qms.provider;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.domain.admin.enumeration.BaseEnumConstants;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.base.utils.GsonUtils;
+import com.unind.qms.enumeration.ApprovedStateEnum;
+import com.unind.qms.enumeration.BasicEnumConstants;
+import com.unind.qms.enumeration.BasicStateEnum;
+import com.unind.qms.web.approved.dao.ApprovedFlowRecordDao;
+import com.unind.qms.web.approved.entity.ApprovedFlowRecord;
+import com.unind.qms.web.basic.dao.TodoInfoDao;
+import com.unind.qms.web.basic.entity.TodoInfo;
+import com.unind.qms.web.product.dao.ProductExtraDao;
+import com.unind.qms.web.product.dao.ProductInfoDao;
+import com.unind.qms.web.product.entity.ProductExtra;
+import com.unind.qms.web.product.entity.ProductInfo;
+import com.unind.qms.web.risk.dao.ProductRiskDao;
+import com.unind.qms.web.risk.dao.SupplierRiskDao;
+import com.unind.qms.web.risk.entity.ProductRisk;
+import com.unind.qms.web.risk.entity.SupplierRisk;
+import com.unind.qms.web.supplier.dao.SupplierInfoDao;
+import com.unind.qms.web.supplier.entity.SupplierInfo;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import javax.persistence.criteria.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+@Component
+public class HttpScheduledService {
+
+    public final Logger logger = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private ProductInfoDao productInfoDao;
+    @Autowired
+    private ProductRiskDao productRiskDao;
+    @Autowired
+    private SupplierInfoDao supplierInfoDao;
+    @Autowired
+    private SupplierRiskDao supplierRiskDao;
+    @Autowired
+    private HttpClientService httpClientService;
+    @Autowired
+    private ApprovedFlowRecordDao approvedFlowRecordDao;
+    @Autowired
+    private TodoInfoDao todoInfoDao;
+    @Autowired
+    private ProductExtraDao productExtraDao;
+
+    @Scheduled(cron = "0 0 0 * * ? ")
+    @Transactional
+//    @Transactional(value = "txManager2")
+    public void getHttpClient() throws BusinessException {
+//        try {
+//            List<ProductInfo> productInfoList = new ArrayList<ProductInfo>();
+////            String url = "http://nanbo.f3322.net:8165/openapi/v1/prod/getitemandvendor";
+//            String url = "http://192.168.21.230:8085/openapi/v1.0/prod/getitemandvendor";
+//            ApiResponseResult apiResponseResult = httpClientService.getHttpClient(url);
+//            if(apiResponseResult.isResult()){
+//                JsonObject jsonObject = GsonUtils.getJsonObject(apiResponseResult.getData().toString());
+//                JsonArray jsonArray = jsonObject.get("data").getAsJsonArray();
+//
+//                for(JsonElement jsonElement : jsonArray){
+//                    JsonObject jsonObject1 = jsonElement.getAsJsonObject();
+//
+//                    String bsPrCode = this.get(jsonObject1, "ITEM_NUM", true, "");
+//                    String bsSuppCode = this.get(jsonObject1, "VENDOR_NUM", true, "");
+//                    String bsOrgIo = this.get(jsonObject1, "ORG_NAME", true, "");
+//                    //产品编号、供应商编号、组织是否为空
+//                    if(StringUtils.isEmpty(bsPrCode)||StringUtils.isEmpty(bsSuppCode)||StringUtils.isEmpty(bsOrgIo)){
+//                        continue;
+//                    }
+//                    //判断是否存在此产品
+//                    int counts = productInfoDao.countByBsPrCodeAndBsSuppCodeAndBsOrgIo(bsPrCode, bsSuppCode, bsOrgIo);
+//                    if (counts > 0) {
+//                        continue;
+//                    }
+//                    ProductInfo productInfo = new ProductInfo();
+//                    productInfo.setBsPrCode(bsPrCode);
+//                    productInfo.setBsPrName(this.get(jsonObject1, "ITEM_DESC", true, ""));
+//                    productInfo.setBsSuppCode(bsSuppCode);
+//                    productInfo.setBsSuppChieseName(this.get(jsonObject1, "VENDOR_NAME", true, ""));
+//                    productInfo.setBsPrType(this.get(jsonObject1, "CATE_DESC", true, ""));
+//                    productInfo.setBsOrgIo(bsOrgIo);
+//                    productInfo.setBsBlueprintNo(this.get(jsonObject1, "PAPER_NUM", true, ""));
+//                    productInfo.setBsBlueprintVersion(this.get(jsonObject1, "PAPER_VERSION", true, ""));
+//                    productInfo.setBsCreatedTime(new Date());
+//                    productInfoList.add(productInfo);
+//                }
+//                productInfoDao.save(productInfoList);
+//            }
+//        } catch (BusinessException e) {
+//            e.printStackTrace();
+//            logger.error("定时导入产品信息失败", e);
+//        }
+    }
+
+    public static String get(JsonObject jsonObject, String key, boolean flag, String defVal) {
+        try {
+            return jsonObject.get(key).isJsonNull() ? "" : jsonObject.get(key).getAsString();
+        } catch (NullPointerException e) {
+            if (flag) {
+                return defVal;
+            }else {
+                throw new NullPointerException(" property: "+key+" is not found");
+            }
+        }
+    }
+
+    /**
+     * 供应商风险等级得分定时更新
+     * @throws BusinessException
+     */
+    @Scheduled(cron = "0 0 1 1 * ? ")
+    @Transactional
+//    @Transactional(value = "txManager2")
+    public void updateSupplierRisk(){
+        try{
+            List<SupplierRisk> supplierRiskList = new ArrayList<SupplierRisk>();
+            List<SupplierInfo> supplierInfoList = new ArrayList<SupplierInfo>();
+            //Iterator Iterator = supplierRiskDao.findAll().iterator();
+            Iterator Iterator = supplierRiskDao.findByBsIsDel(BooleanStateEnum.FALSE.intValue()).iterator();
+            while(Iterator.hasNext()){
+                SupplierRisk o = (SupplierRisk) Iterator.next();
+                //1.更新到供应商风险信息表
+                //统计各项得分
+                o.setBsFeedbackScore(o.getBsFeedbackType() * 3);
+                o.setBsPpmScore(o.getBsPpmType() * 2);
+                o.setBsDeliveryScore(o.getBsDeliveryType() * 3);
+                o.setBsInspectScore(o.getBsInspectType() * 2);
+                o.setBsPaymentScore(o.getBsPaymentType() * 1);
+                o.setBsCpkScore(o.getBsCpkType() * 2);
+                o.setBsDangerProScore(o.getBsDangerProType() * 2);
+                o.setBsApprovedScore(o.getBsApproveType() * 2);
+                o.setBsEhsScore(o.getBsEhsType() * 2);
+                o.setBsBusinessScore(((o.isBsComStability() ? 1 : 0) + (o.isBsAntiCorruptProtocol() ? 1 : 0 )
+                        + (o.isBsLongTermProtocol() ? 1 : 0 ) + (o.isBsCooperProtocol() ? 1 : 0 )
+                        + (o.isBsBusinessBroScore() ? 1 : 0)) * 2);
+                //统计总得分
+                o.setBsRiskScore(o.getBsFeedbackScore() + o.getBsPpmScore() + o.getBsDeliveryScore() + o.getBsInspectScore()
+                        + o.getBsPaymentScore() + o.getBsCpkScore() + o.getBsDangerProScore() + o.getBsApprovedScore()
+                        + o.getBsEhsScore() + o.getBsBusinessScore());
+                //统计风险等级
+                //判断直升高风险类型是否达到高风险（type为5）,满足要求直升高风险
+                int level = 1;
+                if(o.getBsDeliveryType() == 5){
+                    level = 5;    //直升高风险
+                }else{
+                    int totalScore = o.getBsRiskScore();
+                    if(totalScore >= 0 && totalScore <= 40){
+                    }
+                    if(totalScore >= 41 && totalScore <= 55){
+                        level = 2;
+                    }
+                    if(totalScore >= 56 && totalScore <= 70){
+                        level = 3;
+                    }
+                    if(totalScore >= 71 && totalScore <= 85){
+                        level = 4;
+                    }
+                    if(totalScore >= 86 && totalScore <= 100){
+                        level = 5;
+                    }
+                }
+                o.setBsRiskLevel(level);
+                //更新时间
+                o.setBsModifiedTime(new Date());
+                supplierRiskList.add(o);
+
+                //2.更新到供应商信息表
+                SupplierInfo supplierInfo = supplierInfoDao.findOne(o.getBsSuppId());
+                if(supplierInfo != null){
+                    supplierInfo.setBsRiskLevelSys(o.getBsRiskLevel());
+                    supplierInfo.setBsRiskTimeSys(new Date());
+                    supplierInfoList.add(supplierInfo);
+                }
+            }
+            if(supplierRiskList.size() > 0){
+                supplierRiskDao.save(supplierRiskList);
+            }
+            if(supplierInfoList.size() > 0){
+                supplierInfoDao.save(supplierInfoList);
+            }
+            logger.info("供应商自动更新等级成功！");
+        }catch(Exception e){
+            e.printStackTrace();
+            logger.error("供应商自动更新等级失败！", e);
+        }
+    }
+
+    /**
+     * 产品风险等级得分定时更新
+     * @throws BusinessException
+     */
+    //@Scheduled(cron = "0 0 2 1 * ? ")
+    @Scheduled(cron = "0 36 13 * * ? ")
+    @Transactional
+//    @Transactional(value = "txManager2")
+    public void updateProductRisk(){
+        try{
+            List<ProductRisk> productRiskList = new ArrayList<ProductRisk>();
+            List<ProductExtra> productExtraList = new ArrayList<ProductExtra>();
+            //List<ProductInfo> productInfoList = new ArrayList<ProductInfo>();
+            //Iterator iterator = productRiskDao.findAll().iterator();
+            Iterator iterator = productRiskDao.findByBsIsDel(BooleanStateEnum.FALSE.intValue()).iterator();
+            while(iterator.hasNext()){
+                ProductRisk o = (ProductRisk) iterator.next();
+                //1.更新到产品风险信息表
+                //统计各项得分
+                o.setBsMassProductScore(o.getBsMassProductType() * 3);
+                o.setBsApprovedScore(o.getBsApprovedType() * 2);
+                o.setBsStandardScore(o.getBsStandardScore() * 2);
+                o.setBsCpkScore(o.getBsCpkType() * 2);
+                o.setBsGrrScore(o.getBsGrrType() * 2);
+                o.setBsEngineeringScore(o.getBsEngineeringType() * 3);
+                o.setBsInspectScore(o.getBsInspectType() * 3);
+                o.setBsFeedbackScore(o.getBsFeedbackType() * 3);
+                o.setBsPpmScore(o.getBsPpmType() * 2);
+                //统计总得分
+                o.setBsRiskScore(o.getBsMassProductScore() + o.getBsApprovedType() + o.getBsStandardScore()
+                    + o.getBsCpkScore() + o.getBsGrrScore() + o.getBsEngineeringScore() + o.getBsInspectScore()
+                    + o.getBsFeedbackScore() + o.getBsPpmScore());
+                //统计风险等级
+                //判断直升高风险类型是否达到高风险（type为5）,满足要求直升高风险
+                int level = 1;
+                if(o.getBsMassProductType() == 5 || o.getBsStandardType() == 5 || o.getBsEngineeringType() == 5 || o.getBsInspectType() == 5){
+                    level = 5;    //直升高风险
+                }else{
+                    int totalScore = o.getBsRiskScore();
+                    if(totalScore >= 0 && totalScore <= 40){
+                    }
+                    if(totalScore >= 41 && totalScore <= 55){
+                        level = 2;
+                    }
+                    if(totalScore >= 56 && totalScore <= 70){
+                        level = 3;
+                    }
+                    if(totalScore >= 71 && totalScore <= 85){
+                        level = 4;
+                    }
+                    if(totalScore >= 86 && totalScore <= 100){
+                        level = 5;
+                    }
+                }
+                o.setBsRiskLevel(level);
+                //更新时间
+                o.setBsModifiedTime(new Date());
+                productRiskList.add(o);
+
+                //2.更新到产品信息详情表
+                List<ProductExtra> list = productExtraDao.findAllByBsIsDelAndBsPrId(BooleanStateEnum.FALSE.intValue(), o.getBsPrId());
+                if(list.size() > 0){
+                    ProductExtra productExtra = list.get(0);
+                    if(productExtra != null){
+                        productExtra.setBsRiskLevelSys(o.getBsRiskLevel());
+                        productExtra.setBsRiskTimeSys(new Date());
+                        productExtraList.add(productExtra);
+                    }
+                }
+//                ProductInfo productInfo = productInfoDao.findOne(o.getBsPrId());
+//                if(productInfo != null){
+//                    productInfo.setBsRiskLevelSys(o.getBsRiskLevel());
+//                    productInfo.setBsRiskTimeSys(new Date());
+//                    productInfoList.add(productInfo);
+//                }
+            }
+            if(productRiskList.size() > 0){
+                productRiskDao.save(productRiskList);
+            }
+            if(productExtraList.size() > 0){
+                productExtraDao.save(productExtraList);
+            }
+            logger.info("产品自动更新等级成功！");
+        }catch(Exception e){
+            e.printStackTrace();
+            logger.error("产品自动更新等级失败", e);
+        }
+    }
+
+    /**
+     * 供应商体系审核定时提醒
+     */
+    @Scheduled(cron = "0 0 7 * * ? ")
+    @Transactional
+//    @Transactional(value = "txManager2")
+    public void approvedRemindSys() {
+        try{
+            //1.找出不在审核中的供应商
+            List<SearchFilter> filters = new ArrayList<SearchFilter>();
+            filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+            filters.add(new SearchFilter("bsIsApprove", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+            Specifications<SupplierInfo> spec = Specifications.where(BaseOprService.and(filters, SupplierInfo.class));
+            List<SupplierInfo> supplierInfoList = supplierInfoDao.findAll(spec);
+            List<TodoInfo> todoInfoList = new ArrayList<TodoInfo>();
+            //2.找出各个供应商对应的体系审核流程记录
+            for(int i = 0; i < supplierInfoList.size(); i++){
+                Long suppId = supplierInfoList.get(i).getId();             //供应商ID
+                String suppName = supplierInfoList.get(i).getBsSuppChieseName();   //供应商名称
+                Long recordId = supplierInfoList.get(i).getBsSuppRecordId();   //审核流程记录ID
+                Integer riskLevel = supplierInfoList.get(i).getBsRiskLevel();  //风险等级
+                //3.在审核流程记录表查找对应审核记录，并根据风险等级判断是否需要再次审核
+                //假设风险等级需要再次审核的天数，1-5级分别为：300，200，100，50，30（单位：天）
+                ApprovedFlowRecord approvedFlowRecord = approvedFlowRecordDao.findOne(recordId);
+                Date recordDate = approvedFlowRecord.getBsModifiedTime();
+                Date nowDate = new Date();
+                Integer subDays = getDays(recordDate, nowDate);
+                if(riskLevel == 1){
+                    if(subDays > 1){
+                        //3.1发邮件
+
+                        //3.2添加待办事项
+                        TodoInfo todoInfo =createTodoInfo(suppId, suppName);
+                        todoInfoList.add(todoInfo);
+                    }else{
+                        continue;
+                    }
+                }
+                if(riskLevel == 2){
+                    if(subDays > 200){
+                        //3.1发邮件
+
+                        //3.2添加待办事项
+                        TodoInfo todoInfo =createTodoInfo(suppId, suppName);
+                        todoInfoList.add(todoInfo);
+                    }else{
+                        continue;
+                    }
+                }
+                if(riskLevel == 3){
+                    if(subDays > 100){
+                        //3.1发邮件
+
+                        //3.2添加待办事项
+                        TodoInfo todoInfo =createTodoInfo(suppId, suppName);
+                        todoInfoList.add(todoInfo);
+                    }else{
+                        continue;
+                    }
+                }
+                if(riskLevel == 4){
+                    if(subDays > 50){
+                        //3.1发邮件
+
+                        //3.2添加待办事项
+                        TodoInfo todoInfo =createTodoInfo(suppId, suppName);
+                        todoInfoList.add(todoInfo);
+                    }else{
+                        continue;
+                    }
+                }
+                if(riskLevel == 5){
+                    if(subDays > 30){
+                        //3.1发邮件
+
+                        //3.2添加待办事项
+                        TodoInfo todoInfo =createTodoInfo(suppId, suppName);
+                        todoInfoList.add(todoInfo);
+                    }else{
+                        continue;
+                    }
+                }
+            }
+            if(todoInfoList.size() > 0){
+                todoInfoDao.save(todoInfoList);
+            }
+            logger.info("供应商审核提醒成功！");
+        }catch(Exception e){
+            e.printStackTrace();
+            logger.error("供应商审核提醒失败！", e);
+        }
+    }
+
+    //计算相差天数
+    public int getDays(Date start, Date end) throws ParseException {
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        return (int) ((df.parse(df.format(end)).getTime() -df.parse(df.format(start)).getTime()) / (24 * 60 * 60 * 1000));
+    }
+
+    //创建待办事项（供应商体系审核定时提醒）
+    public TodoInfo createTodoInfo(Long suppId, String suppName){
+        TodoInfo todoInfo = new TodoInfo();
+        todoInfo.setBsUserId(new Long(1));   //系统用户
+        todoInfo.setBsReferId(suppId);
+        todoInfo.setBsRouter("/qms/supplier/createApprovedRecord");
+        todoInfo.setBsTitle("[供应商体系审核]" + suppName + "需要发起新的审核");                   //标题
+        todoInfo.setBsStatus(BasicEnumConstants.TODO_NOFINISH);
+        todoInfo.setBsSystemType(BasicStateEnum.TODO_QMSTYPE.intValue());
+        todoInfo.setBsType(BasicEnumConstants.TODO_SUPP_SETUP);      //待办类型
+        todoInfo.setBsExtend(suppId);
+        todoInfo.setBsCreatedTime(new Date());
+        todoInfo.setPkCreatedBy(new Long(1));
+        todoInfo.setBsStartTime(new Date());     //有效起始时间
+        //计算一周后的时间
+        Calendar curr = Calendar.getInstance();
+        curr.setTime(todoInfo.getBsStartTime());
+        curr.add(Calendar.WEEK_OF_YEAR, 1);
+        Date after7Days=curr.getTime();
+        todoInfo.setBsEndTime(after7Days);                  //有效结束时间
+        return todoInfo;
+    }
+
+    /**
+     * 待办提醒功能
+     */
+    @Scheduled(cron = "0 12 14 * * ? ")
+    @Transactional
+    public void todoRemindSys(){
+        try{
+            //查询未处理的待办事项
+            //(1)同一个关联ID和同一个用户ID的有多个未处理的待办事项,(2)同一个关联ID和不同用户ID的有多个未处理的待办事项
+            List<SearchFilter> filters = new ArrayList<SearchFilter>();
+            filters.add(new SearchFilter("bsStatus", SearchFilter.Operator.EQ, BaseEnumConstants.FALSE));
+            Specifications<TodoInfo> spec = Specifications.where(BaseOprService.and(filters, TodoInfo.class));
+            List<TodoInfo> todoInfoList = todoInfoDao.findAll(spec);
+
+            //循环判断是否需要提醒
+            for(int i = 0; i < todoInfoList.size(); i++){
+                TodoInfo todoInfo = todoInfoList.get(i);
+                Date endDate = todoInfo.getBsEndTime();   //待办事项截止时间
+                if(endDate == null){
+                    continue;
+                }
+                Date nowDate = new Date();
+                Integer subDays = getDays(nowDate, endDate);
+                if(subDays <= 3){
+                    //发邮件
+                }else{
+                    continue;
+                }
+            }
+            logger.info("待办事项提醒成功！");
+        }catch(Exception e){
+            e.printStackTrace();
+            logger.error("待办事项提醒失败！",e);
+        }
+    }
+
+}
+
+

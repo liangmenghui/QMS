@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<groupId>com.unind</groupId>
+		<artifactId>unind-dependencies</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>unind</artifactId>
+	<packaging>pom</packaging>
+	<name>unind</name>
+	<url>http://maven.apache.org</url>
+
+	<dependencies>
+	</dependencies>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<modules>
+		<module>unind-core</module>
+		<module>unind-domain</module>
+		<module>unind-common</module>
+		<module>unind-db</module>
+	</modules>
+</project>

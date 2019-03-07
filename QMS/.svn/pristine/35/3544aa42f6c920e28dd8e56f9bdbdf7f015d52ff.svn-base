@@ -1,0 +1,31 @@
+package com.unind.qms.web.product.dao;
+
+import com.unind.qms.web.product.entity.ProductExtra;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+/**
+ * @author Shen
+ */
+public interface ProductExtraDao extends CrudRepository<ProductExtra, Long>, JpaSpecificationExecutor<ProductExtra> {
+
+    public int countByBsPrIdAndAndBsIsDel(Long bsPrId, Integer bsIsDel);
+
+    public List<ProductExtra> findAllByBsIsDelAndBsPrId(Integer bsIsDel, Long bsPrId);
+
+    @Modifying
+    @Query("update ProductExtra t set t.bsProcessRecordId=?1,t.bsIsApprove='1' where t.id=?2")
+    public void updatebsProcessRecordIdById(Long bsProcessRecordId,Long id);
+
+    @Modifying
+    @Query("update ProductExtra t set t.bsProductRecordId=?1,t.bsIsApprove='1' where t.id=?2")
+    public void updatebsProductRecordIdById(Long bsProductRecordId,Long id);
+
+    @Modifying
+    @Query("update ProductExtra t set t.bsIsApprove='0' where t.id=?1")
+    public void updatebsIsApproveById(Long id);
+}

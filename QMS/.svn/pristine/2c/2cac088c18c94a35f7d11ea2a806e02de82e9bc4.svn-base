@@ -1,0 +1,40 @@
+<template>
+	<div class="component">
+		<Card>			
+        	<p slot="title" style="display: inline;">审核状态: {{$t("approved.status["+approvedData.bsStatus+"]")}}</p>  
+        	<p slot="title" style="display: inline;margin-left: 30px;">结果说明: {{approvedData.bsDesc}}</p>        	
+        <div v-if="approvedData.resultSet.length>0">
+    		<el-table :data="approvedData.resultSet" style="width: 100%;">
+    		    <el-table-column label="审核结果">
+    		    	<template scope="scope">
+        				<span v-if="isCoach==undefined">{{$t('approved.itemResultDesc['+(scope.row.bsResult)+']')}}</span>
+                        <span v-if="isCoach!=undefined">{{$t('approved.coachResultDesc['+(scope.row.bsResult)+']')}}</span>
+        			</template>
+    		    </el-table-column>
+    		    <el-table-column prop="resultBy.bsName" label="负责人">
+    		    </el-table-column>
+    		    <el-table-column prop="bsDesc" label="审核意见">
+    		    </el-table-column>
+       			<el-table-column prop="bsCreatedTime" label="时间">
+       		 	</el-table-column>
+       		</el-table>	
+        </div>
+        </Card>
+   	</div>
+</template>
+
+<script>
+export default {
+	props:['approvedData','isCoach'],
+	data(){
+		return{
+			
+		}
+	},
+	
+};
+</script>
+
+<style>
+.component{margin-top: 30px;}
+</style>

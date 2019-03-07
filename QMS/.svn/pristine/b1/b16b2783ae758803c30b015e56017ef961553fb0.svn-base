@@ -1,0 +1,542 @@
+<template>
+    <form>
+        <table class="formed" align="left" valign="left">
+            <tr>
+                <td colspan="4">
+                    <p>
+                        <u>1. Shipper 託運人及地址:</u>
+                    </p>
+                </td>
+                <td colspan="3">
+                    <p>
+                        <u>DHL GLOBAL FORWARDING (HONG KONG) LIMITED as agent only</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><input readonly="true" type="text" v-model="form.shipperName" /></td>
+                <td colspan="3">
+                    <span style="font-size:10px;margin-left:6px;">Office: 11/F, Trade Square, 681 Cheung Sha Wan Road, Kowloon, Hong Kong</span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" rowspan="4">
+                    <textarea readonly="true" rows="4" v-model="form.shipperAddress"></textarea>
+                </td>
+                <td colspan="3"><br/></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <p>辦公室: 香港九龍長沙灣道681號貿易廣場11樓</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <p>
+                        <u>4. Billing Party 付款單位:</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" rowspan="3">
+                    <textarea readonly="true" rows="3" v-model="form.billingParty"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>
+                        <u>Shipper No託運人號:</u>
+                    </p>
+                </td>
+                <td><input readonly="true" type="text" v-model="form.shipperNo" /></td>
+                <td>
+                    <p>
+                        <u>Fax 傳真:</u>
+                    </p>
+                </td>
+                <td><input readonly="true" type="text" v-model="form.shipperFax" /></td>
+            </tr>
+            <tr>
+                <td>
+                    <p>
+                        <u>Tel 電話:</u>
+                    </p>
+                </td>
+                <td><input readonly="true" type="text" v-model="form.shipperTel" /></td>
+                <td>
+                    <p>
+                        <u>托运人:</u>
+                    </p>
+                </td>
+                <td><input readonly="true" type="text" v-model="form.shipperContact" /></td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <p>
+                        <u>2. Consignee 收貨人及地址:</u>
+                    </p>
+                </td>
+                <td>
+                    <p>
+                        <u>Contact 聯絡人:</u>
+                    </p>
+                </td>
+                <td colspan="2">
+                    <input readonly="true" type="text" v-model="form.billingPartyContract" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><input readonly="true" type="text" v-model="form.consigneeName" /></td>
+                <td>
+                    <p>
+                        <u>Tel 電話:</u>
+                    </p>
+                </td>
+                <td colspan="2"><input readonly="true" type="text" v-model="form.billingPartyTel" /></td>
+            </tr>
+            <tr>
+                <td colspan="4" rowspan="4">
+                    <textarea readonly="true" rows="4" v-model="form.consigneeAddress"></textarea>
+                </td>
+                <td>
+                    <p>
+                        <u>Fax 傳真:</u>
+                    </p>
+                </td>
+                <td colspan="2"><input readonly="true" type="text" v-model="form.billingPartyFax" /></td>
+            </tr>
+            <tr>
+                <td rowspan="6"><br/></td>
+                <td rowspan="6"><br/></td>
+                <td rowspan="6"><br/></td>
+            </tr>
+            <tr></tr>
+            <tr></tr>
+            <tr>
+                <td>
+                    <p>
+                        <u>Tel 電話:</u>
+                    </p>
+                </td>
+                <td><input readonly="true" type="text" v-model="form.consigneeTel" /></td>
+                <td>
+                    <p>
+                        <u>Contact 聯絡人:</u>
+                    </p>
+                </td>
+                <td><input readonly="true" type="text" v-model="form.consigneeContact" /></td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <p>
+                        <u>3. Notify Party 並通知:</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><input readonly="true" type="text" v-model="form.notifyPartyName" /></td>
+            </tr>
+            <tr>
+                <td colspan="4" rowspan="4">
+                    <textarea readonly="true" rows="4" v-model="form.notifyPartyAddress"></textarea>
+                </td>
+                <td colspan="3"><br/></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p>
+                        <u>9. Delivery Terms 運貨條款:</u>
+                    </p>
+                </td>
+                <td>
+                    <input readonly="true" type="text" v-model="form.deliveryTerm" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3"><br/></td>
+            </tr>
+            <tr>
+                <td rowspan="2">
+                    <p>
+                        <u>10. Licence 出入口証:</u>
+                    </p>
+                </td>
+                <td colspan="2" rowspan="2"></td>
+            </tr>
+            <tr>
+                <td>
+                    <p>
+                        <u>Tel 電話:</u>
+                    </p>
+                </td>
+                <td><input readonly="true" type="text" v-model="form.notifyPartyTel" /></td>
+                <td>
+                    <p>
+                        <u>Contact 聯絡人:</u>
+                    </p>
+                </td>
+                <td><input readonly="true" type="text" v-model="form.deliveryContract" /></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p>
+                        <u>11.Vessel/Voyage 船名:</u>
+                    </p>
+                </td>
+                <td colspan="2">
+                    <p>
+                        <u>12.Place of Receipt 收貨地點:</u>
+                    </p>
+                </td>
+                <td>
+                    <p>
+                        <u>13.Port of Loading 裝貨港:</u>
+                    </p>
+                </td>
+                <td>
+                    <p>
+                        <u>14.Port of Discharge 卸貨港:</u>
+                    </p>
+                </td>
+                <td>
+                    <p>
+                        <u>15.Place of Delivery 目的地:</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2"><br/></td>
+                <td colspan="2">
+                    <input type="text" v-model="form.receipt" style="background-color:#fff;" />
+                </td>
+                <td>
+                    <input readonly="true" type="text" v-model="form.loading" />
+                </td>
+                <td>
+                    <input readonly="true" type="text" v-model="form.discharge" />
+                </td>
+                <td>
+                    <input type="text" v-model="form.delivery" style="background-color:#fff;" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p>
+                        <u>16. Marks and Nos 嘜頭:</u>
+                    </p>
+                </td>
+                <td>
+                    <p>
+                        <u>17. No. & Kinds of Packages 貨物數量及類別:</u>
+                    </p>
+                </td>
+                <td colspan="3">
+                    <p>
+                        <u>18. Goods Names & Description of Goods 貨物名稱:</u>
+                    </p>
+                </td>
+                <td>
+                    <p>
+                        <u>19. Measurements (CBM) & Gross Weight (In Kilos) 尺碼及重量:</u>
+                    </p>
+                </td>
+            </tr>
+            <!-- 柜子的数量以及尺寸 -->
+            <tr>
+                <td colspan="2"></td>
+                <td></td>
+                <td colspan="3"></td>
+                <td>
+                    <p>
+                        <u>
+                            <b>{{form.totalCabinet}}</b>
+                        </u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p>
+                        <u>
+                            <b>Electrolux Home Product</b>
+                        </u>
+                    </p>
+                </td>
+                <td>
+                    <div style="width:50%;border-right:solid 1px #c1c1c3;display:inline-block;">
+                        <p>
+                            <u>
+                                <b>QTY</b>
+                            </u>
+                        </p>
+                    </div>
+                    <div style="width:50%;display:inline;">
+                        <b>CTNS</b>
+                    </div>
+                </td>
+                <td colspan="3">
+                    <p>
+                        <u>
+                            <b>Metal Parts of Oven</b>
+                        </u>
+                    </p>
+                </td>
+                <td>
+                </td>
+            </tr>
+            <!-- 需要优化行合并问题 -->
+            <tr v-for="item in form.cabinets" :key="item.index">
+                <td colspan="2">
+                    <p>
+                        <u>{{item.partNo}}</u>
+                    </p>
+                </td>
+                <td>
+                    <div style="width:50%;border-right:solid 1px #c1c1c3;display:inline-block;">{{item.qty}}</div>
+                    <div style="width:50%;display:inline;">{{item.cartonQty}}</div>
+                </td>
+                <td colspan="3">
+                    <p>
+                        <u>{{item.partNoDesc}}</u>
+                    </p>
+                </td>
+                <td v-if="item.firstRow ==true" v-bind:rowspan="item.rowCount">
+                    <p>
+                        <u>{{item.volume}}&nbsp;CBMS&nbsp;&nbsp;/&nbsp;&nbsp;{{item.weight}}&nbsp;KGS</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <p>
+                        <u>
+                            <b>TOTAL</b>
+                        </u>
+                    </p>
+                </td>
+                <td>
+                    <div style="width:50%;border-right:solid 1px #c1c1c3;display:inline-block;">{{form.totalQty}}</div>
+                    <div style="width:50%;display:inline;">{{form.totalCartonQty}}</div>
+                </td>
+                <td colspan="3"></td>
+                <td>
+                    <p>
+                        <u>{{form.totalVolume}}&nbsp;CBMS&nbsp;&nbsp;/&nbsp;&nbsp;{{form.totalWeight}}&nbsp;KGS</u>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div style="padding:10px 20px;">
+                        <p style="display:inline-block;">
+                            <u>
+                                <b>ASN:</b>
+                            </u>
+                        </p>
+                        <input type="input" v-model="form.invoiceCode" style="width:140px;background-color:#fff;" />
+                    </div>
+                </td>
+                <td></td>
+                <td colspan="3">
+                    <div style="padding:10px 20px;">
+                        <p style="display:inline-block;">
+                            <u>
+                                <b>H.S. CODE:</b>
+                            </u>
+                        </p>
+                        <input type="input" v-model="form.hsCode" style="width:160px;" readonly="true" />
+                    </div>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </form>
+</template>
+
+<script>
+import Vue from "vue";
+export default {
+  props: {
+    customer: {
+      type: String
+    },
+    agent: {
+      type: String
+    },
+    cabinets: {
+      type: Array
+    },
+    contentData: {
+      type: [Array, Object],
+      required: true
+    }
+  }, //props
+  data() {
+    return {
+      content: "",
+      form: {
+        shipperName: "",
+        shipperAddress: "",
+        billingParty: "",
+        shipperNo: "",
+        shipperFax: "",
+        shipperTel: "",
+        shipperContact: "",
+        billingPartyContract: "",
+        consigneeName: "",
+        billingPartyTel: "",
+        consigneeAddress: "",
+        billingPartyFax: "",
+        consigneeTel: "",
+        consigneeContact: "",
+        notifyPartyName: "",
+        notifyPartyAddress: "",
+        deliveryTerm: "",
+        notifyPartyTel: "",
+        deliveryContract: "",
+        receipt: "",
+        loading: "",
+        discharge: "",
+        delivery: ""
+      }
+    };
+  }, //data
+  methods: {
+    getData: function() {
+      let validSuccess = true;
+      if (this.form.receipt == undefined || this.form.receipt == "") {
+        this.$Message.error("请选择收货地点");
+        validSuccess = false;
+      }
+      if (this.form.delivery == undefined || this.form.delivery == "") {
+        this.$Message.error("请选择目的地");
+        validSuccess = false;
+      }
+      if (this.form.invoiceCode == undefined || this.form.invoiceCode == "") {
+        this.$Message.error("请输入发票号");
+        validSuccess = false;
+      }
+
+      if (validSuccess == false) return;
+      this.content.receipt = this.form.receipt;
+      this.content.delivery = this.form.delivery;
+      this.content.invoiceCode = this.form.invoiceCode;
+      this.$emit("on-commit", this.content);
+    } //getFormData
+  }, //methods
+  computed: {
+    total() {
+      let count = 0;
+      this.cabinets.forEach(element => {
+        count += element.qty;
+      });
+      return count;
+    }
+  }, //computed
+  watch: {
+    contentData(val) {
+      this.content = JSON.parse(JSON.stringify(val));
+      if (!content) return;
+      let formData = JSON.parse(JSON.stringify(val));
+      let cabinets = [];
+      //当前页面能解析的解析的
+      formData.cabinets.forEach(ele => {
+        ele.cabinetDetail.forEach((dele, index) => {
+          cabinets.push({
+            partNo: dele.partNo,
+            qty: dele.qty,
+            cartonQty: dele.cartonQty,
+            partNoDesc: dele.partNoDesc,
+            loadingDate: dele.loadingDate,
+            firstRow: index == 0 ? true : false,
+            rowCount: ele.cabinetDetail.length,
+            volume: ele.cabinetVolume,
+            weight: ele.cabinetWeight
+          });
+        });
+      });
+      formData.cabinets = cabinets;
+      this.form = formData;
+    }
+  }
+};
+</script>
+
+<style>
+table {
+  padding: 0;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0px;
+}
+
+.formed {
+  margin: 6px 10px;
+  border: 2px solid #000;
+  line-height: 1.6em;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+.formed tr {
+  padding: 0px;
+}
+.formed tr td {
+  border: 0;
+  border-right: 1px solid #c1c1c3;
+  border-bottom: 1px dashed #c1c1c3;
+  padding: 0px;
+  width: 140px;
+  padding: 1px 1px;
+}
+
+.formed > tr:last-child > td {
+  border-bottom: 0;
+}
+.formed .sperator {
+  border-top: 2px solid #000;
+}
+
+.formed p > u {
+  margin: 3px 5px;
+  font-size: 12px;
+  display: inline;
+  line-height: 12px;
+  text-decoration: none;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.formed input,
+select {
+  width: 100%;
+  border: 1px solid #c1c1c3;
+}
+.formed input {
+  background-color: #e1e2e3;
+}
+.formed label {
+  margin-left: 30px;
+  position: relative;
+}
+.formed input[type="checkbox"] {
+  margin-left: 2px;
+  position: absolute;
+  left: -20px;
+  bottom: 1px;
+}
+
+.formed textarea {
+  resize: none;
+  width: 100%;
+  border: 1px solid #c1c1c3;
+  background-color: #e1e2e3;
+}
+.f-blue {
+  background-color: #c0d9f1;
+}
+.f-white {
+  background-color: #fff;
+}
+.f-yellow {
+  background-color: #ff0;
+}
+</style>

@@ -1,0 +1,115 @@
+package com.unind.qms.web.basic.entity;
+
+import com.unind.base.domain.admin.BaseEntity;
+import com.unind.base.domain.admin.user.SysUser;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+
+/**
+ * @author chen
+ */
+@Entity
+@Table(name = FeedbackHandler.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class FeedbackHandler extends BaseEntity {
+    private static final long serialVersionUID = 7151771262953316256L;
+    public static final String TABLE_NAME = "t_feedback_handler";
+
+    /**
+     * 客诉ID
+     */
+    @ApiModelProperty(name="bsFeedbackId",required=true,value="客诉ID")
+    @NotNull
+    @Column
+    protected Long bsFeedbackId;
+
+    /**
+     * 处理人员ID
+     */
+    @ApiModelProperty(name="bsHandlerId",required=true,value="处理人员ID")
+    @NotNull
+    @Column
+    protected Long bsHandlerId;
+
+    @ApiModelProperty(name = "handlerBy", hidden = true, value = "客诉处理人--user")
+    @ManyToOne
+    @JoinColumn(name = "bsHandlerId", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    protected SysUser handlerBy;
+
+    /**
+     * 类型
+     */
+    @ApiModelProperty(name="bsType",value="类型")
+    @Column
+    protected int bsType;
+
+    /**
+     * 状态
+     */
+    @ApiModelProperty(name="bsStatus",value="状态")
+    @Column
+    protected int bsStatus;
+
+    /**
+     * 描述信息
+     */
+    @ApiModelProperty(name="bsDesc",value="描述信息")
+    @Column(length = 500)
+    protected String bsDesc;
+
+    public Long getBsFeedbackId() {
+        return bsFeedbackId;
+    }
+
+    public void setBsFeedbackId(Long bsFeedbackId) {
+        this.bsFeedbackId = bsFeedbackId;
+    }
+
+    public Long getBsHandlerId() {
+        return bsHandlerId;
+    }
+
+    public void setBsHandlerId(Long bsHandlerId) {
+        this.bsHandlerId = bsHandlerId;
+    }
+
+    public SysUser getHandlerBy() {
+        return handlerBy;
+    }
+
+    public void setHandlerBy(SysUser handlerBy) {
+        this.handlerBy = handlerBy;
+    }
+
+    public int getBsType() {
+        return bsType;
+    }
+
+    public void setBsType(int bsType) {
+        this.bsType = bsType;
+    }
+
+    public int getBsStatus() {
+        return bsStatus;
+    }
+
+    public void setBsStatus(int bsStatus) {
+        this.bsStatus = bsStatus;
+    }
+
+    public String getBsDesc() {
+        return bsDesc;
+    }
+
+    public void setBsDesc(String bsDesc) {
+        this.bsDesc = bsDesc;
+    }
+}

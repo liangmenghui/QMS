@@ -1,0 +1,277 @@
+/*客诉详情*/
+	.feedbackdetails .text{
+		float: left;margin-left:10px;font-size: 14px;color: #7D979C;
+	}
+	.feedbackdetails .i-div{
+		float: left;
+	}
+	.feedbackdetails .i-div .ivu-icon{
+		font-size: 20px;
+	}
+	.feedbackdetails .text2{
+		height: 50px;font-size: 14px;color: #7D979C;
+	}
+	.feedbackdetails #last-div{
+		background-color: white;padding-top: 10px;padding-left:7%;padding-bottom: 10px;
+	}
+	.feedbackdetails #last-div p{
+		font-size: 14px;
+	}
+	.feedbackdetails #last-div .el-textarea{
+		width:50%;
+	}
+	.feedbackdetails #last-div .el-button{
+		width: 110px;height: 110px;
+	}
+	.feedbackdetails #last-div .el-icon-plus{
+		display: block;font-size: 30px;
+	}
+	.filelist{width: 60%;border:1px dashed #ccc; padding: 0 15px 15px;margin-top:10px;}
+	.Colors{color:#20536e;}
+
+/*客诉处理*/
+.feedbackhandle .title1 {
+    float: left;
+}
+
+.feedbackhandle .title2 {
+    float: left;
+    display: inline-block;
+    line-height: 20px;
+    font-size: 14px;
+    color: #1c2438;
+    font-weight: 700;
+    margin-left: 1%;
+    margin-right: 1%;
+    margin-top: 8px;
+}
+
+.feedbackhandle #product-body {
+    height:120px;
+    padding-top: 20px;
+    padding-left: 4%;
+}
+
+.feedbackhandle .product-body-div {
+    height: 40px;
+    font-size: 14px;
+    float: left;
+    width:50%;    
+    color:#555;
+}
+
+.feedbackhandle .product-body-div span {
+    color: #35464e;
+}
+
+.feedbackhandle #handler-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #problem-body {
+    padding-top: 10px;
+    padding-left: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle .principal-div {
+    height: 50px;
+    margin-top: 30px;
+}
+
+.feedbackhandle .principal-div1 {
+    float: left;
+    margin-top: 10px;
+    width: 60px;
+    font-size: 14px;
+}
+
+.feedbackhandle .principal-div2 {
+    float: left;
+}
+
+.feedbackhandle .time-div {
+    height: 50px;
+    margin-top: 20px;
+}
+
+.feedbackhandle .time-div1 {
+    float: left;
+    margin-top: 10px;
+    width: 60px;
+    font-size: 14px;
+}
+
+.feedbackhandle .submit-div {
+    height: 40px;
+    margin-top: 20px;
+    padding-top: 10px;
+}
+
+.feedbackhandle #measures-body {
+   /* padding-left: 2%;*/
+   /* padding-right: 2%;*/
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #why-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #select-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #perform-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #prevent-body {
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 10px;
+}
+
+.feedbackhandle #bottom {
+    margin-bottom: 20px;
+    padding-top: 25px;
+    padding-bottom: 50px;
+}
+
+.feedbackhandle .submit-div .el-button {
+    width: 10%;
+    padding: 7px 20px;
+}
+
+/*提交客诉*/
+	.feedbackreport #customer-body:after{
+		content:".";
+        visibility:hidden;
+        display:block; 
+        clear:both;
+	}
+	.feedbackreport .customer-body-div{
+		height: 50px;	float:left; 
+	}
+	.feedbackreport .customer-body-text{
+		float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;
+	}
+    .feedbackreport .customer-body-input{
+        float: left;
+    }
+	.feedbackreport .customer-body-input .el-input{
+		width: 300px;color:#444;
+	}
+	.feedbackreport #supplier-body:after{
+		content:".";
+        visibility:hidden;
+        display:block; 
+        clear:both;
+	}
+	.feedbackreport .supplier-body-div{
+		height: 50px;float:left;
+	}
+	.feedbackreport .supplier-body-text{
+		float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;
+	}
+    .feedbackreport .supplier-body-input{
+        float: left;
+    }
+	.feedbackreport .supplier-body-input .el-input{
+		width: 300px;color:#444;
+	}
+	.feedbackreport #product-body:after{
+		content:".";
+        visibility:hidden;
+        display:block; 
+        clear:both;
+	}
+	.feedbackreport .product-body-div{
+		height: 50px;float:left;
+	}
+	.feedbackreport .product-body-text{
+		float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;
+	}
+    .feedbackreport .product-body-input{
+        float: left;
+    }
+	.feedbackreport .product-body-input .el-input{
+		width: 300px;color:#444;
+	}
+	.feedbackreport #feedback-body{
+		padding-top: 10px;padding-left: 3%;
+	}
+	.feedbackreport #feedback-body-picture{
+		margin-top: 30px;
+	}
+	.feedbackreport #feedback-body-picture p{
+		font-size: 14px;
+	}
+	
+	.feedbackreport .el-icon-plus{
+		display: block;font-size: 30px;
+	}
+
+/*退货*/
+    .returngoods #basic-body1:after{
+        content:".";
+        visibility:hidden;
+        display:block; 
+        clear:both;
+    }
+    .returngoods #basic-body1 .basic-body-div{
+        float: left;height: 50px;
+    }
+    .returngoods #basic-body1 .basic-body-text{
+        float: left;margin-top: 10px;width: 150px;margin-left:20px;font-size: 14px;text-align: right;
+    }
+    .returngoods #basic-body1 .basic-body-input{
+        float: left;width: 300px;
+    }
+    .returngoods #basic-body2:after{
+        content:".";
+        visibility:hidden;
+        display:block; 
+        clear:both;
+    }
+    .returngoods #basic-body3:after{
+        content:".";
+        visibility:hidden;
+        display:block; 
+        clear:both;
+    }
+    .returngoods .basic-body-div{
+        float: left;height: 50px;
+    }
+    .returngoods .basic-body-text{
+        float: left;margin-top: 10px;width: 100px;font-size: 14px;text-align: right;
+    }
+    .returngoods .basic-body-input{
+        float: left;width: 230px;
+    }
+    .returngoods .refund-body-div{
+        height: 50px;
+    }
+    .returngoods .refund-body-text{
+        float: left;margin-top: 10px;width: 100px;font-size: 14px;text-align: right;
+    }
+    .returngoods .refund-body-input{
+        float: left;width: 300px;
+    }
+    .returngoods #refund-body .ivu-checkbox-wrapper{
+        width: 160px;margin-top: 10px;margin-left: 10px;font-size: 14px;
+    } 
+    .returngoods #refund-why:after{
+        content:".";
+        visibility:hidden;
+        display:block; 
+        clear:both;
+    }

@@ -1,0 +1,286 @@
+<template>
+  <div class="ivu-fs-release">
+    <div class="fs-header">
+      <h2>文档发布</h2>
+    </div>
+    <div class="ivu-fs-release-wrapper">
+      <div class="fs-toolbar">
+        <Row>
+          <i-col :span="12">
+            <div class="btn-box">
+              <div class="btn-box-item">
+                <Upload ref="upload" :data="upload.params" :show-upload-list="false" :action="upload.url" :format="upload.filetype" :accept="acceptype" :before-upload="handleBeforeUpload">
+                  <Button size="small" type="ghost" icon="android-add">添加文件</Button>
+                </Upload>
+              </div>
+              <div class="btn-box-item">
+                <Button size="small" type="ghost" @click="handleRemoveFile" icon="android-remove"> 删除文件</Button>
+              </div>
+            </div>
+          </i-col>
+          <!-- <i-col :span="12">
+            <div class="btn-box">
+              <div class="btn-box-item">快速设置</div>
+              <div class="btn-box-item">
+                <comp-permission @change="handleChangeAllPermission"></comp-permission>
+              </div>
+            </div>
+          </i-col> -->
+        </Row>
+      </div>
+      <div class="fs-body">
+        <Table ref="grid" :data="data" :columns="grid.columns" :height="400" :show-header="false" @on-current-change="handleRowChange" no-data-text="请添加要发布的WORD文档" stripe highlight-row></Table>
+      </div>
+    </div>
+    <div class="fs-footer">
+      <div class="btn-box">
+        <div class="btn-box-item">
+          <Button type="ghost" size="small" icon="ios-cloud-upload-outline" @click="handleUpload(false)">上传</Button>
+        </div>
+        <div class="btn-box-item">
+          <Button type="ghost" size="small" icon="android-upload" @click="handleUpload(true)">上传并发布</Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+import compPermission from "./permission";
+import compFolder from "./folder";
+import compFile from "./filename";
+import compDoUpload from "./do-upload";
+
+export default {
+  name: "iFsRelease",
+  components: {
+    compPermission,
+    compFolder,
+    compFile,
+    compDoUpload
+  },
+  data() {
+    let vm = this;
+    return {
+      upload: {
+        url: "/admin/fs/doc/release/upload",
+        params: {},
+        filetype: ["docx", "doc"]
+      },
+      grid: {
+        columns: [
+          {
+            key: "order",
+            title: "order",
+            type: "selection",
+            width: 40
+          },
+          {
+            key: "folder",
+            width: 280,
+            render: (h, params) => {
+              return h(compFolder, {
+                props: {
+                  value: params.row.folderId,
+                  text: params.row.folderDesc
+                },
+                on: {
+                  change: node => {
+                    let row = vm.data[params.index];
+                    row.folderId = node.id;
+                    row.folderDesc = node.title;
+                  }
+                }
+              });
+            }
+          },
+          {
+            key: "fileName",
+            width: 300,
+            render: (h, params) => {
+              return h(compFile, {
+                props: {
+                  value: params.row.fileName,
+                  readonly: true
+                }
+              });
+            }
+          },
+          {
+            key: "permission",
+            width: 290,
+            render: (h, params) => {
+              return h(compPermission, {
+                props: {
+                  value: params.row.permission
+                },
+                on: {
+                  change(permission) {
+                    let row = vm.data[params.index];
+                    row.permission = permission.name;
+                  }
+                }
+              });
+            }
+          },
+          {
+            key: "upload",
+            width: 300,
+            render: (h, params) => {
+              let index = params.index;
+              return h(compDoUpload, {
+                ref: "upload",
+                props: {
+                  permission: vm.data[index].permission,
+                  folderId: vm.data[index].folderId,
+                  folder: vm.data[index].folderDesc,
+                  fileName: vm.data[index].fileName,
+                  publish: vm.data[index].publish,
+                  file: vm.data[index].file,
+                  action: vm.upload.url,
+                  format: vm.upload.format
+                }
+              });
+            }
+          },
+          {
+            key: "extend"
+          }
+        ]
+      },
+      data: []
+    };
+  },
+  methods: {
+    handleBeforeUpload(file) {
+      for (let i in this.data) {
+        let item = this.data[i];
+        //console.log(item);
+        if (item.fileName == file.name) {
+          this.$Message.error("文件已存在列表中。");
+          return false;
+        }
+      }
+      this.data.push({ fileName: file.name, file: file });
+      return false;
+    },
+    handleRowChange(currentRow, oldCurrentRow) {
+      let objData = this.$refs.grid.$refs.tbody.objData;
+      let element = objData[currentRow.keyIndex];
+      if (element) {
+        element._isChecked = !element._isChecked;
+        element._isHighlight = !element._isHighlight;
+      }
+    },
+    handleRemoveFile() {
+      let selections = this.$refs.grid.getSelection();
+      let selectionIndexs = [];
+      selections.forEach(element => selectionIndexs.push(element.keyIndex));
+      this.data = this.data.filter(
+        (item, index) => selectionIndexs.indexOf(index) == -1
+      );
+    },
+    handleChangeAllPermission(permission) {},
+    handleUpload(publish) {
+      for (let index in this.data) {
+        let item = this.data[index];
+        item.publish = publish;
+        if (!item.folderId) {
+          this.$Message.error("未设置目录");
+          return;
+        }
+        if (!item.permission) {
+          this.$Message.error("未设置权限");
+          return;
+        }
+      }
+
+      this.$refs.grid.$refs.tbody.$children.forEach(item => {
+        let data = {};
+        let index = item._props.row.keyIndex;
+        let vm = this;
+        data.permission = vm.data[index].permission;
+        data.folderId = vm.data[index].folderId;
+        data.folder = vm.data[index].folderDesc;
+        data.fileName = vm.data[index].fileName;
+        data.publish = vm.data[index].publish;
+        data.file = vm.data[index].file;
+        item.$children.forEach(cell => {
+          let upload = cell.$refs.upload;
+          if (upload) {
+            upload._data.data = data;
+            upload.post();
+          }
+        });
+      });
+    }
+  },
+  computed: {
+    acceptype() {
+      let tmp = this.upload.filetype.reduce((x1, x2) => {
+        return (x1 += ",." + x2);
+      });
+      return "." + tmp;
+    }
+  },
+  mounted() {},
+  watch: {
+    data: {
+      handler() {
+        this.data.forEach((item, index) => {
+          item.keyIndex = index;
+        });
+      }
+    }
+  }
+};
+</script>
+<style>
+.ivu-fs-release .fs-header {
+  background-color: #dddee1;
+  margin: 0 16px 24px 16px;
+  padding: 24px 16px;
+  height: 80px;
+  line-height: 36px;
+  vertical-align: middle;
+}
+.ivu-fs-release .fs-header h2 {
+  margin-left: 32px;
+}
+.ivu-fs-release .fs-body {
+  margin: 0 16px 12px 16px;
+}
+.ivu-fs-release-wrapper .fs-toolbar {
+  margin: 0px 16px 4px 16px;
+  padding-left: 16px;
+}
+.btn-box {
+  display: inline-block;
+  overflow: hidden;
+}
+.btn-box .btn-box-item {
+  margin-left: 8px;
+  display: inline-block;
+}
+.btn-box .btn-box-item:first-child {
+  margin-left: 0px;
+}
+.ivu-fs-release-wrapper .fs-body {
+  background-color: #f8f8f9;
+  height: 400px;
+}
+.ivu-fs-release .ivu-table-wrapper {
+  border: none 0 #fff;
+}
+.ivu-fs-release .ivu-table-wrapper .ivu-table,
+.ivu-table::before,
+.ivu-table::after,
+.ivu-table td {
+  background-color: #f8f8f9;
+}
+.ivu-fs-release .fs-footer {
+  text-align: center;
+}
+.ivu-fs-release .fs-footer .ivu-btn {
+  width: 120px;
+}
+</style>

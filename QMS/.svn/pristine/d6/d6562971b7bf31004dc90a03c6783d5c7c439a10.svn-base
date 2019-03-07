@@ -1,0 +1,15 @@
+﻿import httpservices from '@/libs/service'
+
+import apiconfig from './erp/erp.apiconfig'    //ERP API配置
+import item from './erp/erp.item' //物料
+import customer from './erp/erp.customer' //客户
+import supplier from './erp/erp.supplier' //供应商
+import itemcustomer from './erp/erp.itemcustomer' //物料-客户-客户物料号关系
+
+export default{
+    item,
+    customer,
+    supplier,
+    itemcustomer,
+    apiconfig
+}

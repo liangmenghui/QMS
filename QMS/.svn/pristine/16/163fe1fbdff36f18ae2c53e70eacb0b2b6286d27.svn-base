@@ -1,0 +1,155 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：产品详情
+    -->
+	<div class="productdetails">
+		<!--
+        	作者：offline
+        	时间：2018-03-28
+        	描述：top
+        -->
+		<div style="height: 50px;">
+			<Col :md="9">
+				<div style="height: 1px;"></div>
+			</Col>
+			<Col :md="6">
+				<Col :md="12">
+				<div  style="width: 99%;height:40px;border-radius: 8px 0px 0px 8px;background-color:#76C6F3;color:white;padding-top: 10px;font-size: 14px;">
+					<center>{{$t('product.ProductDetail')}}</center>
+				</div>
+				</Col>
+				<Col :md="12">
+				<router-link :to="{path: 'riskManagement'}">
+				<el-button type="primary" style="width: 99%;border-radius: 0px 8px 8px 0px;height:40px;font-size: 14px;">
+					{{$t('product.RiskManagement')}}
+				</el-button>
+				</router-link>
+				</Col>
+				<!--<Col :md="8">
+				<router-link :to="{path: 'dataMonitor'}">
+				<el-button type="primary" style="width: 99%;height:40px;border-radius: 0px 8px 8px 0px;font-size: 14px;">
+					{{$t('product.DataMonitor')}}
+				</el-button>
+				</router-link>
+				</Col>-->
+			</Col>
+			<Col :md="9">
+				<div style="height: 1px;"></div>
+			</Col>
+		</div>
+		<!--
+        	作者：offline
+        	时间：2018-03-28
+        	描述：产品详情
+       -->
+        <Row>
+        	<Card>
+        		<p slot="title">
+                    <Icon type="cube" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('product.ProductDetail')}}
+               	</p>			
+				<el-tag slot="extra" color="white">
+					{{$t('approved.statusLabel')}}: {{$t('product.productstatus['+productData.bsIsApprove+']')}}
+				</el-tag>
+		
+      			<div id="product-body">      				
+					<div class="product-body-div">
+						<div class="product-body-text">
+							{{$t('product.name')}}：	
+						</div>
+						<div class="product-body-input">
+							<el-input readonly v-model="productData.bsPrName"></el-input>
+						</div>
+					</div>
+					<div class="product-body-div">
+						<div class="product-body-text">
+							{{$t('product.Type')}}：
+						</div>
+						<div class="product-body-input">
+							<el-input readonly v-model="productData.bsPrType"></el-input>
+						</div>
+					</div>
+					<div class="product-body-div">
+						<div class="product-body-text">
+							{{$t('product.ComponentNo')}}：	
+						</div>
+						<div class="product-body-input">
+							<el-input readonly v-model="productData.bsComponentNo"></el-input>
+						</div>
+					</div>
+					<div class="product-body-div">
+						<div class="product-body-text">
+							{{$t('product.BlueprintNo')}}：	
+						</div>
+						<div class="product-body-input">
+							<el-input readonly v-model="productData.bsBlueprintNo"></el-input>
+						</div>
+					</div>
+					<div class="product-body-div">
+						<div class="product-body-text">
+							{{$t('product.BlueprintVersion')}}：	
+						</div>
+						<div class="product-body-input">
+							<el-input readonly v-model="productData.bsBlueprintVersion"></el-input>	
+						</div>
+					</div>					
+					<div class="product-body-div">
+						<div class="product-body-text">
+							{{$t('product.SuppChieseName')}}：	
+						</div>
+						<div class="product-body-input">
+							<el-input readonly v-model="productData.bsSuppChieseName"></el-input>
+						</div>
+					</div>
+					<div class="product-body-div">
+						<div class="product-body-text">
+							{{$t('product.Contact')}}：	
+						</div>
+						<div class="product-body-input">
+							<el-input readonly></el-input>
+						</div>
+					</div>
+					<div class="product-body-div">
+						<div class="product-body-text">
+							{{$t('product.ContactInformation')}}：	
+						</div>
+						<div class="product-body-input">
+							<el-input readonly></el-input>
+						</div>
+					</div>
+					<div class="product-body-div">
+						<div class="product-body-text">
+							{{$t('product.RiskLevel')}}：
+						</div>
+						<div class="product-body-input">
+							<el-input readonly v-model="productData.bsRiskLevel"></el-input>
+						</div>
+					</div>					
+      			</div>	     	
+      		</Card>
+      	</Row>
+   	</div>		
+</template>
+
+<script>
+	import {mapState} from 'vuex'
+	export default {
+    data() {
+      return {
+   		productData:{},
+      } 
+    },
+    created(){
+       this.productData=this.$store.getters.getProductData;
+    },
+    methods:{
+    
+    }
+  }
+</script>
+
+<style>
+	@import '../../../../styles/product.css';
+</style>

@@ -1,0 +1,474 @@
+<template>
+    <div>
+        <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery"  inline>
+                    <Form-item prop="bsCustomer" label="客户" :label-width="50">
+                      <!--<un-customer v-model="formQuery.bsCustomer" :text.sync="formQuery.bsCustomerDesc"></un-customer>-->
+                        <Select v-model="formQuery.bsCustomer" style="width:300px">
+                            <Option v-for="item in customers" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                        </Select>
+                    </Form-item>
+                    <Form-item prop="bsBatchNo">
+                        <Input type="text" v-model="formQuery.bsBatchNo" placeholder="批次号" />
+                    </Form-item>
+                    <Form-item prop="bsPartNo">
+                        <Input type="text" v-model="formQuery.bsPartNo" placeholder="部件号" />
+                    </Form-item>
+                    <!-- <Form-item v-if="menuData.perms.QUERY"> -->
+                    <Form-item >
+                        <Button type="primary" @click="handleSubmit('formQuery')">查 询</Button>
+                    </Form-item>
+                    <!-- <Form-item v-if="menuData.perms.ADD">
+                        <Button type="primary" @click="showAddDialog()">新 增</Button>
+                    </Form-item> -->
+                    <!-- <Form-item v-if="menuData.perms.IMPORT"> -->
+                    <Form-item v-if="menuData.perms.IMPORT">
+                        <Button type="primary" @click="showAddDialog()">导 入</Button>
+                    </Form-item>
+                    <!-- <Form-item v-if="menuData.perms.EXPORT"> -->
+                    <Form-item v-if="menuData.perms.EXPORT">
+                        <Button type="primary" @click="handleExport">导 出</Button>
+                    </Form-item>
+                </Form>
+            </i-col>
+        </Row>
+        <Row>
+            <i-col span="24" style="padding:1px">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe height="700"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+        <Modal v-model="dialog.modal_dialog" title="batch import" @on-ok="ok" @on-cancel="cancel" >
+            <p>
+                <Form :model="dialog.formItem" :ref="dialog.ruleForm" :rules="dialog.ruleForm" :label-width="80">
+                    <Form-item label="客户" prop="bsCustomer" >
+                      <!--<un-customer v-model="dialog.formItem.bsCustomer" :text.sync="dialog.formItem.bsCustomerDesc"></un-customer>-->
+                        <Select v-model="dialog.formItem.bsCustomer" style="width:375px">
+                            <Option v-for="item in customers" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                        </Select>
+                    </Form-item>
+                    <Form-item label="文件">
+                        <Upload multiple type="drag" :before-upload="handleUpload" >
+                            <div style="padding: 20px 0" v-if="this.file !== null">Upload file: {{ this.file.name }} </div>
+                            <div style="padding: 20px 0" v-if="this.file === null">
+                                <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
+                                <p>Click or drag files here to upload</p>
+                            </div>
+                        </Upload>
+                    </Form-item>
+                </Form>
+            </p>
+        </Modal>
+        <Modal v-model="partNoDetailDialog.modal_dialog" title="Part No History"
+           @on-ok="handlePartNoDetailOk" @on-cancel="handlePartNoDetailCancel"
+           :style="{top:'20px'}" width="760">
+            <Tabs>
+                <TabPane v-for="item in partNoDetails" :key="item" :label="item.whirlpool.bsBatchNo">
+                    <div>
+                        <table class="h-table">
+                            <tr>
+                                <td align=center><Font size=2>VENDOR NO.<br>{{item.whirlpool.bsVendorNo}}</font></td>
+                                <td align=center><Font size=2>P.O. NUMBR<br>{{item.whirlpool.bsPoNo}}</font></td>
+                                <td align=center><Font size=2>RLSE NO.<br>{{item.whirlpool.bsRlseNo}}</font></td>
+                                <td align=center><Font size=2>RELEASE DATE<br>{{item.whirlpool.bsReleaseDate}}</font></td>
+                                <td align=center><Font size=2>REVISION<br>{{item.whirlpool.bsRevision}}</font></td>
+                                <td align=center><Font size=2>REVISION EFFECTIVE<br>{{item.whirlpool.bsRevisionEffective}}</font></td>
+                                <td align=center><Font size=2>UNIT OF MEAS<br>{{item.whirlpool.bsUnitOfMeas}}</font></td>
+                            </tr>
+                        </table>
+                        <table class="h-table">
+                            <tr>
+                                <td align=center><Font size=2>PART NUMBER<br>{{item.whirlpool.bsPartNo}}</font></td>
+                                <td align=center><Font size=2>PART DESCRIPTION<br>{{item.whirlpool.bsPartDescription}}</font></td>
+                                <td align=center><Font size=2>VENDOR PART NUMBER<br>{{item.whirlpool.bsVendorPartNo}}</font></td>
+                            </tr>
+                        </table>
+                        <table class="h-table">
+                            <tr>
+                                <td align=center colspan=3><Font size=2>LAST SHIPMENT RECEIVED</Font></td>
+                                <td align=center v-if="item.whirlpool.bsAsnQty==0"><Font size=2>ASN NET: NO</Font></td>
+                                <td align=center v-else><Font size=2>ASN NET: NO </Font></td>
+                                <td align=center v-if="item.whirlpool.bsConsigmentQty==0"><Font size=2>CONSIGN NET: NO</Font></td>
+                                <td align=center v-else><Font size=2>CONSIGN NET: YES</Font></td>
+                            </tr>
+                            <tr>
+                                <td align=center><Font size=2>DATE<br>{{item.whirlpool.bsLastReceivedDate}}</font></td>
+                                <td align=center><Font size=2>QUANTITY<br>{{item.whirlpool.bsLastReceivedQty}}</font></td>
+                                <td align=center><Font size=2>ACCUM RECPTS<br>{{item.whirlpool.bsLastReceivedAccum}}</font></td>
+                                <td align=center><Font size=2>ASN QTY<br>{{item.whirlpool.bsAsnQty}}</font></td>
+                                <td align=center><Font size=2>CONSIGNMENT QTY<br>{{item.whirlpool.bsConsigmentQty}}</font></td>
+                            </tr>
+                        </table>
+                        <Font size=2>AFTER LAST SHIPMENT CONSIDERED FABRICATE & SHIP TO ARRIVE AS SPECIFIED BELOW</font>
+                        <table class="h-table">
+                            <tr>
+                                <td><Font size=2>WEEK<br>OF</font></td>
+                                <td><Font size=2>WEEKLY<br>QUANTITIES</font></td>
+                                <td><Font size=2>ACCUM<br>QUANTITIES</font></td>
+                                <td><Font size=2>Monday</font></td>
+                                <td><Font size=2>Tuesday</font></td>
+                                <td><Font size=2>Wednesday</font></td>
+                                <td><Font size=2>Thursday</font></td>
+                                <td><Font size=2>Friday</font></td>
+                                <td><Font size=2>Saturday</font></td>
+                                <td><Font size=2>Sunday</font></td>
+                            </tr>
+                            <tr>
+                                <td><Font size=2>Past Due</font></td>
+                                <td align=right><Font size=2>{{item.whirlpool.bsPastWeeklyQty}}&nbsp;&nbsp;</font></td>
+                                <td align=right><Font size=2>{{item.whirlpool.bsPastAccumQty}}&nbsp;&nbsp;</font></td>
+                                <td><Font size=2>&nbsp;</font></td>
+                                <td><Font size=2>&nbsp;</font></td>
+                                <td><Font size=2>&nbsp;</font></td>
+                                <td><Font size=2>&nbsp;</font></td>
+                                <td><Font size=2>&nbsp;</font></td>
+                                <td><Font size=2>&nbsp;</font></td>
+                                <td><Font size=2>&nbsp;</font></td>
+                            </tr>
+                            <tr v-for="entryItem in item.entries" :key="entryItem" >
+                                <td ><Font size=2>{{entryItem.bsWeekOf}}</font></td>
+                                <td align=right v-if="entryItem.bsQuantity>0"><Font size=2>{{entryItem.bsQuantity}}&nbsp;&nbsp;</font></td>
+                                <td v-else><Font size=2>&nbsp;</font></td>
+                                <td align=right v-if="entryItem.bsAccumQty>0"><Font size=2>{{entryItem.bsAccumQty}}&nbsp;&nbsp;</font></td>
+                                <td v-else><Font size=2>&nbsp;</font></td>
+                                <td align=right v-if="entryItem.bsMonday>0"><Font size=2>{{entryItem.bsMonday}}&nbsp;&nbsp;</font></td>
+                                <td v-else><Font size=2>&nbsp;</font></td>
+                                <td align=right v-if="entryItem.bsTuesday>0"><Font size=2>{{entryItem.bsTuesday}}&nbsp;&nbsp;</font></td>
+                                <td v-else><Font size=2>&nbsp;</font></td>
+                                <td align=right v-if="entryItem.bsWednesday>0"><Font size=2>{{entryItem.bsWednesday}}&nbsp;&nbsp;</font></td>
+                                <td v-else><Font size=2>&nbsp;</font></td>
+                                <td align=right v-if="entryItem.bsThursday>0"><Font size=2>{{entryItem.bsThursday}}&nbsp;&nbsp;</font></td>
+                                <td v-else><Font size=2>&nbsp;</font></td>
+                                <td align=right v-if="entryItem.bsFriday>0"><Font size=2>{{entryItem.bsFriday}}&nbsp;&nbsp;</font></td>
+                                <td v-else><Font size=2>&nbsp;</font></td>
+                                <td align=right v-if="entryItem.bsSaturday>0"><Font size=2>{{entryItem.bsSaturday}}&nbsp;&nbsp;</font></td>
+                                <td v-else><Font size=2>&nbsp;</font></td>
+                                    <td align=right v-if="entryItem.bsSunday>0"><Font size=2>{{entryItem.bsSunday}}&nbsp;&nbsp;</font></td>
+                                <td v-else><Font size=2>&nbsp;</font></td>
+                            </tr>
+                        </table>
+                    </div>
+                </TabPane>
+                <Button type="primary" @click="handleHistoryExport" size="default" slot="extra">导出</Button>
+            </Tabs>
+            <div slot="footer"></div>
+        </Modal>
+    </div>
+</template>
+<script>
+import { mapState } from "vuex";
+export default {
+  data() {
+    return {
+      customers: [
+        {label: "All", value: "" },
+        {value: "Whirlpool EZ-ISM Production", label: "Whirlpool" },
+        {value:"B1048-EHP Juarez C",label:"Electronix JuarezFabricCare.LRQ"},
+        {value:"A1022-EHP Kinston", label:"Electronix Kinston.LRQ"},
+        {value:"B1064-EHP Memphis", label:"Electronix Memphis.LRQ"},
+        {value:"A1001-EHP SG",      label:"Electronix Springfield.LRQ"},
+        {value:"A1049-EHP Anderson",label:"Electronix Anderson.LRQ"},
+        {value:"B1025-EHP Juarez L",label:"Electronix JuarezRefrigeration.LRQ"}
+      ],
+      file: "",
+      formQuery: {
+        bsCustomer: "",
+        bsCustomerDesc: "",
+        bsBatchNo: "",
+        bsPartNo: ""
+      },
+      partNoDetailDialog: {
+        modal_dialog: false,
+        batchId: "",
+        formItem: {},
+        ruleForm: {}
+      },
+      dialog: {
+        modal_dialog: false,
+        formItem: {
+          bsCustomer: "",
+          bsCustomerDesc: ""
+        },
+        ruleForm: {
+          bsPartNo: [
+            { required: true, message: "请填写部件号", trigger: "blur" }
+          ],
+          bsDateOf: [
+            { required: true, message: "请填写日期", trigger: "blur" }
+          ],
+          bsQuantity: [
+            { required: true, message: "请填写数量", trigger: "blur" }
+          ]
+        }
+      },
+      datagrid: {
+        queryParams: {
+          page: 1,
+          rows: 25,
+          pkParent: -1
+        },
+        pagination: [25, 50, 100],
+        data: { rows: [], total: 0 },
+        columns: [
+          {
+            title: "批次号",
+            key: "bsBatchNo"
+          },
+          {
+            title: "部件号",
+            key: "bsPartNo",
+            render: (h, params) => {
+              return h(
+                "a",
+                {
+                  on: {
+                    click: () => {
+                      this.showPartNoDetailDialog(params);
+                    }
+                  }
+                },
+                params.row.bsPartNo
+              );
+            }
+          },
+          {
+            title: "日期",
+            key: "bsDateOf"
+          },
+          {
+            title: "数量",
+            key: "bsQuantity"
+          },
+          {
+            title: "创建时间",
+            key: "bsCreatedTime"
+          },
+          {
+            title: "更新时间",
+            key: "bsModifiedTime"
+          },
+          {
+            title: "操作",
+            key: "action",
+            render: (h, params) => {
+              let ary = [];
+              if (this.menuData.perms.EDIT) {
+                // ary.push(
+                //   h(
+                //     "Button",
+                //     {
+                //       props: {
+                //         type: "primary",
+                //         size: "small"
+                //       },
+                //       style: {
+                //         marginRight: "5px"
+                //       },
+                //       on: {
+                //         click: () => {
+                //           this.showEditDialog(params);
+                //         }
+                //       }
+                //     },
+                //     "编辑"
+                //   )
+                // );
+              }
+              if (this.menuData.perms.DELETE) {
+                // ary.push(
+                //   h(
+                //     "Button",
+                //     {
+                //       props: {
+                //         type: "error",
+                //         size: "small"
+                //       },
+                //       on: {
+                //         click: () => {
+                //           this.delete(params);
+                //         }
+                //       }
+                //     },
+                //     "删除"
+                //   )
+                // );
+              }
+              return h("div", ary);
+            }
+          }
+        ]
+      }
+
+      // add_display: false,
+      // edit_display: false,
+      // delete_display: false
+    };
+  },
+  created() {
+    // this.getTree();
+    // alert(this.menuData.bsUrl);
+    // alert(this.menuData.perms.add);
+    // this.add_display = this.menuData.perms.add;
+    // this.edit_display = this.menuData.perms.edit;
+    // this.delete_display = this.menuData.perms.delete;
+  },
+  computed: {
+    ...mapState({
+      menuData: state => state.menuData
+    })
+  },
+  methods: {
+    handleSubmit(name) {
+      this.getData();
+    },
+    getData() {
+      Object.assign(this.formQuery, this.datagrid.queryParams);
+      // //console.log("after===>");
+      //console.log(this.formQuery);
+      if(!this.formQuery.bsCustomer) {
+        this.formQuery.bsCustomer = "";
+      }
+      this.api.forecast.getlist(this.formQuery).then(res => {
+        // //console.log("get list===>");
+        // //console.log(res.data);
+        if (res.result) {
+          this.datagrid.data = res.data;
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
+    reloadData() {
+      this.datagrid.data = this.getData();
+    },
+    changePage(page) {
+      this.datagrid.queryParams.page = page;
+      this.datagrid.data = this.getData();
+    },
+    edit(params) {
+      // //console.log(params);
+      this.api.forecast.edit(params.row).then(res => {
+        // //console.log(res);
+        if (res.result) {
+          //refresh
+          this.reloadData();
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
+    delete(params) {
+      // //console.log(params);
+      this.$Modal.confirm({
+        title: "提示信息",
+        content: "<p>是否确定删除？</p>",
+        loading: true,
+        onOk: () => {
+          this.api.forecast.delete({ id: params.row.id }).then(res => {
+            // //console.log(res);
+            if (res.result) {
+              //refresh
+              this.reloadData();
+              this.$Message.info("删除成功");
+              this.$Modal.remove();
+            } else {
+              this.$Message.error(res.msg);
+            }
+          });
+        }
+      });
+    },
+    showAddDialog() {
+      this.dialog.modal_dialog = true;
+      this.file = "";
+      this.dialog.formItem = {};
+    },
+    showEditDialog(params) {
+      this.dialog.modal_dialog = true;
+      let r = params.row;
+      this.dialog.formItem = { id: r.id };
+    },
+    ok() {
+      // //console.log("上传");
+      let formData = new FormData();
+      //console.log(this.dialog.formItem.bsCustomer);
+      formData.append("bsCustomer", this.dialog.formItem.bsCustomer);
+      formData.append("file", this.file);
+      //console.log(formData);
+      this.api.forecast.upload(formData).then(res => {
+        if (res.result) {
+          //refresh
+          this.reloadData();
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
+    cancel() {},
+    handleUpload(file) {
+      this.file = file;
+      //alert(this.dialog.formItem.file.name);
+      return false;
+    },
+    handlePartNoDetailOk() {},
+    handlePartNoDetailCancel() {},
+    handleUpload(file) {
+      this.file = file;
+      return false;
+    },
+    handleUpload111(file) {
+      this.file = file;
+      let formData = new FormData();
+      formData.append("bsCustomer", this.formQuery.bsCustomer);
+      formData.append("file", this.file);
+      this.api.forecast.upload(formData).then(res => {
+        if (res.result) {
+          //refresh
+          this.reloadData();
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+      return false;
+    },
+    handleExport() {
+      window.open(
+        "/admin/forecast/download?bsCustomer=&bsBatchNo=" +
+          this.formQuery.bsBatchNo
+      );
+    },
+    handleHistoryExport() {
+      window.open(
+        "/admin/forecast/history/download?id=" + this.partNoDetailDialog.batchId
+      );
+    },
+    showPartNoDetailDialog() {
+      this.partNoDetailDialog.modal_dialog = true;
+    }
+  }
+};
+</script>
+
+<style lang="less">
+a:hover {
+  text-decoration: underline;
+}
+
+.h-table {
+  width: 100%;
+  empty-cells: show;
+  border-collapse: collapse;
+  margin: 0 auto;
+}
+.h-table td {
+  border: 1px solid #cad9ea;
+  background: #fff;
+  text-align: center;
+  vertical-align: middle;
+}
+</style>

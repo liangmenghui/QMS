@@ -1,0 +1,246 @@
+<template>
+  	<div class="ProductList" v-if="!showRooterView" >
+  		<Row style="margin-bottom: 10px;">
+<!--搜索框 -->
+            <Select size="large" style="width: 200px;display: inline-block;margin-top: -4px;" v-model="formQuery.bsRiskLevel" placeholder="按风险等级搜索">
+            	<Option v-for="item in options1" :key="item.value" :label="item.label" :value="item.value">
+    			</Option>
+  			</Select>                  
+          <!--   <Select size="large" style="width: 200px;display: inline-block;margin-top: -4px;" v-model="formQuery.bsStatus" placeholder="按产品状态搜索">
+    			<Option v-for="item in options2" :key="item.value" :label="item.label" :value="item.value">
+    			</Option>
+  			</Select> -->         
+            <el-input size="medium" style="width: 200px;display: inline-block;" v-model="formQuery.keyWord" :placeholder="$t('Button.Keyword-search')"></el-input>             
+            <el-button style="padding: 10px 10px;" type="primary"  icon="el-icon-search" @click="getData">{{$t('Button.Inquire')}}</el-button>               	
+            <el-button style="padding: 10px 10px;" type="primary"  icon="el-icon-refresh" @click="cleargetData">{{$t('Button.Reset')}}</el-button>
+       	</Row>
+  	
+    	<el-table :data="tableData" class="productlist mytable" row-key="id" :expand-row-keys="expands" @row-click="rowClick">
+    <!--产品跳转按钮 -->
+            <el-table-column type="expand">
+                <template slot-scope="props">
+                    <el-form label-position="left" inline class="demo-table-expand">
+                   	    <el-button  type="primary" size="small" @click="pushToChildWithData('product/details',props)">{{$t('product.ProductDetail')}}</el-button>
+                   	    <el-button v-perm-query=""  type="primary" size="small" @click="pushToChildWithData('product/riskManagement',props)">{{$t('product.RiskManagement')}}
+                        </el-button>
+                        <!-- <el-button v-perm-query="" type="primary" size="small" @click="pushToChildWithData('product/dataMonitor',props)">{{$t('product.DataMonitor')}}
+                        </el-button> -->
+                        <el-button v-perm-alloc="" type="primary" size="small" @click="pushToChildWithData('product/regularManagement',props)">{{$t('product.regulars')}}</el-button>
+                        <el-button v-perm-verify="" type="primary" size="small" v-bind:disabled="props.row.disabledProcessRecord" @click="pushToProductArrovedFlow('product/approved',props)">{{$t('product.ProductAudit')}}
+                        </el-button>
+                        <el-button v-perm-verify="" type="primary" size="small" v-bind:disabled="props.row.disabledProductRecord" @click="pushToProdcutionCheckFlow('product/approved',props)">{{$t('product.ProductInspection')}}
+                        </el-button>
+                        <el-button v-perm-alloc="" type="primary" size="small" v-bind:disabled="props.row.bsIsApprove==1" @click="pushToApprovedCreator('product/createApprovedRecord',props)">{{$t('product.NewAudit')}}
+                        </el-button>
+                        <el-button v-perm-query="" type="primary" size="small" @click="pushToChildWithData('product/approvedRecordsList',props)">{{$t('product.AuditTrails')}}</el-button>
+                    </el-form>    
+                </template>
+            </el-table-column>
+  <!--   数据表格 -->
+            <el-table-column align="left"
+                :label="$t('product.RiskLevel')" 
+                prop="productExtra.bsRiskLevel">
+            </el-table-column>
+            <el-table-column align="left"
+                :label="$t('product.ComponentRepresentation')"
+                prop="bsRiskLevel">
+            </el-table-column>
+            <el-table-column 
+              :label="$t('product.name')" width="300px"
+              prop="itemDesc">
+            </el-table-column>
+            <el-table-column
+              :label="$t('product.Type')" width="250px"
+              prop="cateDesc">
+            </el-table-column>                     
+            <el-table-column
+                :label="$t('product.SuppChieseName')" width="270px"
+                prop="vendorName">
+            </el-table-column>
+            <el-table-column
+              :label="$t('product.code')" width="150px"
+              prop="itemNum">
+            </el-table-column>
+<!--   产品状态 -->
+<!--             <el-table-column align="center"
+              :label="$t('product.Status')">
+              	<template scope="scope">
+    				<span>{{$t('product.StatusDesc['+scope.row.bsStatus+']')}}</span>
+    			</template>
+            </el-table-column> -->
+        </el-table>
+
+        <div class="block">   
+                <el-pagination
+                  class="pull-right clearfix"                
+                  @current-change="changePage"
+                  @size-change="SizeChange"
+                  :current="1"
+                  :current-page.sync="queryParams.page"
+                  :page-sizes="pageSizesList"
+                  :page-size="queryParams.rows"
+                  layout="total, sizes, prev, pager, next, jumper"                 
+                  :page-size-opts="pageSizesList"
+                  :total="totalCount">
+                 
+                </el-pagination>
+        </div> 
+        <router-view></router-view>
+  </div>
+  <div v-else-if="showRooterView">
+        <router-view></router-view>
+  </div>
+  
+</template>
+
+<script>
+export default {
+    data() {
+      return {
+      	formQuery:{},
+        tableData: [],
+        expands: [],   // 要展开的行，数值的元素是row的key值
+        filters: {},
+        showRooterView: false,
+        queryParams:{
+                page:1,
+                rows:10,
+                pkParent:-1
+            },      
+        pageSizesList: [10, 20, 30, 40, 50, 100],
+        totalCount: 0,//数据的总条数,
+        options1: [{
+          value: '1',
+          label: this.$t('product.ProductRisk[0]')
+        }, {
+          value: '2',
+          label: this.$t('product.ProductRisk[1]')
+        }, {
+          value: '3',
+          label: this.$t('product.ProductRisk[2]')
+        }, {
+          value: '4',
+          label:this.$t('product.ProductRisk[3]')
+        }, {
+          value: '5',
+          label: this.$t('product.ProductRisk[4]')
+        }],
+        value1: '',
+       /* options2: [{
+          value: '0',
+          label: this.$t('product.StatusDesc[0]')
+        }, {
+          value: '1',
+          label: this.$t('product.StatusDesc[1]')
+        }, {
+          value: '2',
+          label: this.$t('product.StatusDesc[2]')
+        }, {
+          value: '3',
+          label: this.$t('product.StatusDesc[3]')
+        }, {
+          value: '4',
+          label: this.$t('product.StatusDesc[4]')
+        }],*/
+        value2: '',
+      }
+    },
+    watch: {
+        '$route' (to, from) {
+            if(to.matched.length == 2) {
+                this.getData();
+            }
+            this.showRooterView = to.matched.length>2;
+        }
+    },
+    created(){
+        this.getData();
+        this.showRooterView = this.$route.matched.length>2;
+    },
+    methods:{
+    	getData(){
+            let filter = Object.assign({},this.formQuery,this.queryParams,this.$route.query);
+    		this.api.productinfo.getlist(filter).then((res) => {
+           
+          		this.tableData = res.data.rows.map(function (row) {
+              
+                    row.productExtra.disabledProductRecord = true;
+                    row.productExtra.disabledProcessRecord = true;
+                    if(row.productExtra==''){
+                       
+                    }                      
+
+                    /*if(row.productExtra.bsIsApprove == 1 && row.productExtra.bsProcessRecordId>row.productExtra.bsProductRecordId) row.productExtra.disabledProcessRecord = false;
+                    else if(row.productExtra.bsIsApprove == 1 && row.productExtra.bsProcessRecordId<row.productExtra.bsProductRecordId) row.productExtra.disabledProductRecord = false;*/
+
+                    return row;
+                    
+                });
+                this.totalCount= res.data.total;
+//              console.log(this.tableData);
+            });
+    	},
+
+      cleargetData(){
+        this.formQuery.bsRiskLevel='';
+        this.formQuery.bsStatus='';
+        this.formQuery.keyWord=''
+
+      },
+    	//在<table>里，设置row的key值设置为每行数据id：row-key="id"
+    	rowClick(row, event, column) {
+                Array.prototype.remove = function (val) {
+                    let index = this.indexOf(val);
+                    if (index > -1) {
+                        this.splice(index, 1);
+                    }
+                };
+ 
+                if (this.expands.indexOf(row.id) < 0) {
+                    this.expands.push(row.id);
+                } else {
+                    this.expands.remove(row.id);
+                }
+            },
+        pushToChildWithData(url,data){
+            this.$store.commit("updateProductDataStates",data.row);
+            this.$router.push({path: url});
+        },
+        pushToApprovedCreator(url,data){
+            this.$router.push({path: url,query: {product:data.row.id,bsName:data.row.bsPrName,bsCode:data.row.bsPrCode}});
+        },
+        pushToProductArrovedFlow(url,data) {
+            this.$router.push({path: url,query:{bsFlowRecordId:data.row.bsProcessRecordId}});
+        },
+        pushToProdcutionCheckFlow(url,data) {
+            this.$router.push({path: url,query:{bsFlowRecordId:data.row.bsProductRecordId}});
+        },
+        changePage(page){         
+           this.queryParams.page = page;  
+                 
+           this.getData();
+        },
+        SizeChange(page){
+
+        }
+    }
+}
+</script>
+     
+<style lang="less">
+@import "../public.less";
+.mytable.el-table th{
+     background:#f0f0f0 !important;
+           
+  }
+.block{text-align: right;margin-top:10px;}
+
+.block .clearfix {
+     width: 95%; 
+    border:none;
+    margin-left: 5%;
+    padding-top: 10px;
+    padding-bottom: 25px;
+}
+.el-table .cell{padding-left:0;}
+</style>

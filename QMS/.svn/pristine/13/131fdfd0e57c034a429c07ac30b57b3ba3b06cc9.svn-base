@@ -1,0 +1,30 @@
+import Vuex from 'vuex'
+import Vue from 'vue'
+var mStorage = window.localStorage;
+
+
+Vue.use(Vuex)
+const store = new Vuex.Store({
+    state: {
+        eable:null,
+        data:null
+    },
+    getters: {
+        getEabel:(state)=>state.eable,
+        getData:(state)=>state.data
+    },
+    mutations:{
+        changeEable(state,_eable){
+            state.eable=_eable;
+        },
+        changeData(state,_data){
+            state.data=_data;
+        }
+    },
+    action:{
+
+    }
+
+})
+Vue.use(store)
+export default store;

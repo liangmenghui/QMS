@@ -1,0 +1,485 @@
+<template>
+    <div>
+        <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                    <Form-item>
+                        <Input v-model="formQuery.bsSegment1" placeholder="请输入客户料号" />
+                    </Form-item>
+                    <Form-item>
+                        <Input v-model="formQuery.bsCustomerItemNumber" placeholder="请输入客户物料编号" />
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="handleSubmit()">查 询</Button>
+                    </Form-item>
+                    <!-- <Form-item >
+                        <Button type="primary" @click="showAddDialog()" >添加</Button>
+                    </Form-item> -->
+                </Form>
+            </i-col>
+        </Row>
+        <Row>
+            <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="height:auto;"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" :current="1" @on-change="changePage" @on-page-size-change="chageSize" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+        <Modal v-model="dialog.modal_dialog1" title="" @on-ok="ok1" @on-cancel="cancel">
+            <p slot="header" style="color:rgb(99, 168, 168);text-align:center">
+                <Icon type="information-circled"></Icon>
+                <span>编 辑</span>
+            </p>
+            <p>
+                <div>
+                    <Row>
+                        <i-col>
+                            <Form :model="formItem" :label-width="80" style="text-align:center" ref="formItem" :rules="dialog.ruleForm">
+                                <FormItem label="物料ID" prop='bsInventoryItemId'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <InputNumber v-model="formItem.bsInventoryItemId" style="width:255px" placeholder="请输入物料ID"></InputNumber>
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="物料编号" prop='bsSegment1'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input v-model="formItem.bsSegment1" placeholder="请输入物料编号" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="物料名称" prop='bsDescription'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input v-model="formItem.bsDescription" placeholder="请输入物料名称" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户物料编号" prop='bsCustomerItemNumber'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsCustomerItemNumber" placeholder="请输入客户物料编号" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户客户物料名称" prop='bsCustomerItemDesc'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsCustomerItemDesc" placeholder="请输入客户物料名称" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户ID" prop='bsCustAccountId'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <InputNumber type='text' v-model="formItem.bsCustAccountId" style="width:255px" placeholder="请输入客户ID"></InputNumber>
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户编号" prop='bsAccountNumber'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsAccountNumber" placeholder="请输入客户编号" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户客户名称" prop='bsPartyName'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsPartyName" placeholder="请输入客户名称" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户物料类别ID" prop='bsCategoryId'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <InputNumber type='text' v-model="formItem.bsCategoryId" style="width:255px" placeholder="请输入物料类别ID"></InputNumber>
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="物料类别名称" prop='bsCategoryDesc'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsCategoryDesc" placeholder="请输入客户名称" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                            </Form>
+                        </i-col>
+                    </Row>
+                </div>
+        </Modal>
+
+        <Modal v-model="dialog.modal_dialog" title="" @on-ok="ok()" @on-cancel="cancel">
+            <p slot="header" style="color:rgb(99, 168, 168);text-align:center">
+                <Icon type="information-circled"></Icon>
+                <span>添 加</span>
+            </p>
+            <p>
+                <div>
+                    <Row>
+                        <i-col>
+                            <Form :model="formItem" :label-width="80" style="text-align:center" ref="formItem" :rules="dialog.ruleForm">
+                                <FormItem label="物料ID" prop='bsInventoryItemId'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <InputNumber v-model="formItem.bsInventoryItemId" style="width:255px" placeholder="请输入物料ID"></InputNumber>
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="物料编号" prop='bsSegment1'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input v-model="formItem.bsSegment1" placeholder="请输入物料编号" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="物料名称" prop='bsDescription'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input v-model="formItem.bsDescription" placeholder="请输入物料名称" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户物料编号" prop='bsCustomerItemNumber'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsCustomerItemNumber" placeholder="请输入客户物料编号" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户客户物料名称" prop='bsCustomerItemDesc'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsCustomerItemDesc" placeholder="请输入客户物料名称" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户ID" prop='bsCustAccountId'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <InputNumber type='text' v-model="formItem.bsCustAccountId" style="width:255px" placeholder="请输入客户ID"></InputNumber>
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户编号" prop='bsAccountNumber'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsAccountNumber" placeholder="请输入客户编号" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户客户名称" prop='bsPartyName'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsPartyName" placeholder="请输入客户名称" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="客户物料类别ID" prop='bsCategoryId'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <InputNumber type='text' v-model="formItem.bsCategoryId" style="width:255px" placeholder="请输入物料类别ID"></InputNumber>
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                                <FormItem label="物料类别名称" prop='bsCategoryDesc'>
+                                    <Row>
+                                        <i-col span="15">
+                                            <Input type='text' v-model="formItem.bsCategoryDesc" placeholder="请输入客户名称" />
+                                        </i-col>
+                                    </Row>
+                                </FormItem>
+                            </Form>
+                        </i-col>
+                    </Row>
+                </div>
+        </Modal>
+    </div>
+
+</template>
+<script>
+import { mapState } from "vuex";
+export default {
+  created() {
+    this.getData();
+  },
+  computed: {
+    ...mapState({
+      menuData: state => state.menuData
+    })
+  },
+  data() {
+    return {
+      start: 0,
+      end: 15,
+      dialog: {
+        modal_dialog: false,
+        modal_dialog1: false,
+        ruleForm: {
+          bsInventoryItemId: [
+            { required: true, message: "请填写物料ID", trigger: "blur" }
+          ],
+          bsSegment1: [
+            { required: true, message: "请填写物料编号", trigger: "blur" }
+          ],
+          bsCustomerItemNumber: [
+            { required: true, message: "请填写客户物料编号", trigger: "blur" }
+          ]
+        }
+      },
+      formItem: {
+        id: "",
+        bsInventoryItemId: "",
+        bsSegment1: "",
+        bsDescription: "",
+        bsCustomerItemNumber: "",
+        bsCustomerItemDesc: "",
+        bsCustAccountId: "",
+        bsAccountNumber: "",
+        bsPartyName: "",
+        bsCategoryId: "",
+        bsCategoryDesc: ""
+      },
+      formQuery: {
+        bsSegment1: "",
+        bsCustomerItemNumber: ""
+      },
+      datagrid: {
+        queryParams: {
+          page: 1,
+          rows: 15,
+          pkParent: -1
+        },
+        pagination: [15, 50, 100],
+        data: { rows: [], total: 0, rows1: [] },
+        columns: [
+          {
+            title: "物料ID",
+            key: "bsInventoryItemId"
+          },
+
+          {
+            title: "物料编号",
+            key: "bsSegment1"
+          },
+          {
+            title: "物料名称",
+            key: "bsDescription"
+          },
+          {
+            title: "客户物料编号",
+            key: "bsCustomerItemNumber"
+          },
+          {
+            title: "客户物料名称",
+            key: "bsCustomerItemDesc"
+          },
+          {
+            title: "客户ID",
+            key: "bsCustAccountId"
+          },
+          {
+            title: "客户编号",
+            key: "bsAccountNumber"
+          },
+          {
+            title: "客户名称",
+            key: "bsPartyName"
+          },
+          {
+            title: "物料类别ID",
+            key: "bsCategoryId"
+          },
+          {
+            title: "物料类别名称",
+            key: "bsCategoryDesc"
+          },
+          {
+            title: "操作",
+            key: "action",
+            render: (h, params) => {
+              let ary = [];
+              this.menuData.perms.EDIT;
+              // if(true) {
+              //     ary.push(h('Button', {
+              //         props: {
+              //             type: 'primary',
+              //             size: 'small'
+              //         },
+              //         style: {
+              //             marginRight: '5px'
+              //         },
+              //         on: {
+              //             click: () => {
+              //                 this.showEditDialog(params)
+              //             }
+              //         }
+              //     }, '编辑'));
+              // }
+              if (true) {
+                ary.push(
+                  h(
+                    "Button",
+                    {
+                      props: {
+                        type: "error",
+                        size: "small"
+                      },
+                      on: {
+                        click: () => {
+                          this.delete(params);
+                        }
+                      }
+                    },
+                    "删除"
+                  )
+                );
+              }
+              return h("div", ary);
+            }
+          }
+        ]
+      }
+    };
+  },
+
+  methods: {
+    getData() {
+      this.api.lmp.cargo.selectlist(this.datagrid.queryParams).then(res => {
+        if (res.result) {
+          this.datagrid.data.rows = res.data.rows;
+          this.datagrid.data.total = res.data.total;
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
+
+    showAddDialog() {
+      this.$refs["formItem"].resetFields();
+      this.formItem.id = "";
+      this.formItem.bsInventoryItemId = "";
+      this.formItem.bsSegment1 = "";
+      this.formItem.bsDescription = "";
+      this.formItem.bsCustomerItemNumber = "";
+      this.formItem.bsCustomerItemDesc = "";
+      this.formItem.bsCustAccountId = "";
+      this.formItem.bsAccountNumber = "";
+      this.formItem.bsPartyName = "";
+      this.formItem.bsCategoryId = "";
+      this.formItem.bsCategoryDesc = "";
+      this.dialog.modal_dialog = true;
+    },
+    check() {
+      if (
+        this.formItem.bsInventoryItemId == "" ||
+        this.formItem.bsInventoryItemId == null
+      ) {
+        this.$Message.error("物料ID不能为空");
+        return false;
+      } else if (
+        this.formItem.bsSegment1 == "" ||
+        this.formItem.bsSegment1 == null
+      ) {
+        this.$Message.error("物料编号不能为空");
+        return false;
+      } else if (
+        this.formItem.bsCustomerItemNumber == "" ||
+        this.formItem.bsCustomerItemNumber == null
+      ) {
+        this.$Message.error("客户物料编号不能为空");
+        return false;
+      } else {
+        return true;
+      }
+    },
+    ok() {
+      if (!this.check()) {
+        return false;
+      }
+      this.api.lmp.cargo.insertCargo(this.formItem).then(res => {
+        if (res.result) {
+          this.getData();
+          this.$Message.success("添加成功！");
+        } else {
+          this.$Message.error("添加失败！");
+        }
+      });
+    },
+    ok1() {
+      if (!this.check()) {
+        return false;
+      }
+      this.api.lmp.cargo.updateCargo(this.formItem).then(res => {
+        if (res.result) {
+          this.getData();
+          this.$Message.success("更新成功！");
+        } else {
+          this.$Message.error("更新失败！");
+        }
+      });
+    },
+    cancel() {},
+    delete(params) {
+      this.$Modal.confirm({
+        title: "提示信息",
+        content: "<p>是否确定删除？</p>",
+        loading: true,
+        onOk: () => {
+          this.api.lmp.cargo.deleteCargo(params.row).then(res => {
+            if (res.result) {
+              this.getData();
+              this.$Message.success("删除成功！");
+              this.$Modal.remove();
+            } else {
+              this.$Message.error("删除失败！");
+            }
+          });
+        }
+      });
+    },
+    showEditDialog(params) {
+      this.$refs["formItem"].resetFields();
+      this.formItem.id = params.row.id;
+      this.formItem.bsInventoryItemId = params.row.bsInventoryItemId;
+      this.formItem.bsSegment1 = params.row.bsSegment1;
+      this.formItem.bsDescription = params.row.bsDescription;
+      this.formItem.bsCustomerItemNumber = params.row.bsCustomerItemNumber;
+      this.formItem.bsCustomerItemDesc = params.row.bsCustomerItemDesc;
+      this.formItem.bsCustAccountId = params.row.bsCustAccountId;
+      this.formItem.bsAccountNumber = params.row.bsAccountNumber;
+      this.formItem.bsPartyName = params.row.bsPartyName;
+      this.formItem.bsCategoryId = params.row.bsCategoryId;
+      this.formItem.bsCategoryDesc = params.row.bsCategoryDesc;
+      this.dialog.modal_dialog1 = true;
+    },
+    handleSubmit() {
+      this.api.lmp.cargo.selectByCargo(this.formQuery).then(res => {
+        if (res.result) {
+          this.datagrid.data = res.data;
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
+    changePage(pageSize) {
+      this.datagrid.queryParams.page = pageSize;
+      // this.start=(pageSize-1)*this.datagrid.queryParams.rows;
+      // this.end=pageSize*this.datagrid.queryParams.rows;
+      this.getData();
+    },
+    chageSize(pageSizeOpts) {
+      this.datagrid.queryParams.rows = pageSizeOpts;
+      // this.datagrid.queryParams.rows=pageSizeOpts;
+      // this.start=0;
+      // this.end=pageSizeOpts;
+      this.getData();
+    }
+  }
+};
+</script>

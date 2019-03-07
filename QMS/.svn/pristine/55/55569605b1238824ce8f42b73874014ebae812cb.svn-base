@@ -1,0 +1,51 @@
+package com.unind.qms.web.samplePlan.entity;
+
+import com.unind.base.domain.admin.BaseEntity;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.DynamicUpdate;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+/**
+ * 批量
+ */
+@Entity
+@Table(name = SampleTotal.TABLE_NAME)
+@DynamicUpdate
+@ApiModel
+public class SampleTotal extends BaseEntity {
+    private static final long serialVersionUID = -1120453838604001881L;
+    public static final String TABLE_NAME = "t_sample_total";
+
+    /**
+     * 批量下限
+     */
+    @ApiModelProperty(name = "bsLowerLimit", value = "批量下限")
+    @Column
+    protected int bsLowerLimit;
+
+    /**
+     * 批量上限
+     */
+    @ApiModelProperty(name = "bsUpperLimit", value = "批量上限")
+    protected int bsUpperLimit;
+
+    public int getBsLowerLimit() {
+        return bsLowerLimit;
+    }
+
+    public void setBsLowerLimit(int bsLowerLimit) {
+        this.bsLowerLimit = bsLowerLimit;
+    }
+
+    public int getBsUpperLimit() {
+        return bsUpperLimit;
+    }
+
+    public void setBsUpperLimit(int bsUpperLimit) {
+        this.bsUpperLimit = bsUpperLimit;
+    }
+}

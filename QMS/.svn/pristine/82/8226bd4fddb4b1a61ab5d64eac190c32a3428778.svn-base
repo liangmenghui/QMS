@@ -1,0 +1,698 @@
+package com.unind.qms.web.approved.service.internal;
+
+import com.unind.base.components.mail.MailSenderService;
+import com.unind.base.dao.admin.SysUserDao;
+import com.unind.base.data.ApiResponseResult;
+import com.unind.base.dbconnection.query.Datagrid;
+import com.unind.base.domain.admin.enumeration.BooleanStateEnum;
+import com.unind.base.domain.admin.user.SysUser;
+import com.unind.base.provider.BaseOprService;
+import com.unind.base.provider.BusinessException;
+import com.unind.base.provider.context.SessionContextUtils;
+import com.unind.qms.enumeration.ApprovedStateEnum;
+import com.unind.qms.enumeration.BasicStateEnum;
+import com.unind.qms.web.approved.dao.*;
+import com.unind.qms.web.approved.entity.*;
+import com.unind.qms.web.approved.service.ApprovedFlowRecordService;
+import com.unind.qms.web.basic.dao.TodoInfoDao;
+import com.unind.qms.web.basic.entity.TodoInfo;
+import com.unind.qms.web.product.dao.ProductInfoDao;
+import com.unind.qms.web.product.entity.ProductInfo;
+import com.unind.qms.web.supplier.dao.SupplierInfoDao;
+import com.unind.qms.web.supplier.entity.SupplierInfo;
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specifications;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.SearchFilter;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+@Service
+@Transactional(rollbackFor = BusinessException.class)
+public class ApprovedFlowRecordImpl extends BaseOprService implements ApprovedFlowRecordService {
+    @Autowired
+    private ApprovedFlowRecordDao approvedFlowRecordDao;
+    @Autowired
+    private ApprovedItemsDao approvedItemsDao;
+    @Autowired
+    private ApprovedItemsRecordDao approvedItemsRecordDao;
+    @Autowired
+    private ApprovedRecorderMapDao approvedRecorderMapDao;
+    @Autowired
+    private ProductInfoDao productInfoDao;
+    @Autowired
+    private SupplierInfoDao supplierInfoDao;
+    @Autowired
+    private TodoInfoDao todoInfoDao;
+    @Autowired
+    private ApprovedFlowDao approvedFlowDao;
+    @Autowired
+    private ApprovedTermsScoreDao approvedTermsScoreDao;
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private MailSenderService mailSenderService;
+
+//    @Transactional(propagation= Propagation.REQUIRED)
+//    public ApiResponseResult add(ApprovedFlowRecord approvedFlowRecord, int bsType, String recorderStr) throws BusinessException {
+//        if(null == approvedFlowRecord.getBsFlowId()){
+//            return ApiResponseResult.failure("流程ID不能为空");
+//        }
+//        if(recorderStr.equals("")){
+//            return ApiResponseResult.failure("请选择审核人");
+//        }
+//        if(null != approvedFlowRecord.getBsPrId()){//产品审核
+//            int approvedCount =approvedFlowRecordDao.countByBsPrIdAndBsType(approvedFlowRecord.getBsPrId(),bsType);//该产品是否已在审核
+//            if(approvedCount == 0){
+//                approvedFlowRecord.setBsStatus(ApprovedStateEnum.FLOW_IN.intValue());
+//                approvedFlowRecord.setBsResult(ApprovedStateEnum.RESULT_IN.intValue());
+//
+//                approvedFlowRecord.setBsCreatedTime(new Date());
+//                approvedFlowRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+//                approvedFlowRecordDao.save(approvedFlowRecord);
+//
+//                if(bsType == ApprovedStateEnum.PR_APPROVED.intValue()){//产品过程审核
+//                    productInfoDao.updatebsProcessRecordIdById(approvedFlowRecord.getId(),approvedFlowRecord.getBsPrId());
+//                }else if(bsType == ApprovedStateEnum.PRED_APPROVED.intValue()){//成品检验
+//                    productInfoDao.updatebsProductRecordIdById(approvedFlowRecord.getId(),approvedFlowRecord.getBsPrId());
+//                }else{}
+//            }else{
+//                return ApiResponseResult.failure("该产品存在进行中的审批！");
+//            }
+//        }else if(null != approvedFlowRecord.getBsSuppId()){//供应商审核
+//            int approvedCount =approvedFlowRecordDao.countByBsSuppIdAndBsType(approvedFlowRecord.getBsSuppId(),bsType);//该供应商是否已在审核
+//            if(approvedCount == 0){
+//                approvedFlowRecord.setBsStatus(ApprovedStateEnum.FLOW_IN.intValue());
+//                approvedFlowRecord.setBsResult(ApprovedStateEnum.RESULT_IN.intValue());
+//
+//                approvedFlowRecord.setBsCreatedTime(new Date());
+//                approvedFlowRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+//                approvedFlowRecordDao.save(approvedFlowRecord);
+//
+//                supplierInfoDao.updateBsSuppRecordIdById(approvedFlowRecord.getId(), approvedFlowRecord.getBsSuppId());
+//            }else{
+//                return ApiResponseResult.failure("该供应商存在进行中的审批！");
+//            }
+//        }else{
+//            return ApiResponseResult.failure("请输入供应商ID或产品ID！");
+//        }
+//
+//        //获取该流程信息
+//        ApprovedFlow approvedFlow = approvedFlowDao.findOne(approvedFlowRecord.getBsFlowId());
+//        //获取该流程所有项目
+//        List<ApprovedItems> approvedItemsList = approvedItemsDao.findByBsFlowId(approvedFlowRecord.getBsFlowId());
+//        //获取项目负责人
+//        Map<String, Object> param = new HashMap<String, Object>();
+//
+//        if(bsType == ApprovedStateEnum.PR_APPROVED.intValue()){//产品过程审核
+//            param.put("roleCode", "QMS_QUALITY_MANAGER");//过程-----宁总
+//        }else if(bsType == ApprovedStateEnum.SUPP_APPROVED.intValue()){//供应商体系审核
+//            param.put("roleCode", "QMS_DEVELOPMENT_MANAGER");//体系-----焦总
+//        }else if(bsType == ApprovedStateEnum.SUPPQUAL_APPROVED.intValue()){//初期评审
+//            param.put("roleCode", "QMS_DEVELOPMENT_MANAGER");//初评-----陈经理
+//        }else if(bsType == ApprovedStateEnum.PRED_APPROVED.intValue()){//成品检验
+//            param.put("roleCode", "QMS_QUALITY_MANAGER");//成品-----宁总
+//        }else{}
+//
+//        StringBuffer sqlbf1 = new StringBuffer();
+//        sqlbf1.append(" SELECT a.pk_user FROM sys_user_roles_agg a LEFT JOIN sys_role b ON a.pk_role = b.id");
+//        sqlbf1.append(" LEFT JOIN sys_user c on c.id = a.pk_user");
+//        sqlbf1.append(" WHERE b.bs_code = :roleCode AND c.bs_is_del = '0'");
+//        Map<String, Object> recorderMap = super.findOneBySql(sqlbf1.toString(), param);
+//        if(null != recorderMap) {
+//            recorderStr += "," + recorderMap.get("PK_USER");
+//        }
+//
+//        //成品检验
+//        if(bsType == ApprovedStateEnum.PRED_APPROVED.intValue()){
+//            ApprovedItems approvedItems = approvedItemsList.get(0);
+//            ApprovedItemsRecord approvedItemsRecord = new ApprovedItemsRecord();
+//            approvedItemsRecord.setBsStatus(ApprovedStateEnum.ITEMS_IN.intValue());
+//            approvedItemsRecord.setBsFlowRecordId(approvedFlowRecord.getId());
+//            approvedItemsRecord.setBsItemsId(approvedItems.getId());
+//            approvedItemsRecord.setBsPriority(approvedItems.getBsPriority());
+//            approvedItemsRecord.setBsStep(1);
+//            approvedItemsRecord.setBsPrId(approvedFlowRecord.getBsPrId());
+//
+//            approvedItemsRecord.setBsCreatedTime(new Date());
+//            approvedItemsRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+//            approvedItemsRecordDao.save(approvedItemsRecord);
+//
+//            //获取总经理
+//            param = new HashMap<String, Object>();
+//            param.put("roleCode","QMS_GENERAL_MANAGER");
+//            sqlbf1 = new StringBuffer();
+//            sqlbf1.append(" SELECT a.pk_user FROM sys_user_roles_agg a LEFT JOIN sys_role b ON a.pk_role = b.id");
+//            sqlbf1.append(" LEFT JOIN sys_user c on c.id = a.pk_user");
+//            sqlbf1.append(" WHERE b.bs_code = :roleCode AND c.bs_is_del = '0'");
+//            Map<String, Object> userMap = super.findOneBySql(sqlbf1.toString(), param);
+//            if(null != userMap){
+//                recorderStr += "," + userMap.get("PK_USER");
+//            }
+//            String[] recorderArr = recorderStr.split(",");
+//
+//            //新增出货检验报告项目的审核人
+//            for(int i=0;i<recorderArr.length;i++){
+//                ApprovedRecorderMap approvedRecorderMap = new ApprovedRecorderMap();
+//                approvedRecorderMap.setBsPriority(i+1);
+//                approvedRecorderMap.setBsRecorderId(Long.parseLong(recorderArr[i]));
+//                approvedRecorderMap.setBsItemsRecordId(approvedItemsRecord.getId());
+//                approvedRecorderMap.setBsCreatedTime(new Date());
+//                approvedRecorderMapDao.save(approvedRecorderMap);
+//            }
+//
+//            //新增出货检验报告项目的首位审核人的待办事项
+//            TodoInfo todoInfo = new TodoInfo();
+//            todoInfo.setBsUserId(Long.parseLong(recorderArr[0]));
+//            todoInfo.setBsReferId(approvedItemsRecord.getBsFlowRecordId());
+//            todoInfo.setBsExtend(approvedItemsRecord.getId());
+//            todoInfo.setBsRouter("/qms/product/approved");
+//            todoInfo.setBsType(BasicStateEnum.TODO_PR_PRO.intValue());
+//
+//            //获取产品信息
+//            String entityName = "";
+//            if(null != approvedItemsRecord.getBsPrId()){
+//                ProductInfo productInfo = productInfoDao.findOne(approvedFlowRecord.getBsPrId());
+//                entityName = productInfo.getBsPrName();
+//            }
+//            todoInfo.setBsTitle("["+approvedFlow.getBsName()+"]"+entityName+"--"+approvedItems.getBsName());
+//            todoInfo.setBsSystemType(BasicStateEnum.TODO_QMSTYPE.intValue());
+//
+//            todoInfo.setBsCreatedTime(new Date());
+//            todoInfo.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+//            todoInfoDao.save(todoInfo);
+//        }else{  //非成品检验
+//            String[] recorderArr = recorderStr.split(",");
+//
+//            for (ApprovedItems approvedItems:approvedItemsList) {
+//                ApprovedItemsRecord approvedItemsRecord = new ApprovedItemsRecord();
+//                approvedItemsRecord.setBsStatus(ApprovedStateEnum.ITEMS_IN.intValue());
+//                //项目汇总的状态为未开始
+//                if(approvedItems.getBsPriority()==approvedItemsList.size()){
+//                    approvedItemsRecord.setBsStatus(ApprovedStateEnum.ITEMS_START.intValue());
+//                }
+//                approvedItemsRecord.setBsFlowRecordId(approvedFlowRecord.getId());
+//                approvedItemsRecord.setBsItemsId(approvedItems.getId());
+//                approvedItemsRecord.setBsPriority(approvedItems.getBsPriority());
+//                approvedItemsRecord.setBsStep(1);
+//
+//                if(null != approvedFlowRecord.getBsPrId()){
+//                    approvedItemsRecord.setBsPrId(approvedFlowRecord.getBsPrId());
+//                }else approvedItemsRecord.setBsSuppId(approvedFlowRecord.getBsSuppId());
+//
+//                approvedItemsRecord.setBsCreatedTime(new Date());
+//                approvedItemsRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+//                approvedItemsRecordDao.save(approvedItemsRecord);
+//
+//                //当前不是该流程的汇总项目记录时
+//                if(approvedItems.getBsPriority()!=approvedItemsList.size()){
+//                    //新增该项目的审核人
+//                    for(int i=0;i<recorderArr.length;i++){
+//                        ApprovedRecorderMap approvedRecorderMap = new ApprovedRecorderMap();
+//                        approvedRecorderMap.setBsPriority(i+1);
+//                        approvedRecorderMap.setBsRecorderId(Long.parseLong(recorderArr[i]));
+//                        approvedRecorderMap.setBsItemsRecordId(approvedItemsRecord.getId());
+//                        approvedRecorderMap.setBsCreatedTime(new Date());
+//                        approvedRecorderMapDao.save(approvedRecorderMap);
+//                    }
+//
+//                    List<ApprovedItemsMap> approvedItemsMapList= new ArrayList<ApprovedItemsMap>(approvedItems.getTermsSet());
+//                    Collections.sort(approvedItemsMapList, new Comparator<ApprovedItemsMap>() {
+//                        @Override
+//                        public int compare(ApprovedItemsMap o1, ApprovedItemsMap o2) {
+//                            String[] o1NoStr = o1.getTermsBy().getBsNo().split("[.]");
+//                            String[] o2NoStr = o2.getTermsBy().getBsNo().split("[.]");
+//                            if(Integer.parseInt(o1NoStr[0])<Integer.parseInt(o2NoStr[0])){
+//                                return -1;
+//                            }else if(Integer.parseInt(o1NoStr[0])==Integer.parseInt(o2NoStr[0])){
+//                                if(Integer.parseInt(o1NoStr[1])<Integer.parseInt(o2NoStr[1])){
+//                                    return -1;
+//                                }else return 1;
+//                            }else return 1;
+////                        return o1.getId()<o2.getId() ? -1 :1;
+//                        }
+//                    });
+//
+//                    //新增项目条款得分记录
+//                    for(ApprovedItemsMap approvedItemsMap:approvedItemsMapList){
+//                        if(approvedItemsMap.getBsIsDel() == BooleanStateEnum.FALSE.intValue()) {
+//                            ApprovedTermsScore approvedTermsScore = new ApprovedTermsScore();
+//                            approvedTermsScore.setBsTermsId(approvedItemsMap.getBsTermsId());
+//                            approvedTermsScore.setBsItemsRecordId(approvedItemsRecord.getId());
+//                            approvedTermsScore.setBsScore(-2);
+//                            approvedTermsScore.setBsCreatedTime(new Date());
+//                            approvedTermsScore.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+//                            approvedTermsScoreDao.save(approvedTermsScore);
+//                        }
+//                    }
+//
+//                    //新增每个项目的首位审核人的待办事项
+//                    TodoInfo todoInfo = new TodoInfo();
+//                    todoInfo.setBsUserId(Long.parseLong(recorderArr[0]));
+//                    todoInfo.setBsReferId(approvedItemsRecord.getBsFlowRecordId());
+//                    todoInfo.setBsExtend(approvedItemsRecord.getId());
+//
+//                    if(bsType == ApprovedStateEnum.PR_APPROVED.intValue()||bsType == ApprovedStateEnum.PRED_APPROVED.intValue()){
+//                        todoInfo.setBsRouter("/qms/product/approved");
+//                    }else if(bsType == ApprovedStateEnum.SUPP_APPROVED.intValue()||bsType == ApprovedStateEnum.SUPPQUAL_APPROVED.intValue()){
+//                        todoInfo.setBsRouter("/qms/supplier/approved");
+//                    }else{
+//                        todoInfo.setBsRouter("Unknown");
+//                    }
+//
+//                    if(bsType == ApprovedStateEnum.PR_APPROVED.intValue()){
+//                        todoInfo.setBsType(BasicStateEnum.TODO_PR.intValue());
+//                    }else if(bsType == ApprovedStateEnum.SUPP_APPROVED.intValue()||bsType == ApprovedStateEnum.SUPPQUAL_APPROVED.intValue()){
+//                        todoInfo.setBsType(BasicStateEnum.TODO_SUPP.intValue());
+//                    }else{
+//                        //todoInfo.setBsType(BasicStateEnum.TODO_PR_PRO.intValue());
+//                    }
+//
+//                    //获取供应商或产品信息
+//                    String entityName = "";
+//                    if(null != approvedItemsRecord.getBsPrId()){
+//                        ProductInfo productInfo = productInfoDao.findOne(approvedFlowRecord.getBsPrId());
+//                        entityName = productInfo.getBsPrName();
+//                    }else{
+//                        SupplierInfo supplierInfo = supplierInfoDao.findOne(approvedFlowRecord.getBsSuppId());
+//                        entityName = supplierInfo.getBsSuppChieseName();
+//                    }
+//                    todoInfo.setBsTitle("["+approvedFlow.getBsName()+"]"+entityName+"--"+approvedItems.getBsName());
+//                    todoInfo.setBsSystemType(BasicStateEnum.TODO_QMSTYPE.intValue());
+//
+//                    todoInfo.setBsCreatedTime(new Date());
+//                    todoInfo.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+//                    todoInfoDao.save(todoInfo);
+//                }else{//当前是该流程的汇总项目记录时
+//                    //新增项目的负责人
+//                    ApprovedRecorderMap approvedRecorderMap = new ApprovedRecorderMap();
+//                    approvedRecorderMap.setBsPriority(1);
+//                    approvedRecorderMap.setBsRecorderId(Long.valueOf(recorderArr[recorderArr.length-1]));
+//                    approvedRecorderMap.setBsItemsRecordId(approvedItemsRecord.getId());
+//                    approvedRecorderMap.setBsCreatedTime(new Date());
+//                    approvedRecorderMapDao.save(approvedRecorderMap);
+//                }
+//            }
+//        }
+//
+//        return ApiResponseResult.success("新增成功！").data(approvedFlowRecord);
+//    }
+
+    @Transactional(propagation= Propagation.REQUIRED)
+    public ApiResponseResult add(ApprovedFlowRecord approvedFlowRecord, int bsType, String recorderStr) throws BusinessException {
+        if(null == approvedFlowRecord.getBsFlowId()){
+            return ApiResponseResult.failure("流程ID不能为空");
+        }
+        if(recorderStr.equals("")){
+            return ApiResponseResult.failure("请选择审核人");
+        }
+        if(null != approvedFlowRecord.getBsPrId()){//产品审核
+            int approvedCount =approvedFlowRecordDao.countByBsPrIdAndBsType(approvedFlowRecord.getBsPrId(),bsType);//该产品是否已在审核
+            if(approvedCount == 0){
+                approvedFlowRecord.setBsStatus(ApprovedStateEnum.FLOW_IN.intValue());
+                approvedFlowRecord.setBsResult(ApprovedStateEnum.RESULT_IN.intValue());
+
+                approvedFlowRecord.setBsCreatedTime(new Date());
+                if(!SecurityUtils.getSubject().isAuthenticated()){
+                    approvedFlowRecord.setPkCreatedBy(Long.parseLong("1"));
+                }else approvedFlowRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+
+                approvedFlowRecordDao.save(approvedFlowRecord);
+
+                if(bsType == ApprovedStateEnum.PR_APPROVED.intValue()){//产品过程审核
+                    productInfoDao.updatebsProcessRecordIdById(approvedFlowRecord.getId(),approvedFlowRecord.getBsPrId());
+                }else if(bsType == ApprovedStateEnum.PRED_APPROVED.intValue()){//成品检验
+                    productInfoDao.updatebsProductRecordIdById(approvedFlowRecord.getId(),approvedFlowRecord.getBsPrId());
+                }else{}
+            }else{
+                return ApiResponseResult.failure("该产品存在进行中的审批！");
+            }
+        }else if(null != approvedFlowRecord.getBsSuppId()){//供应商审核
+            int approvedCount =approvedFlowRecordDao.countByBsSuppIdAndBsType(approvedFlowRecord.getBsSuppId(),bsType);//该供应商是否已在审核
+            if(approvedCount == 0){
+                approvedFlowRecord.setBsStatus(ApprovedStateEnum.FLOW_IN.intValue());
+                approvedFlowRecord.setBsResult(ApprovedStateEnum.RESULT_IN.intValue());
+
+                approvedFlowRecord.setBsCreatedTime(new Date());
+                if(!SecurityUtils.getSubject().isAuthenticated()){
+                    approvedFlowRecord.setPkCreatedBy(Long.parseLong("1"));
+                }else approvedFlowRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+
+                approvedFlowRecordDao.save(approvedFlowRecord);
+
+                supplierInfoDao.updateBsSuppRecordIdById(approvedFlowRecord.getId(), approvedFlowRecord.getBsSuppId());
+            }else{
+                return ApiResponseResult.failure("该供应商存在进行中的审批！");
+            }
+        }else{
+            return ApiResponseResult.failure("请输入供应商ID或产品ID！");
+        }
+
+        //获取该流程信息
+        ApprovedFlow approvedFlow = approvedFlowDao.findOne(approvedFlowRecord.getBsFlowId());
+        //获取该流程所有项目
+        List<ApprovedItems> approvedItemsList = approvedItemsDao.findByBsFlowId(approvedFlowRecord.getBsFlowId());
+        //获取项目负责人
+        Map<String, Object> param = new HashMap<String, Object>();
+
+        if(bsType == ApprovedStateEnum.PR_APPROVED.intValue()){//产品过程审核
+            param.put("roleCode", "QMS_QUALITY_MANAGER");//过程-----宁总
+        }else if(bsType == ApprovedStateEnum.SUPP_APPROVED.intValue()){//供应商体系审核
+            param.put("roleCode", "QMS_DEVELOPMENT_MANAGER");//体系-----焦总
+        }else if(bsType == ApprovedStateEnum.SUPPQUAL_APPROVED.intValue()){//初期评审
+            param.put("roleCode", "QMS_DEVELOPMENT_MANAGER");//初评-----陈经理
+        }else if(bsType == ApprovedStateEnum.PRED_APPROVED.intValue()){//成品检验
+            param.put("roleCode", "QMS_QUALITY_MANAGER");//成品-----宁总
+        }else{}
+
+        StringBuffer sqlbf1 = new StringBuffer();
+        sqlbf1.append(" SELECT a.pk_user FROM sys_user_roles_agg a LEFT JOIN sys_role b ON a.pk_role = b.id");
+        sqlbf1.append(" LEFT JOIN sys_user c on c.id = a.pk_user");
+        sqlbf1.append(" WHERE b.bs_code = :roleCode AND c.bs_is_del = '0'");
+        Map<String, Object> recorderMap = super.findOneBySql(sqlbf1.toString(), param);
+        if(null != recorderMap) {
+            recorderStr += "," + recorderMap.get("PK_USER");
+        }
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+
+        //成品检验
+        if(bsType == ApprovedStateEnum.PRED_APPROVED.intValue()){
+            ApprovedItems approvedItems = approvedItemsList.get(0);
+            ApprovedItemsRecord approvedItemsRecord = new ApprovedItemsRecord();
+            approvedItemsRecord.setBsStatus(ApprovedStateEnum.ITEMS_IN.intValue());
+            approvedItemsRecord.setBsFlowRecordId(approvedFlowRecord.getId());
+            approvedItemsRecord.setBsItemsId(approvedItems.getId());
+            approvedItemsRecord.setBsPriority(approvedItems.getBsPriority());
+            approvedItemsRecord.setBsStep(1);
+            approvedItemsRecord.setBsPrId(approvedFlowRecord.getBsPrId());
+
+            approvedItemsRecord.setBsCreatedTime(new Date());
+            if(!SecurityUtils.getSubject().isAuthenticated()){
+                approvedItemsRecord.setPkCreatedBy(Long.parseLong("1"));
+            }else approvedItemsRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+
+            approvedItemsRecordDao.save(approvedItemsRecord);
+
+            //获取总经理
+            param = new HashMap<String, Object>();
+            param.put("roleCode","QMS_GENERAL_MANAGER");
+            sqlbf1 = new StringBuffer();
+            sqlbf1.append(" SELECT a.pk_user FROM sys_user_roles_agg a LEFT JOIN sys_role b ON a.pk_role = b.id");
+            sqlbf1.append(" LEFT JOIN sys_user c on c.id = a.pk_user");
+            sqlbf1.append(" WHERE b.bs_code = :roleCode AND c.bs_is_del = '0'");
+            Map<String, Object> userMap = super.findOneBySql(sqlbf1.toString(), param);
+            if(null != userMap){
+                recorderStr += "," + userMap.get("PK_USER");
+            }
+            String[] recorderArr = recorderStr.split(",");
+
+            //新增出货检验报告项目的审核人
+            for(int i=0;i<recorderArr.length;i++){
+                ApprovedRecorderMap approvedRecorderMap = new ApprovedRecorderMap();
+                approvedRecorderMap.setBsPriority(i+1);
+                approvedRecorderMap.setBsRecorderId(Long.parseLong(recorderArr[i]));
+                approvedRecorderMap.setBsItemsRecordId(approvedItemsRecord.getId());
+                approvedRecorderMap.setBsCreatedTime(new Date());
+                approvedRecorderMapDao.save(approvedRecorderMap);
+            }
+
+            //新增出货检验报告项目的首位审核人的待办事项
+            TodoInfo todoInfo = new TodoInfo();
+            todoInfo.setBsUserId(Long.parseLong(recorderArr[0]));
+            todoInfo.setBsReferId(approvedItemsRecord.getBsFlowRecordId());
+            todoInfo.setBsRouter("/qms/product/approved");
+            todoInfo.setBsType(BasicStateEnum.TODO_PR_PRO.intValue());
+
+            //获取产品信息
+            String entityName = "";
+            if(null != approvedItemsRecord.getBsPrId()){
+                ProductInfo productInfo = productInfoDao.findOne(approvedFlowRecord.getBsPrId());
+                entityName = productInfo.getBsPrName();
+            }
+            todoInfo.setBsTitle("["+approvedFlow.getBsName()+"]"+entityName+ (approvedFlowRecord.getBsPlanDate()==null?"":( "("+formatter.format(approvedFlowRecord.getBsPlanDate())+")" )));
+            todoInfo.setBsSystemType(BasicStateEnum.TODO_QMSTYPE.intValue());
+
+            todoInfo.setBsCreatedTime(new Date());
+            if(!SecurityUtils.getSubject().isAuthenticated()){
+                todoInfo.setPkCreatedBy(Long.parseLong("1"));
+            }else todoInfo.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+
+            todoInfoDao.save(todoInfo);
+
+            //发送邮件
+            SysUser sysUser = sysUserDao.findOne(todoInfo.getBsUserId());
+            if(sysUser != null){
+                String nameTo = sysUser.getBsName();    //收件人名
+                String mailTo = sysUser.getBsEmail().trim();   //收件人邮箱
+                String subject = "待办事项提醒";    //主题
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日");
+                String dateStr = simpleDateFormat.format(new Date());
+                StringBuffer text = new StringBuffer();   //邮件内容
+                text.append("<div style='padding: 5px;'>" + nameTo + "，" + "</div>");
+                text.append("<div style='padding: 5px;'>" + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;你好！" + todoInfo.getBsTitle() +"。请及时处理！</div>");
+                text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;此致</div>");
+                text.append("<div style='padding: 5px;'>敬礼</div>");
+                text.append("<div style='padding: 5px; float: right; margin: 0 50px 0 0;'>QMS系统</div><br>");
+                text.append("<div style='padding: 5px; float: right; margin: 0 20px 0 0;clear: both;'>" + dateStr + "</div><br>");
+                mailSenderService.send(mailTo, subject, text.toString());
+            }
+        }else{  //非成品检验
+            String[] recorderArr = recorderStr.split(",");
+
+            for (ApprovedItems approvedItems:approvedItemsList) {
+                ApprovedItemsRecord approvedItemsRecord = new ApprovedItemsRecord();
+                approvedItemsRecord.setBsStatus(ApprovedStateEnum.ITEMS_IN.intValue());
+                //项目汇总的状态为未开始
+//                if(approvedItems.getBsPriority()==approvedItemsList.size()){
+//                    approvedItemsRecord.setBsStatus(ApprovedStateEnum.ITEMS_START.intValue());
+//                }
+                approvedItemsRecord.setBsFlowRecordId(approvedFlowRecord.getId());
+                approvedItemsRecord.setBsItemsId(approvedItems.getId());
+                approvedItemsRecord.setBsPriority(approvedItems.getBsPriority());
+                approvedItemsRecord.setBsStep(1);
+
+                if(null != approvedFlowRecord.getBsPrId()){
+                    approvedItemsRecord.setBsPrId(approvedFlowRecord.getBsPrId());
+                }else approvedItemsRecord.setBsSuppId(approvedFlowRecord.getBsSuppId());
+
+                approvedItemsRecord.setBsCreatedTime(new Date());
+                if(!SecurityUtils.getSubject().isAuthenticated()){
+                    approvedItemsRecord.setPkCreatedBy(Long.parseLong("1"));
+                }else approvedItemsRecord.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+
+                approvedItemsRecordDao.save(approvedItemsRecord);
+
+                //新增该项目的审核人
+                for(int i=0;i<recorderArr.length;i++){
+                    ApprovedRecorderMap approvedRecorderMap = new ApprovedRecorderMap();
+                    approvedRecorderMap.setBsPriority(i+1);
+                    approvedRecorderMap.setBsRecorderId(Long.parseLong(recorderArr[i]));
+                    approvedRecorderMap.setBsItemsRecordId(approvedItemsRecord.getId());
+                    approvedRecorderMap.setBsCreatedTime(new Date());
+                    approvedRecorderMapDao.save(approvedRecorderMap);
+                }
+
+                //当前不是该流程的汇总项目记录时
+                if(approvedItems.getBsPriority()!=approvedItemsList.size()){
+
+                    List<ApprovedItemsMap> approvedItemsMapList= new ArrayList<ApprovedItemsMap>(approvedItems.getTermsSet());
+                    Collections.sort(approvedItemsMapList, new Comparator<ApprovedItemsMap>() {
+                        @Override
+                        public int compare(ApprovedItemsMap o1, ApprovedItemsMap o2) {
+                            String[] o1NoStr = o1.getTermsBy().getBsNo().split("[.]");
+                            String[] o2NoStr = o2.getTermsBy().getBsNo().split("[.]");
+                            if(Integer.parseInt(o1NoStr[0])<Integer.parseInt(o2NoStr[0])){
+                                return -1;
+                            }else if(Integer.parseInt(o1NoStr[0])==Integer.parseInt(o2NoStr[0])){
+                                if(Integer.parseInt(o1NoStr[1])<Integer.parseInt(o2NoStr[1])){
+                                    return -1;
+                                }else return 1;
+                            }else return 1;
+//                        return o1.getId()<o2.getId() ? -1 :1;
+                        }
+                    });
+
+                    //新增项目条款得分记录
+                    for(ApprovedItemsMap approvedItemsMap:approvedItemsMapList){
+                        if(approvedItemsMap.getBsIsDel() == BooleanStateEnum.FALSE.intValue()) {
+                            ApprovedTermsScore approvedTermsScore = new ApprovedTermsScore();
+                            approvedTermsScore.setBsTermsId(approvedItemsMap.getBsTermsId());
+                            approvedTermsScore.setBsItemsRecordId(approvedItemsRecord.getId());
+                            approvedTermsScore.setBsScore(-2);
+                            approvedTermsScore.setBsCreatedTime(new Date());
+                            if(!SecurityUtils.getSubject().isAuthenticated()){
+                                approvedTermsScore.setPkCreatedBy(Long.parseLong("1"));
+                            }else approvedTermsScore.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+                            approvedTermsScoreDao.save(approvedTermsScore);
+                        }
+                    }
+                }
+            }
+
+            //新增首位审核人的待办事项
+            TodoInfo todoInfo = new TodoInfo();
+            todoInfo.setBsUserId(Long.parseLong(recorderArr[0]));
+            todoInfo.setBsReferId(approvedFlowRecord.getId());
+//            todoInfo.setBsExtend(approvedFlowRecord.getId());
+
+            if(bsType == ApprovedStateEnum.PR_APPROVED.intValue()||bsType == ApprovedStateEnum.PRED_APPROVED.intValue()){
+                todoInfo.setBsRouter("/qms/product/approved");
+            }else if(bsType == ApprovedStateEnum.SUPP_APPROVED.intValue()||bsType == ApprovedStateEnum.SUPPQUAL_APPROVED.intValue()){
+                todoInfo.setBsRouter("/qms/supplier/approved");
+            }else{
+                todoInfo.setBsRouter("Unknown");
+            }
+
+            if(bsType == ApprovedStateEnum.PR_APPROVED.intValue()){
+                todoInfo.setBsType(BasicStateEnum.TODO_PR.intValue());
+            }else if(bsType == ApprovedStateEnum.SUPP_APPROVED.intValue()||bsType == ApprovedStateEnum.SUPPQUAL_APPROVED.intValue()){
+                todoInfo.setBsType(BasicStateEnum.TODO_SUPP.intValue());
+            }else{
+                //todoInfo.setBsType(BasicStateEnum.TODO_PR_PRO.intValue());
+            }
+
+            //获取供应商或产品信息
+            String entityName = "";
+            if(null != approvedFlowRecord.getBsPrId()){
+                ProductInfo productInfo = productInfoDao.findOne(approvedFlowRecord.getBsPrId());
+                entityName = productInfo.getBsPrName();
+            }else{
+                SupplierInfo supplierInfo = supplierInfoDao.findOne(approvedFlowRecord.getBsSuppId());
+                entityName = supplierInfo.getBsSuppChieseName();
+            }
+            todoInfo.setBsTitle("["+approvedFlow.getBsName()+"]"+entityName+ (approvedFlowRecord.getBsPlanDate()==null?"":( "("+formatter.format(approvedFlowRecord.getBsPlanDate())+")" )));
+            todoInfo.setBsSystemType(BasicStateEnum.TODO_QMSTYPE.intValue());
+
+            todoInfo.setBsCreatedTime(new Date());
+            if(!SecurityUtils.getSubject().isAuthenticated()){
+                todoInfo.setPkCreatedBy(Long.parseLong("1"));
+            }else todoInfo.setPkCreatedBy(SessionContextUtils.getCurrentUser().getId());
+            todoInfoDao.save(todoInfo);
+
+            //发送邮件
+            SysUser sysUser = sysUserDao.findOne(todoInfo.getBsUserId());
+            if(sysUser != null){
+                String nameTo = sysUser.getBsName();    //收件人名
+                String mailTo = sysUser.getBsEmail().trim();   //收件人邮箱
+                String subject = "待办事项提醒";    //主题
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日");
+                String dateStr = simpleDateFormat.format(new Date());
+                StringBuffer text = new StringBuffer();   //邮件内容
+                text.append("<div style='padding: 5px;'>" + nameTo + "，" + "</div>");
+                text.append("<div style='padding: 5px;'>" + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;你好！" + todoInfo.getBsTitle() +"。请及时处理！</div>");
+                text.append("<div style='padding: 5px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;此致</div>");
+                text.append("<div style='padding: 5px;'>敬礼</div>");
+                text.append("<div style='padding: 5px; float: right; margin: 0 50px 0 0;'>QMS系统</div><br>");
+                text.append("<div style='padding: 5px; float: right; margin: 0 20px 0 0;clear: both;'>" + dateStr + "</div><br>");
+                mailSenderService.send(mailTo, subject, text.toString());
+            }
+        }
+
+        return ApiResponseResult.success("新增成功！").data(approvedFlowRecord);
+    }
+
+    @Transactional
+    public ApiResponseResult edit(Long id, String bsDesc, int bsResult) throws BusinessException {
+        if (null == id) {
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        ApprovedFlowRecord o = approvedFlowRecordDao.findOne(id);
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        //当前登录人是否为流程负责人
+        if(!SessionContextUtils.getCurrentUser().getId().equals(o.getFlowBy().getBsApprovederId())){
+            return ApiResponseResult.failure("请使用当前流程负责人账号！");
+        }
+        if(o.getBsStatus() != ApprovedStateEnum.FLOW_CONFIRM.intValue()){
+            return ApiResponseResult.failure("该审批任务的项目记录完毕后才可审批流程记录！");
+        }
+        if(bsResult != ApprovedStateEnum.RESULT_PASS.intValue()&&bsResult != ApprovedStateEnum.RESULT_NOPASS.intValue()){
+            return  ApiResponseResult.failure("无该审批结果！");
+        }
+        o.setBsStatus(ApprovedStateEnum.FLOW_CLOSE.intValue());
+        o.setBsResult(bsResult);
+        o.setBsDesc(bsDesc);
+
+        o.setBsModifiedTime(new Date());
+        o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+        approvedFlowRecordDao.save(o);
+
+        //关闭当前流程下的所有待办事项
+        todoInfoDao.closeByBsAndBsReferId(id);
+
+        //关闭正在审核状态
+        if(null != o.getBsPrId()){
+            int approvedCount =approvedFlowRecordDao.countByBsPrIdAndBsType(o.getBsPrId(), o.getFlowBy().getBsType());//该产品仍在审核（成品检验）
+            if(approvedCount == 0){
+                productInfoDao.updatebsIsApproveById(o.getBsPrId());
+            }
+        }else{
+            supplierInfoDao.updatebsIsApproveById(o.getBsSuppId());
+        }
+
+        return ApiResponseResult.success("提交确定成功！");
+    }
+
+    @Transactional
+    public ApiResponseResult close(Long id, String bsDesc) throws BusinessException {
+        if (null == id) {
+            return ApiResponseResult.failure("记录ID为必填项");
+        }
+        ApprovedFlowRecord o = approvedFlowRecordDao.findOne(id);
+        if (null == o) {
+            return ApiResponseResult.failure("记录ID不存在或已被删除");
+        }
+        //当前登录人是否为流程负责人
+//        if(!SessionContextUtils.getCurrentUser().getId().equals(o.getFlowBy().getBsApprovederId())){
+//            return ApiResponseResult.failure("请使用当前流程负责人账号！");
+//        }
+        o.setBsStatus(ApprovedStateEnum.FLOW_CLOSE.intValue());
+        o.setBsResult(ApprovedStateEnum.RESULT_CLOSE.intValue());
+        o.setBsDesc(bsDesc);
+
+        o.setBsModifiedTime(new Date());
+        o.setPkModifiedBy(SessionContextUtils.getCurrentUser().getId());
+        approvedFlowRecordDao.save(o);
+
+        //关闭正在审核的项目记录
+        approvedItemsRecordDao.closeByBsFlowRecordId(id);
+
+        //关闭当前流程下的所有待办事项
+        todoInfoDao.closeByBsReferId(id);
+
+        //关闭正在审核状态
+        if(null != o.getBsPrId()){
+            int approvedCount =approvedFlowRecordDao.countByBsPrIdAndBsType(o.getBsPrId(), o.getFlowBy().getBsType());//该产品仍在审核（成品检验）
+            if(approvedCount == 0){
+                productInfoDao.updatebsIsApproveById(o.getBsPrId());
+            }
+        }else{
+            supplierInfoDao.updatebsIsApproveById(o.getBsSuppId());
+        }
+        return ApiResponseResult.success("关闭成功！");
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponseResult getlist(Long id, Long bsSuppId, Long bsPrId, PageRequest pageRequest) {
+        List<SearchFilter> filters = new ArrayList<SearchFilter>();
+        filters.add(new SearchFilter("bsIsDel", SearchFilter.Operator.EQ, BooleanStateEnum.FALSE.intValue()));
+        if (null != id) {
+            filters.add(new SearchFilter("id", SearchFilter.Operator.EQ, id));
+        }else if(null != bsSuppId){
+            filters.add(new SearchFilter("bsSuppId", SearchFilter.Operator.EQ, bsSuppId));
+        }else if(null != bsPrId){
+            filters.add(new SearchFilter("bsPrId", SearchFilter.Operator.EQ, bsPrId));
+        }else{ }
+        Specifications<ApprovedFlowRecord> spec = Specifications.where(super.and(filters, ApprovedFlowRecord.class));
+        Page<ApprovedFlowRecord> page = approvedFlowRecordDao.findAll(spec, pageRequest);
+        return ApiResponseResult.success().data(Datagrid.create(page.getContent(), (int) page.getTotalElements(), pageRequest.getPageNumber() + 1, pageRequest.getPageSize()));
+    }
+}

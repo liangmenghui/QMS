@@ -1,0 +1,345 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：提交客诉
+    -->
+	<div class="feedbackreport">
+		<Row :gutter="10">
+			<!--客户信息 -->
+			<Col :md="24"  :style="{marginBottom: '20px'}">
+				<Card>
+					<p slot="title">
+                        <Icon type="person" style="color: #ff9900;"></Icon>
+                        &nbsp;{{$t('feedback.CustomerInformation')}}
+                   	</p>
+		
+    				<div id="customer-body">
+          				<div class="customer-body-div">
+    						<div class="customer-body-text">{{$t('feedback.CusCompanyName')}}：</div>
+                            <div class="customer-body-input">
+    						    <el-input v-model="form.bsCusCompanyName" placeholder="请输入内容"></el-input>
+                            </div>
+    					</div>
+    					<div class="customer-body-div">
+    						<div class="customer-body-text">{{$t('feedback.CustomerID')}}：</div>
+                            <div class="customer-body-input">
+    						    <el-input v-model="form.bsCusCompanyCode" placeholder="请输入内容"></el-input>
+                            </div>
+    					</div>
+    					<div class="customer-body-div">
+    						<div class="customer-body-text">{{$t('feedback.ContactName')}}：</div>
+                            <div class="customer-body-input">
+    						    <el-input v-model="form.bsCusCompanyPerson" placeholder="请输入内容"></el-input>
+                            </div>
+    					</div>
+    					<div class="customer-body-div">
+    						<div class="customer-body-text">{{$t('feedback.ContactNumber')}}：</div>
+                            <div class="customer-body-input">
+    						    <el-input v-model="form.bsCusCompanyMobile" placeholder="请输入内容"></el-input>
+                            </div>
+    					</div>
+    					<div class="customer-body-div">
+    						<div class="customer-body-text">{{$t('feedback.ContactEmail')}}：</div>
+                            <div class="customer-body-input">
+    						    <el-input v-model="form.bsCusCompanyEmail" placeholder="请输入内容"></el-input>
+                            </div>
+    					</div>
+          			</div>
+      			</Card>
+      		</Col>
+
+      	    <!--产品信息-->
+            <Col :md="24" :style="{marginBottom: '20px'}">
+                <Card>
+                    <p slot="title">
+                        <Icon type="cube" style="color: #ff9900;"></Icon>
+                        &nbsp;{{$t('feedback.ProductInformation')}}
+                    </p>
+                
+                <div id="product-body">
+                    <div class="product-body-div">
+                        <div class="product-body-text">{{$t('feedback.ProductName')}}：</div>
+                        <div class="product-body-input">
+                        <el-autocomplete style="width: 300px;"
+                        class="inline-input"
+                        v-model="form.bsPrName"
+                        :fetch-suggestions="queryProduct"
+                        @select="handleSelectProduct">
+                        </el-autocomplete>
+                        </div>
+                    </div>
+                    <div class="product-body-div">
+                        <div class="product-body-text">{{$t('feedback.ProductNumber')}}：</div>
+                        <div class="product-body-input">
+                            <el-input v-model="form.bsPrCode" placeholder="请输入内容"></el-input>
+                        </div>
+                    </div>
+                    <div class="product-body-div">
+                        <div class="product-body-text">{{$t('feedback.amount')}}：</div>
+                        <div class="product-body-input">
+                            <el-input v-model="form.bsPrNum" placeholder="请输入内容"></el-input>
+                        </div>
+                    </div>
+                    <div class="product-body-div">
+                        <div class="product-body-text">{{$t('feedback.place')}}：</div>
+                        <div class="product-body-input">
+                            <el-input v-model="form.bsReportLocation" placeholder="请输入内容"></el-input>
+                        </div>
+                    </div>
+                    <div class="product-body-div">
+                        <div class="product-body-text">{{$t('feedback.origin')}}：</div>
+                        <div class="product-body-input">
+                            <el-input v-model="form.bsProductLocation" placeholder="请输入内容"></el-input>
+                        </div>
+                    </div>
+                    <div class="product-body-div">
+                        <div class="product-body-text">{{$t('feedback.TheDateOfProduction')}}：</div>
+                        <div class="product-body-input">
+                            <el-date-picker v-model="form.bsProductDate" type="date" placeholder="选择日期">
+                            </el-date-picker>
+                        </div>
+                    </div>
+                </div>
+                </Card>
+            </Col>
+
+      		<!--供应商信息 -->
+			<Col :md="24" :style="{marginBottom: '20px'}">
+				<Card>
+					<p slot="title">
+                        <Icon type="ios-folder" style="color: #ff9900;"></Icon>
+                        &nbsp;{{$t('feedback.SupplierInformation')}}
+                   	</p>
+				
+    				<div id="supplier-body">
+          				<div class="supplier-body-div">
+    						<div class="supplier-body-text">{{$t('feedback.SupplierName')}}：</div>
+                            <div class="supplier-body-input">
+                    		<el-input style="width: 300px;"
+                      		class="inline-input"
+                      		v-model="form.bsSuppCompanyName">
+                      		</el-input>
+                            </div>
+    					</div>
+    					<div class="supplier-body-div">
+    						<div class="supplier-body-text">{{$t('feedback.SupplierID')}}：</div>
+                            <div class="supplier-body-input">
+    						    <el-input v-model="form.bsSuppCompanyCode" placeholder="请输入内容"></el-input>
+                            </div>
+    					</div>
+    					<div class="supplier-body-div">
+    						<div class="supplier-body-text">{{$t('feedback.ContactName')}}：</div>
+                            <div class="supplier-body-input">
+    						    <el-input v-model="form.bsSuppCompanyPerson" placeholder="请输入内容"></el-input>
+                            </div>
+    					</div>
+    					<div class="supplier-body-div">
+    						<div class="supplier-body-text">{{$t('feedback.ContactNumber')}}：</div>
+                            <div class="supplier-body-input">
+    						    <el-input v-model="form.bsSuppCompanyMobile" placeholder="请输入内容"></el-input>
+                            </div>
+    					</div>
+    					<div class="supplier-body-div">
+    						<div class="supplier-body-text">{{$t('feedback.ContactEmail')}}：</div>
+                            <div class="supplier-body-input">
+    						    <el-input v-model="form.bsSuppCompanyEmail" placeholder="请输入内容"></el-input>
+                            </div>
+    					</div>
+          			</div>
+      			</Card>
+      		</Col>
+      	</Row>
+      	
+      	<Row>
+      		<!--客诉信息-->
+      	
+			<Card>
+				<p slot="title">
+                    <Icon type="chatbox-working" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('feedback.CustomerComplaintInformation')}}
+               	</p>
+		
+ 				<div id="feedback-body">
+					<div>
+						<p style="font-size: 14px;margin-top: 30px;">{{$t('feedback.ProblemDescription')}}</p>
+						<el-input type="textarea" :autosize="{ minRows: 3}" placeholder="请输入内容" style="width: 500px;" v-model="form.bsProblemDes">
+						</el-input>
+					</div>
+      	
+      				<div id="feedback-body-picture">
+      					<p>{{$t('feedback.RelatedImages')}}</p>
+      					<div class="Upload">
+      						<el-upload 
+							  class="upload-demo"
+							  action=""
+							  :before-upload="handleUpload"
+							  :on-preview="downloadFile"							  
+							  :on-remove="handleRemove"
+							  :file-list="fileList"  
+							  >
+							  <el-button size="medium" type="success" plain>
+							    {{$t('upcoming.UploadAttachment')}}
+							  </el-button>
+							  <div slot="tip" class="el-upload__tip"></div>
+							</el-upload>
+      					</div>
+      				</div>
+      			</div>
+      		</Card>
+      	</Row>
+
+      	<!--
+          	作者：offline
+          	时间：2018-03-28
+          	描述：bottom
+          -->
+      	<div style="margin-bottom: 100px ;margin-top: 50px;">
+      		<center>
+      			<el-button type="primary" style="width: 10%;padding: 7px 0;" @click="submitFeeback">{{$t('feedback.submit')}}</el-button>
+      		</center>
+      	</div>
+	</div>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+            form: {bsStatus:1,bsType:1,bsSuppCompanyName:''},
+            products: [],
+            suppliers: [],
+            file:{},
+            fileList:[]
+        }
+    }, 
+    created(){
+        this.fileList.map(function (file) {
+             file.name = file.fsFileBy.bsName+file.fsFileBy.bsFileType; //显示文件名文件类型
+             return file; 
+        });
+        this.getProductData('');
+    },
+    methods: {
+        getSupplierData(suppCode) {
+            this.api.supplierinfo.getlist({bsSuppCode:suppCode}).then((res) => {
+                this.suppliers = res.data.rows.map(function (row) {
+                    row.value = row.bsSuppChieseName;
+                    return row;
+                });
+                if(this.suppliers.length>0) this.handleSelectSupplier(this.suppliers[0]);
+            });
+        },
+        getProductData(keyWord){
+            this.api.productinfo.getlist({page:1,rows:100,keyWord:keyWord}).then((res) => {
+                this.products = res.data.rows.map(function (row) {
+                    row.value = row.bsPrName + '('+row.bsSuppChieseName+')';
+                    return row;
+                });
+            });
+        },
+        queryProduct(queryString, cb) {
+            this.api.productinfo.getlist({page:1,rows:200,keyWord:queryString}).then((res) => {
+                this.products = res.data.rows.map(function (row) {
+                    row.value = row.bsPrName + '('+row.bsSuppChieseName+')';
+                    return row;
+                });
+                cb(this.products);
+            });
+        },
+        productFileter(queryString) {
+            return (model) => {
+                return (model.bsPrName.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+            };
+        },
+        handleSelectSupplier(item) {
+            this.form.bsSuppId = item.id;
+            this.form.bsSuppCompanyName = item.bsSuppChieseName;
+            this.form.bsSuppCompanyEmail = item.bsSuppEmail;
+            this.form.bsSuppCompanyMobile = item.bsSuppMobile;
+            this.form.bsSuppCompanyPerson = item.bsSuppContactName;
+            this.form.bsSuppCompanyCode = item.bsSuppCode;
+            //console.log(this.form);
+        },
+        handleSelectProduct(item) {
+            this.form.bsPrId = item.id;
+            this.form.bsPrName = item.bsPrName;
+            this.form.bsPrCode = item.bsPrCode;
+            this.getSupplierData(item.bsSuppCode);
+        },
+        submitFeeback(){
+            if(this.fileList.length>0){
+                this.form.fileIdStr = this.fileList.map(function (file) {
+                    return file.id;
+                }).toString();
+            }
+        	
+            if(this.form.id == undefined) {
+                this.api.feedback.add(this.form).then((res) => {
+                    this.form.id = res.data.id;
+                    this.$router.push({path:"/qms/feedback/details",query:{feedbackId:res.data.id}});
+                    this.$Message.info("提交成功");
+                });
+            }
+            else {
+                this.api.feedback.edit(this.form).then((res) => {
+                    this.$Message.info("修改成功");
+                });
+            }
+        },
+
+        handleUpload (file) {
+
+            this.file = file; 
+            let formData = new FormData();     
+            formData.append('file', this.file);
+            
+            this.api.fileQms.upload(formData).then((res) => {
+                if(res.result) { 
+                            	
+                    var file = Object.assign(res.data,{name:this.file.name});                   
+                    this.fileList.push(file);       
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });          
+           
+            return true;           
+        },
+
+        downloadFile(file){ 
+            	
+            var params = {
+                fsFileId:file.id
+            };
+            //console.log(params)
+            this.api.fileQms.getfile(params).then((link) => {    
+                  	
+                link.click(); 
+            });
+        },
+        handleRemove(file, fileList) {  
+           /* if(!file.id || !canUpload) return;*/
+            var params = {
+                    id:file.id
+                };      
+            this.api.approvedItemsRecordFile.delete(params).then((res)=>{         
+                if(res.result) {
+                    //refresh
+                    this.fileList.remove();
+                    this.$Message.info('删除成功');
+                }else {
+                    this.$Message.error(res.msg);   
+                }
+            });
+        }
+    }   
+};
+</script>
+
+<style lang="less">
+	@import "../public.less";
+    @import '~@/styles/feedback.css';
+
+	.Upload{margin-top: 15px;width: 45%;}
+</style>

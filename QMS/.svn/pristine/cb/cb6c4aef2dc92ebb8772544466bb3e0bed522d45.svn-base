@@ -1,0 +1,150 @@
+export default {
+    "home":{
+        "Todoitems":"Todoitems",
+        "CompletedItems":"CompletedItems",
+        "SystemInformation":"system information",
+        "SeeMore":"detail",
+        "CloseTodo":"close"
+    },
+    //系统配置
+    "systemInfo":{
+        //资源管理
+         "resourceManage":{
+            "resourceCoding":'resource coding',
+            "resourceName":'resource name',
+            "resourceType" :"resource type",
+            "url":"URL",
+            "state":"state",
+            "deleteFlag":"delete flag",
+            "createTime":"create time",
+            "updateTime":"update time",
+            "action":"action",
+            "":"",
+            "":"",
+            "":"",
+         },
+         //客制化目录
+         "CustomizedCatalogue":{
+             "property":'property',
+             "extend":'extend table',
+             "describe":'describe',
+             "action":'action'
+         },
+         //全局应用配置
+         "globalAppConfiguration":{
+             "applyName":"apply name",
+             "type":"type",
+             "code":"code",
+             "name":"name",
+             "value":"value",
+             "state":"state",
+             "applicationEnv":"application environment",
+             "description":'desription',
+             "action":'action'
+         },
+         //编码规则管理
+         "codingRuleMa":{
+            "code":"code",
+            "name":"name",
+            "prefixion":"prefixion",
+            "postfix":"postfix",
+            "initValue":"initial value",
+            "maxValue":"max value",
+            "lenght":"lenght",
+            "state":"state",
+            "currentValue":"current value",
+            "createTime":"create time",
+            "updateTime":"update time",
+         }
+
+    },
+    //实验室管理系统
+    "labSystem":{
+        //设备管理
+        "eqManagement":{
+            "name":"equipment name",
+            "state":"equipment state",
+            "createTime":"create time",
+            "action":"action",
+            "inputEqName":"please input equipment name",
+            "select":"please select state",
+
+        },
+        //样品列表
+        "sampleList":{
+            "bscode":"code",
+            "bsName":"name",
+            "bsCreateTime":"create time",
+            "bsReportTime":"end time",
+            "bsQty":"quantity",
+            "bsState":"state",
+            "bsItem":"test item",
+            "action":"action",
+            "testx":"test items",
+            "testEque":"test equipment",
+            "testTime":"test time",
+            "bsBaseline":"reference value",
+            "bsBaselineUp":"Upper Limit",
+            "bsBaselineDown":"lower value",
+            "bsBaseData":"data",
+            "bsMean":"mean",
+            "bsRange":"range",
+            "bsResult":"result",
+            "bscomment":"comment",
+            "action":"action",
+            "bsCostTime":"cost time",
+            "bsStartTime":"starting time",
+            "bsCompTime":"estimated time of completion",
+            "bsPeople":"tester",
+        },
+        //样品报告
+        "sampleReport":{
+            "bsSampleId":"sample ID",
+            "bsCode":"code",
+            "bsName":"name",
+            "bsStartTime":"starting time",
+            "bsCompTime":"time of completion",
+            "bsState":"state",
+            "action":"action",
+        },
+        //邮件配置
+        "mailInfo":{
+            "labMail":"Laboratory mail",
+            "sendMail":"sender mail",
+            "bsState":"state",
+            "bsCreateTime":"create time",
+            "action":"action"
+        }
+    },
+    //按钮
+    "button":{
+        "search":"search",
+        "add":"add",
+        "save":"save",
+        "delete":"delete",
+        "modify":'modify',
+        "permissionSetting":'permission setting',
+        "detail":"detail",
+        "addData":"fill in the data",
+        "startTest":"testing",
+        "addItems":"add test items",
+        "cancel":"cancel",
+        "saveData":"save as excel",
+        "download":"download data",
+
+
+    },
+    //$message提示信息
+    'message':{
+        "failure":"operate failure",
+        "sucess":'operate successfully',
+        
+      },
+    //Model信息
+    'model':{
+        "deleteTitel":"prompt message",
+        "deleteContent":'Are you sure to delete it?'
+
+    }
+ }
+

@@ -1,0 +1,296 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-07-23
+    	描述：模板管理
+    -->
+    <div class="ApprovedFlowManagement">
+            <div>
+                <el-Row style="margin-bottom: 10px;">                                 		
+					<el-button style="padding: 10px 10px;" type="primary" icon="el-icon-plus" v-perm-add="" @click="showAddDialog()">
+						{{$t('excelTemp.addTemp')}}
+					</el-button>             		
+                </el-Row>
+                <el-Row>
+                    <el-col :span="24">
+                        <Table :data="datagrid.data.rows" :columns="datagrid.columns">                  
+                        </Table>
+                        <div style="margin: 10px;overflow: hidden">
+                            <div style="float: right;">
+                                <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+                            </div>
+                        </div>
+                    </el-col>
+                </el-Row>
+				<Modal v-model="dialog.modal_dialog" :title="$t('Button.addPpm')" @on-ok="ok" @on-cancel="cancel" >
+					<el-form ref="dialog.formItem" :model="dialog.formItem" label-position="right" :rules="dialog.ruleForm" label-width="100px" class="form-modal">
+						<el-form-item :label="$t('excelTemp.type')">
+							<el-select v-model="dialog.formItem.bsType">
+								<el-option v-for="item in option" :key="item.value" :label="item.label" :value="item.value">
+								</el-option>
+							</el-select>
+						</el-form-item>
+					
+						<el-form-item :label="$t('upcoming.UploadAttachment')" prop="fsFileId" >
+							<uploadannex @on-upload="fileUpload" class="fileup"></uploadannex>
+						</el-form-item>
+					</el-form>
+                </Modal>
+            </div>
+    </div>
+</template>
+<script>
+import uploadannex from '../../components/uploadannex.vue';
+export default {
+	components: {          
+        uploadannex
+    },
+    data() {
+        return {
+            dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                /*ruleForm: {
+                    bsPrName: [
+                        { required: true, message: '请选择产品', trigger: 'blur' }
+                    ],
+                }*/
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:10,
+                    pkParent:-1,
+                },
+                pagination: [10, 25, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title:this.$t('excelTemp.type'),
+                        key: 'bsType',
+						render: (h, params) => {
+                            return h('span', this.$t('excelTemp.typeName['+params.row.bsType+']'))
+                        }
+                    },                   
+                    {
+                        title: this.$t('excelTemp.name'),
+                        key: 'bsName', 
+						render: (h, params) => {
+                            return h('span', params.row.fsFileBy.bsName)
+                        }
+                    },
+                    {
+                        title: this.$t('excelTemp.createtime'),
+                        key: 'bsCreatedTime',
+                    },
+					{
+                        title: this.$t('excelTemp.modifiedtime'),
+                        key: 'bsModifiedTime',
+                    },
+                    {
+                        title: this.$t('ApprovedFlow.Operating'),
+                        key: 'action',
+                        render: (h, params) => {
+                            let ary = [];
+							{
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('EDIT')
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditDialog(params)
+                                        }
+                                    }
+                                }, this.$t('Button.Edit')));
+                            }
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'info',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('EXPORT')
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.downloadFile(params)
+                                        }
+                                    }
+                                }, this.$t('approved.Download')));
+                            }
+                            {
+                                ary.push(h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small',
+                                        disabled: !this.$Util.hasPerm('DELETE')
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.delete(params)
+                                        }
+                                    }
+                                }, this.$t('Button.Delete')));
+                            }
+                            return h('div', ary);
+                        }
+                    }
+                ]
+            },
+			option: [{
+			  value: 1,
+			  label: '供应商审核'
+			}, {
+			  value: 2,
+			  label: '产品审核'
+			}, {
+			  value: 3,
+			  label: '出货检验'
+			}, {
+			  value: 4,
+			  label: '客诉'
+			}, {
+			  value: 5,
+			  label: '退款'
+			}],
+        }
+    },
+    created(){
+        this.getData();
+    },
+    methods: {
+        handleSubmit(name) {         
+            this.getData();
+        },
+        getData() {
+            this.api.excelTemp.getlist(this.datagrid.queryParams).then((res) => {
+                this.datagrid.data = res.data;
+            });
+        },
+        reloadData() {
+            this.getData();
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.datagrid.data = this.getData();
+        },
+		downloadFile(params){  
+            this.api.fileQms.getfile({fsFileId:params.row.fsFileId}).then((link) => {
+                //link.click(); 
+            });
+        },
+        delete(params) {
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                onOk: () => {
+                    this.api.excelTemp.delete({id:params.row.id}).then((res)=>{
+                        if(res.result) {
+                            this.reloadData();
+                            this.$Modal.remove();
+                            this.$Message.info('删除成功');
+                        }else {
+                            this.$Message.error(res.msg);   
+                        }
+                    });
+                }
+            });
+        },
+        showAddDialog() {
+			this.dialog.formItem = {};
+            this.dialog.modal_dialog = true;    
+        },
+        showEditDialog(params) {   
+            this.dialog.formItem = this.$Util.formattedParams(params.row);
+			
+            this.dialog.formItem.index=params.index;
+            delete this.dialog.formItem.fsFileBy;
+            this.dialog.modal_dialog = true;
+        },
+		fileUpload(file,property){            
+            this.dialog.formItem.fsFileId = file.id;
+        },
+        ok () {
+            //this.dialog.formItem.bsApprovederId = this.selecedtUser.id;
+            this.$refs["dialog.formItem"].validate((valid) => {
+                if (valid) {
+                    if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                        this.api.excelTemp.edit(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                this.getData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                    }else {
+                        this.api.excelTemp.add(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                this.getData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                    }
+                } else {
+                    this.$Message.info(this.$t('Error.ParamsRequire'));
+                }
+            });
+        },
+        cancel () {
+            
+        },
+    }
+}
+</script>
+<style lang="less">
+	@import "../public.less";
+  .el-textarea__inner{
+    width: 85%;
+  }
+
+  .el-form-item {
+    margin-bottom: 14px;
+}
+
+.searchbox{  
+  width: 100%;
+  height: 40px;
+}
+
+.form-modal input{
+	width:300px;
+}
+
+.ivu-input {
+    margin-top: 14px;
+    display: inline-block;
+    width: 200px;
+    height: 38px;
+    padding: 11px 10px;
+    font-size: 12px;
+    border: 1px solid #dddee1;
+    /*border-radius: 4px;*/
+    color: #495060;
+    background-color: #fff;
+    background-image: none;
+    position: relative;
+    cursor: text;
+    /*margin-top:16px;*/
+    transition: border .2s ease-in-out,background .2s ease-in-out,box-shadow .2s ease-in-out;}
+    .addform{
+        width: 480px;
+    }
+    .addform .el-input{width: 300px}
+.searchbtn .el-button{border-radius: 0px;padding: 11px 14px;}
+.toolbar .el-form--inline .el-form-item{vertical-align: baseline;}
+.tip{margin-left:70px; color:#777;}
+</style>

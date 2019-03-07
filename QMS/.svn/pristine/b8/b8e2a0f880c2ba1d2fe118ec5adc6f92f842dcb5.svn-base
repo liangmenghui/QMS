@@ -1,0 +1,225 @@
+<template>
+	<!--
+    	作者：offline
+    	时间：2018-03-27
+    	描述：出货检验报告汇总
+    -->
+	<div class="productinspectsummaryapproved">
+		<Row :style="{marginBottom: '20px'}">
+			<center><h4 style="font-size: 16px;">出货检验报告汇总</h4></center>
+		</Row>
+		<Row :style="{marginBottom: '20px'}">
+			<Card>
+				<p slot="title">
+                    <Icon type="document" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('approved.SummaryOfShipmentInspectionReport')}}
+               	</p>
+               	<el-tag slot="extra" v-if="!perms.edit" color="white" style="font-size: 14px;">
+					{{$t('approved.statusLabel')}}：{{$t('approved.status['+approvedItemRecord.bsStatus+']')}}
+				</el-tag>
+		
+				<div id="body">											
+					<div class="body-div">
+						<div class="body-text">{{$t('product.name')}}：</div>
+						<div class="body-input">
+							<el-input v-model="productInfo.bsPrName" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('product.code')}}：</div>
+						<div class="body-input">
+							<el-input v-model="productInfo.bsPrCode" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.DrawingNumber')}}：</div>
+						<div class="body-input">
+							<el-input readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.InspectionStandard')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsInspectStandard" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.TestLevel')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsInspectLevel" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.DateInProduced')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsProductDate" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.InspectionDate')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsInspectDate" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.ProductQuantity')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsProductNum" readonly></el-input>
+						</div>
+					</div>															
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.BoxNumber')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsBoxesNum" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.Customer')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsCustomer" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.ContractNumber')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsContractNo" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.BatchNumber')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsBatchNo" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.AQLLevel')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsAqlLevel" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.NumberReceivers')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsAcceptNum" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.NotNumberReceivers')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsRejectNum" readonly></el-input>
+						</div>
+					</div>
+					<div class="body-div">
+						<div class="body-text">{{$t('approved.SamplingSize')}}：</div>
+						<div class="body-input">
+							<el-input v-model="shipmentInspectData.bsSamplesNum" readonly></el-input>
+						</div>
+					</div>							
+				</div>
+
+				<Row :gutter="20" style="padding-left: 4%;padding-right: 4%;">
+					<Col :md="24" :lg="12">
+						<div class="textarea-div">
+							<p>{{$t('approved.InspectionInstruction')}}</p>
+							<el-input type="textarea" readonly :autosize="{ minRows: 4}" v-model="shipmentInspectData.bsInspectDesc">
+							</el-input>
+						</div>
+						
+						<div class="textarea-div">
+							<p>{{$t('approved.IndividualOpinion')}}</p>
+							<el-input type="textarea" :readonly="!perms.edit" :autosize="{ minRows: 4}" v-model="shipmentInspectData.bsPersonalAdvise">
+							</el-input>
+						</div>
+					</Col>
+					<Col :md="24" :lg="12">
+						<div class="textarea-div">
+							<p>{{$t('approved.CompanyViews')}}</p>
+							<el-input type="textarea" :readonly="!perms.edit" :autosize="{ minRows: 4}" v-model="shipmentInspectData.bsCompanyAdvise">
+							</el-input>
+						</div>
+						
+						<div class="textarea-div">
+							<p>{{$t('approved.note')}}</p>
+							<el-input type="textarea" :readonly="!perms.edit" :autosize="{ minRows: 4}" v-model="shipmentInspectData.bsRemark">
+							</el-input>
+						</div>
+					</Col>
+				</Row>
+			</Card>
+		</Row>
+        <approvedResultRecord :approvedData="approvedItemRecord"></approvedResultRecord>
+		<div id="bottom" v-if="perms.edit">
+            <ApprovedAction type="inspect" :data="shipmentInspectData" :approvedItemRecord="approvedItemRecord"></ApprovedAction>
+        </div>
+	</div>
+</template>
+
+<script>
+import Cookies from 'js-cookie';
+import ApprovedAction from '../../components/ApprovedAction.vue';
+import approvedResultRecord from '../../components/approvedResultRecord.vue';
+export default {
+    components: {     
+        ApprovedAction,
+        approvedResultRecord
+    },
+	data() {
+		return {
+            shipmentInspectData: {},
+            productInfo:{},
+            perms:{}
+		}
+	},
+  created(){
+        this.getInspectData();
+        this.productInfo = this.$store.getters.getProductData;
+        this.approvedItemRecord = this.$store.getters.getItemRecordData;
+        this.perms.edit = 
+            (this.approvedItemRecord.users.includes(Cookies.get('user'))||
+             this.$Util.hasPerm('EDIT')) && this.approvedItemRecord.bsStatus == 1;
+    },
+    methods: {
+    	getInspectData(){
+        	var params = {
+        		bsPrId: this.productInfo.id,
+        		bsFlowRecordId: this.$route.query.bsFlowRecordId,
+        	};
+    		this.api.shipmentInspect.getlist(params).then((res) => {
+    			if(res.data.rows.length) {
+    				this.shipmentInspectData=res.data.rows[0];
+    			}
+    		});
+    	},
+    }
+}
+</script>
+
+<style>
+	.productinspectsummaryapproved #body:after{
+		content:".";
+        visibility:hidden;
+        display:block; 
+        clear:both;
+	}
+	.productinspectsummaryapproved .body-div{
+		float: left;height: 50px;
+	}
+	.productinspectsummaryapproved .body-text{
+		float: left;margin-top: 10px;width: 130px;font-size: 14px;text-align: right;
+	}
+	.productinspectsummaryapproved .body-input{
+		float: left;
+	}
+	.productinspectsummaryapproved .body-input .el-input{
+		width: 300px;
+	}
+	.productinspectsummaryapproved .textarea-div{
+		background-color: white;padding-bottom:20px;
+	}
+	.productinspectsummaryapproved .textarea-div p{
+		font-size: 14px;
+	}
+	.productinspectsummaryapproved #bottom{
+		height:150px;margin-bottom: 20px;background-color: white;padding-left: 5%;
+	}
+</style>

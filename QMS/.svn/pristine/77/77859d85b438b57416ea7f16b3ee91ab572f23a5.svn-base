@@ -1,0 +1,5 @@
+<form action="/admin/logon" method="post">
+	<input name="username" />
+	<input name="password" />
+	<input name="btn" type="submit" value="button"/>
+</form>

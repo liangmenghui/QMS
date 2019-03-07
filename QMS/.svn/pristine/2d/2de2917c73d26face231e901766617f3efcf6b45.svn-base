@@ -1,0 +1,32 @@
+<template>
+    <Menu mode="horizontal" :active-key="currentCode"  >
+        <MenuItem v-for="item of data"  :key="item.code" :name="item.code" @click.native="handleClick(item)">
+            <Icon :type="item.icon"></Icon>
+            {{item.title}}
+        </MenuItem>
+    </Menu>
+</template>
+<script>
+    export default {
+        name: 'top-nav',
+        props: {
+            data: Array,
+            currentCode: ''
+        },
+        data() {
+            return {
+            }
+        },
+        created() {
+
+        },
+        computed() {
+        },
+        methods: {
+            handleClick(item) {
+                this.$emit("handleNavClick", item);
+                this.currentCode = item.code;
+            }
+        }
+    };
+</script>

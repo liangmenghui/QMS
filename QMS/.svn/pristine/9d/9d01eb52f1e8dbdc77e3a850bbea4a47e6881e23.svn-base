@@ -1,0 +1,159 @@
+<template>
+	<div class="Risk">
+		<div style="width:95%;margin-left: 2%;margin-top: 20px;">
+		<div style="height: 40px; background-color: #F7F7F7;padding-top: 3px;">
+			<div>
+				<center>
+				<h5 style="display: inline;font-size: 15px;">{{$t('supplier.SupplierRisklevelmanagement')}}</h5>
+				<el-tooltip placement="bottom">
+        		<div slot="content" class="tooltext">
+    			  审核周期: <br/>
+    			  在上次审核完成后,根据供应商风险等级,在对应的审核周期后,提醒管理员<br/>
+    			  再次进行供应商的审核,以确保供应商的供应水平是否仍然在可控范围内
+      			</div>
+      			<i class="el-icon-info"></i>
+    			</el-tooltip>				
+				</center>
+			</div>
+		</div>
+		<div>
+			<el-table
+      		:data="riskTableData"
+      		style="width: 100%;text-align:center">
+      		<el-table-column
+        	prop="riskLevelName"
+        	:label="$t('supplier.RiskLevel')">
+      		</el-table-column>
+      		<el-table-column
+        	prop="auditCycle"
+        	:label="$t('approved.AuditCycle')">
+      		</el-table-column>
+    		</el-table>
+		</div>
+		</div>
+		
+		<div style="width:95%;margin-left: 2%;margin-top: 40px;margin-bottom: 100px;">
+		<div style="height: 40px; background-color: #F7F7F7;padding-top: 3px;">
+			<div>
+				<center>
+				<h5 style="display: inline;font-size: 15px;">{{$t('product.ProductRiskLevelManagement')}}</h5>
+				<el-tooltip placement="bottom">
+        		<div slot="content" class="tooltext">
+    			 抽样水平: <br/>
+    			 根据产品的风险等级,在成品检验时抽取指定百分比的成品<br/>
+    			 进行检验,以确保供应商的供应水平是否仍然在可控范围内
+      			</div>
+      			<i class="el-icon-info"></i>
+    			</el-tooltip>
+				</center>
+			</div>
+		</div>
+		<div>
+			<el-table
+      		:data="riskTableData"
+      		style="width: 100%;text-align:center;">
+      		<el-table-column
+        	prop="riskLevelName"
+        	:label="$t('supplier.RiskLevel')">
+      		</el-table-column>
+      		<el-table-column
+        	prop="verificationLevel"
+        	:label="$t('approved.SamplingLevel')">
+      		</el-table-column>
+    		</el-table>
+		</div>
+		</div>
+    </div>
+</template>
+
+<script>
+	export default {
+      data() {
+        return {
+          tableData1: [{
+            FXDJ: this.$t('approved.Level1'),
+            SHZQ: '36',
+          }, {
+            FXDJ: this.$t('approved.Level2'),
+            SHZQ: '24',
+          }, {
+            FXDJ: this.$t('approved.Level3'),
+            SHZQ: '12',
+          }, {
+            FXDJ: this.$t('approved.Level4'),
+            SHZQ: '6',
+          }, {
+            FXDJ: this.$t('approved.Level5'),
+            SHZQ: '3',
+          }],
+          tableData2: [{
+            FXDJ: this.$t('approved.Level1'),
+            SHZQ: '120',
+          }, {
+            FXDJ: this.$t('approved.Level2'),
+            SHZQ: '140',
+          }, {
+            FXDJ: this.$t('approved.Level3'),
+            SHZQ: '160',
+          }, {
+            FXDJ: this.$t('approved.Level4'),
+            SHZQ: '180',
+          }, {
+            FXDJ: this.$t('approved.Level5'),
+            SHZQ: '200',
+          }],
+          riskLevel: [],
+          riskTableData: [{
+            riskLevelName: this.$t('approved.Level1'),  //风险等级名称
+            auditCycle:'',                              //审核周期（单位：天）
+            verificationLevel:'',                       //检验水平
+          }, {
+            riskLevelName: this.$t('approved.Level2'),
+            auditCycle:'',
+            verificationLevel:'',
+          }, {
+            riskLevelName: this.$t('approved.Level3'),
+            auditCycle:'',
+            verificationLevel:'',
+          }, {
+            riskLevelName: this.$t('approved.Level4'),
+            auditCycle:'',
+            verificationLevel:'',
+          }, {
+            riskLevelName: this.$t('approved.Level5'),
+            auditCycle:'',
+            verificationLevel:'',
+          }],
+        }
+      },
+      created(){
+        this.getData();
+      },
+      methods:{
+        getData(){
+          this.api.riskLevelManagement.getlist().then((res) => {
+         
+            this.riskLevel = res.data.rows;
+            for(var i = 0; i < this.riskLevel.length; i++){
+              this.riskTableData[i].auditCycle = this.riskLevel[i].bsAuditCycle;
+              this.riskTableData[i].verificationLevel = this.riskLevel[i].bsVerificationLevel;
+            }
+          });
+        }
+      }
+    }
+</script>
+
+<style>
+	.el-icon-info{     
+      line-height:30px;
+      display:inline-block;
+      margin-left:10px;
+      font-size:16px;
+    }
+    .tooltext{
+    line-height:25px;
+    font-size: 14px;
+    }
+    .Risk .el-table th{text-align: center;}
+</style>

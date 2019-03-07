@@ -1,0 +1,7 @@
+import httpService from '@/libs/service'
+
+export default {
+    getTree: function () {
+        return httpService.get('/fs/doc/release/folder-list', {});
+    }
+}

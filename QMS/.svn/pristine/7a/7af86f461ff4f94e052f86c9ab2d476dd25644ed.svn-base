@@ -1,0 +1,261 @@
+<template>
+    <div>
+        <Row>
+            <i-col>
+                <Form :model="formItem" ref="ruleForm" :label-width="120">
+                <span style="display:none;">
+                    <Input v-model="formItem.erpItemCustomerAgg"></Input>
+                    <Input v-model="formItem.bsItemId" placeholder="请输入"></Input>
+                    <Input v-model="formItem.bsCustomerId" placeholder="请输入"></Input>
+                </span>
+                <Row style="margin-bottom:10px">
+                    <i-col span="24">
+                        <Button type="primary" @click="save()">保 存</Button>
+                    </i-col>
+                </Row>
+                <Row>
+                    <i-col span="24">
+                        <Row>
+                        <i-col span="4">
+                            <span>物料编码：</span>
+                        </i-col>
+                        <i-col span="8">
+                            <span>{{formItem.bsItemCode}}</span>
+                        </i-col>
+                        <i-col span="4">
+                        <span>物料名称：</span>
+                        </i-col>
+                        <i-col span="8">
+                        <span>{{formItem.bsItemName}}</span>
+                        </i-col>
+                        </Row>
+                    </i-col>
+                </Row><br/>
+                <Row>
+                    <i-col span="24">
+                        <Row>
+                        <i-col span="4">
+                            <span>客户编码：</span>
+                        </i-col>
+                        <i-col span="8">
+                            <span>{{formItem.bsCustomerCode}}</span>
+                        </i-col>
+                        <i-col span="4">
+                        <span>客户名称：</span>
+                        </i-col>
+                        <i-col span="8">
+                        <span>{{formItem.bsCustomerName}}</span>
+                        </i-col>
+                        </Row>
+                    </i-col>
+                </Row><br/>
+                <Row>
+                    <i-col span="24">
+                        <Row>
+                            <i-col span="4">
+                                <span>客户物料编号：</span>
+                            </i-col>
+                            <i-col span="8">
+                                <span>{{formItem.bsCustomerItemDesc}}</span>
+                            </i-col>
+                            <i-col span="4">
+                                <span>客户物料名称：</span>
+                            </i-col>
+                            <i-col span="8">
+                                <span>{{formItem.bsCustomerItemDesc}}</span>
+                            </i-col>
+                        </Row>
+                    </i-col>
+                </Row><br/>
+                <Row>
+                    <i-col span="8">
+                        <Form-item label="安全库存周数（周）" prop="bsMinSaftyInv">
+                            <Input v-model="formItem.bsMinSaftyInv" placeholder="请输入" style="width: 80px"></Input>
+                            - <Input v-model="formItem.bsMaxSaftyInv" placeholder="请输入" style="width: 80px"></Input>
+                        </Form-item>
+                    </i-col>
+                    <i-col span="8">
+                        <Form-item label="标准安全库存（周）" prop="bsStdSaftyInv">
+                            <Input v-model="formItem.bsStdSaftyInv" placeholder="请输入" style="width: 80px"></Input>
+                        </Form-item>
+                    </i-col>
+                    <i-col span="8">
+                        <Form-item label="安全库存极限值（周）" prop="bsMinLimit">
+                            <Input v-model="formItem.bsMinLimit" placeholder="请输入" style="width: 80px"></Input>
+                            - <Input v-model="formItem.bsMaxLimit" placeholder="请输入" style="width: 80px"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                <Row>
+                    <i-col span="8">
+                        <Form-item label="装柜系数" prop="bsCabinetRatio">
+                            <Input v-model="formItem.bsCabinetRatio" placeholder="请输入" style="width: 80px"></Input>
+                        </Form-item>
+                    </i-col>
+                    <i-col span="8">
+                        <Form-item label="运输周期" prop="bsHaulCycle">
+                            <Input v-model="formItem.bsHaulCycle" placeholder="请输入" style="width: 80px"></Input>
+                        </Form-item>
+                    </i-col>
+                    <i-col span="8">
+                        <Form-item label="装柜日" prop="bsDayOfLoading">
+                            <Input v-model="formItem.bsDayOfLoading" placeholder="请输入" style="width: 80px"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                <Row>
+                    <i-col span="8">
+                        <Form-item label="检验日" prop="bsDayOfInspect">
+                            <Input v-model="formItem.bsDayOfInspect" placeholder="请输入" style="width: 80px"></Input>
+                        </Form-item>
+                    </i-col>
+                    <i-col span="16">
+                        <Form-item label="生产周期" prop="bsDayOfProd">
+                            <Input v-model="formItem.bsDayOfProd" placeholder="请输入" style="width: 80px"></Input>
+                        </Form-item>
+                    </i-col>
+                </Row>
+                </Form>
+            </i-col>
+        </Row>
+    </div>
+</template>
+<script>
+import {mapState} from 'vuex'
+export default {
+    data() {
+        return {
+            formQuery: {
+                page: 1,
+                rows: 1,
+                erpItemCustomerAgg: ''
+            },
+            formItem: {erpItemCustomerAgg:'', bsMinSaftyInv:4.0, bsMaxSaftyInv:6.0, bsStdSaftyInv:5.0, bsMinLimit:2.0,
+                    bsMaxLimit:8.0, bsCabinetRatio:0.9, bsHaulCycle:47.0, bsDayOfLoading:-2.0,
+                    bsDayOfInspect: -1.0, bsDayOfProd:40.0},
+            ruleForm: {
+                bsMinSaftyInv: [
+                    { required: true, message: '请填写最小安全库存周数', trigger: 'blur' }
+                ],
+                bsMaxSaftyInv: [
+                    { required: true, message: '请填写物料最大安全库存周数', trigger: 'blur' }
+                ],
+                bsStdSaftyInv: [
+                    { required: true, message: '请填写标准安全库存周数', trigger: 'blur' }
+                ],
+                bsMinLimit: [
+                    { required: true, message: '请填写安全库存极限值（最小）', trigger: 'blur' }
+                ],
+                bsMaxLimit: [
+                    { required: true, message: '请填写安全库存极限值（最大）', trigger: 'blur' }
+                ],
+                bsCabinetRatio: [
+                    { required: true, message: '请填写装柜系数', trigger: 'blur' }
+                ],
+                bsHaulCycle: [
+                    { required: true, message: '请填写运输周期', trigger: 'blur' }
+                ],
+                bsDayOfLoading: [
+                    { required: true, message: '请填写装柜日', trigger: 'blur' }
+                ],
+                bsDayOfInspect: [
+                    { required: true, message: '请填写检验日', trigger: 'blur' }
+                ],
+                bsDayOfProd: [
+                    { required: true, message: '请填写生产周期', trigger: 'blur' }
+                ]
+            }
+        }
+    },
+    created(){
+    },
+    computed:{
+        ...mapState({
+            menuData:state=>state.menuData  
+        })
+    },
+    mounted () {
+        this.init();
+    },
+    watch: {
+        '$route' () {
+            this.init();
+        }
+    },
+    methods: {
+        init() {
+            this.formQuery.erpItemCustomerAgg=this.$route.query.id;
+            this.formItem.erpItemCustomerAgg=this.$route.query.id;
+
+            this.getData();
+        },
+        selectItem() {
+
+        },
+        handleSubmit(name) {
+            this.getData();
+        },
+        getData() {
+            this.api.shipmentconfig.getdetail(this.formQuery).then((res) => {
+            
+                this.formItem.bsMinSaftyInv = res.data.bsMinSaftyInv;
+                this.formItem.bsMaxSaftyInv = res.data.bsMaxSaftyInv;
+                this.formItem.bsStdSaftyInv = res.data.bsStdSaftyInv;
+                this.formItem.bsMinLimit = res.data.bsMinLimit;
+                this.formItem.bsMaxLimit = res.data.bsMaxLimit;
+                this.formItem.bsCabinetRatio = res.data.bsCabinetRatio;
+                this.formItem.bsHaulCycle = res.data.bsHaulCycle;
+                this.formItem.bsDayOfLoading = res.data.bsDayOfLoading;
+                this.formItem.bsDayOfInspect = res.data.bsDayOfInspect;
+                this.formItem.bsDayOfProd = res.data.bsDayOfProd;
+
+                this.formItem.bsItemId=res.data.erpItemCustomerAgg.bsItemId;
+                this.formItem.bsItemCode=res.data.erpItemCustomerAgg.bsItemCode;
+                this.formItem.bsItemName=res.data.erpItemCustomerAgg.bsItemName;
+                this.formItem.bsCustomerId=res.data.erpItemCustomerAgg.bsCustomerId;
+                this.formItem.bsCustomerCode=res.data.erpItemCustomerAgg.bsCustomerCode;
+                this.formItem.bsCustomerName=res.data.erpItemCustomerAgg.bsCustomerName;
+                this.formItem.bsCustomerItemNumber=res.data.erpItemCustomerAgg.bsCustomerItemNumber;
+                this.formItem.bsCustomerItemDesc=res.data.erpItemCustomerAgg.bsCustomerItemDesc;
+            });
+        },
+        reloadData() {
+            this.formItem = this.getData();
+        },
+        delete(params) {
+            console.log(params);
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.shipmentconfig.delete({id:params.row.id}).then((res)=>{
+                        if(res.result) {
+                            this.$Message.info('删除成功');
+                        }else {
+                            this.$Message.error(res.msg);
+                        }
+                    });
+                }
+            });
+        },
+        save () {
+            //this.$refs["ruleForm"].validate((valid) => {
+            //    if (valid) {
+                    this.api.shipmentconfig.save(this.formItem).then((res) => {
+                        if(res.result) {
+                            //refresh
+                            this.$Message.info(res.msg);
+                        }else {
+                            this.$Message.error(res.msg);
+                        }
+                    });
+            //    }
+            //});
+        },
+        cancel () {
+            
+        }
+    }
+}
+</script>

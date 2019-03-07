@@ -1,0 +1,457 @@
+<template>
+    <div>
+        <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery" inline>
+                    <Form-item prop="bsCode">
+                        <Input type="text" v-model="formQuery.bsCode" placeholder="资源编码" />
+                    </Form-item>
+                    <Form-item prop="bsName">
+                        <Input type="text" v-model="formQuery.bsName" placeholder="资源名称" />
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="handleSubmit('formQuery')">查 询</Button>
+                    </Form-item>
+                    <Form-item>
+                        <Button type="primary" @click="showAddDialog()">新 增</Button>
+                    </Form-item>
+                </Form>
+            </i-col>
+        </Row>
+        <Row>
+            <i-col span="4">
+                <Tree ref="tree" :data="tree.data" class="layout-menu-left" @on-select-change="selectNode" ></Tree>
+            </i-col>
+            <i-col span="20">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns" stripe style="height:500px;"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" :current="1" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination" @on-change="changePage" show-total show-elevator show-sizer></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+        <Modal v-model="dialog.modal_dialog" title="" @on-ok="ok" @on-cancel="cancel" >
+            <p>
+                <Form :model="dialog.formItem" :rules="dialog.ruleForm" :label-width="80">
+                    <Input v-model="dialog.formItem.id" type="hidden"></Input>
+                    <Input v-model="dialog.formItem.pkGroup" value="-1"  type="hidden"></Input>
+                    <Input v-model="dialog.formItem.pkOrg" value="-1"  type="hidden"></Input>
+                    <Input v-model="dialog.formItem.pkParent" value="-1"  type="hidden"></Input>
+                    
+                    <!--<Form-item label="所属目录">
+                        <Select v-model="dialog.formItem.pkParent" placeholder="请选择">
+                            <Option value="beijing">北京市</Option>
+                        </Select>
+                    </Form-item>-->
+                    <Form-item label="上级节点">
+                        <Input v-model="dialog.formItem.parentName" disabled placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="资源编码" prop="bsCode">
+                        <Input v-model="dialog.formItem.bsCode" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="资源名称" prop="bsName">
+                        <Input v-model="dialog.formItem.bsName" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="资源类型" prop="bsLeaf">
+                        <Select v-model="dialog.formItem.bsLeaf" placeholder="请选择">
+                            <Option :value="1">菜单</Option>
+                            <Option :value="0">目录</Option>
+                        </Select>
+                    </Form-item>
+                    <Form-item label="URL">
+                        <Input v-model="dialog.formItem.bsUrl" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="图标">
+                        <Input v-model="dialog.formItem.bsIconCls" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="序号" prop="bsSortNo">
+                        <Input v-model="dialog.formItem.bsSortNo" placeholder="请输入" number></Input>
+                    </Form-item>
+                    <Form-item label="启用状态" prop="bsEnableState">
+                        <Select v-model="dialog.formItem.bsEnableState" placeholder="请选择">
+                            <Option :value="1">启用</Option>
+                            <Option :value="2">停用</Option>
+                        </Select>
+                    </Form-item>
+                    <Form-item label="备注">
+                        <Input v-model="dialog.formItem.bsComment" type="textarea" :autosize="{minRows: 2,maxRows: 5}" placeholder="请输入..."></Input>
+                    </Form-item>
+                </Form>
+            </p>
+        </Modal>
+        <Modal v-model="perms.modal_dialog" title="" @on-ok="perms_ok" @on-cancel="perms_cancel" >
+            <p>
+                <!--<div style="border-bottom: 1px solid #e9e9e9;padding-bottom:6px;margin-bottom:6px;">
+                    <Checkbox :indeterminate="perms.indeterminate" :value="perms.checkAll" @click.prevent.native="handleCheckAll">全选</Checkbox>
+                </div>
+                <Checkbox-group v-model="perms.checkAllGroup" @on-change="checkAllGroupChange">
+                    <Checkbox v-for="item in perms.data" :key="item" :value="item.id" :label="item.bsName"></Checkbox>
+                </Checkbox-group>-->
+                <Form :model="perms.formItem" :label-width="80">
+                    <input v-model="perms.formItem.pkResrce" type="hidden" name="pkResrce" value=""/>
+                    <p><label><input type="checkbox"></input>全选</label></p><br/>
+                    <p>
+                        <label v-for="item in perms.data" :key="item"><input v-model="perms.formItem.pkPerms" type="checkbox" name="pkPerms" :value="item.id"></input>&nbsp;&nbsp;{{item.bsName}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                    </p>
+                </Form>
+            </p>
+        </Modal>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            formQuery: {
+                bsCode: '',
+                bsName: ''
+            },
+            tree: {
+                data: [{expand: true, title: '根目录', children:[]}]
+            },
+            perms:{
+                modal_dialog: false,
+                data: [],
+                indeterminate: true,
+                checkAll: false,
+                checkAllGroup: [],
+                formItem: {
+                    pkResrce:'',
+                    pkPerms: []
+                }
+            },
+            dialog: {
+                modal_dialog: false,
+                formItem: {
+                },
+                ruleForm: {
+                    bsCode: [
+                        { required: true, message: '请填写编码', trigger: 'blur' }
+                    ],
+                    bsName: [
+                        { required: true, message: '请填写名称', trigger: 'blur' }
+                    ],
+                    bsEnableState: [
+                        { required: true, message: '请选择启用状态', trigger: 'blur' }
+                    ],
+                    bsLeaf: [
+                        { required: true, message: '请选择资源类型', trigger: 'blur' }
+                    ]
+                }
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:25,
+                    pkParent:-1
+                },
+                pagination: [25, 50, 100],
+                data: {rows:[],total:0},
+                columns: [
+                    {
+                        title: '资源编码',
+                        key: 'bsCode',
+                        width: '100px'
+                    },
+                    {
+                        title: '资源名称',
+                        key: 'bsName',
+                        width: '150px'
+                    },
+                    {
+                        title: '资源类型',
+                        key: 'bsLeaf',
+                        render: (h, params) => {
+                            return h('span', (params.row.bsLeaf==0?'目录':'菜单'))
+                        },
+                        align: 'center',
+                        width: '100px'
+                    },
+                    {
+                        title: 'URL',
+                        key: 'bsUrl',
+                        width: '225px'
+                    },
+                    {
+                        title: '启用状态',
+                        key: 'bsEnableState',
+                        width: '100px',
+                        align: 'center',
+                        render: (h, params) => {
+                            return h('span', (params.row.bsEnableState==1?'启用':'停用'));
+                        }
+                    },
+                    {
+                        title: '创建时间',
+                        key: 'bsCreatedTime',
+                        width: '150px'
+                    },
+                    {
+                        title: '更新时间',
+                        key: 'bsModifiedTime',
+                        width: '150px'
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let buttons = [];
+                            if(params.row.bsLeaf == 1) {
+                                buttons.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showAllocDialog(params)
+                                        }
+                                    }
+                                }, '权限设置'));
+                            }
+                            buttons.push(h('Button', {
+                                props: {
+                                    type: 'primary',
+                                    size: 'small'
+                                },
+                                style: {
+                                    marginRight: '5px'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.showEditDialog(params)
+                                    }
+                                }
+                            }, '编辑'));
+                            buttons.push(h('Button', {
+                                props: {
+                                    type: 'error',
+                                    size: 'small'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.delete(params)
+                                    }
+                                }
+                            }, '删除'));
+                            return h('div', buttons);
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    created(){
+        this.getTree();
+    },
+    methods: {
+        handleSubmit(name) {
+            this.getData();
+        },
+        getData() {
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+            console.log("after===>");
+            console.log(this.formQuery);
+            this.api.resrce.getlist(this.formQuery).then((res) => {
+                console.log("get list===>");
+                console.log(res.data);
+                if(res.result) {
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        reloadData() {
+            this.datagrid.data = this.getData();
+        },
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.datagrid.data = this.getData();
+        },
+        edit(params) {
+            console.log(params);
+            this.api.resrce.edit(params.row).then((res)=>{
+                console.log(res)
+                if(res.result) {
+                    //refresh
+                    this.reloadData();
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        delete(params) {
+            console.log(params);
+            this.$Modal.confirm({
+                title: '提示信息',
+                content: '<p>是否确定删除？</p>',
+                loading: true,
+                onOk: () => {
+                    this.api.resrce.delete({id:params.row.id}).then((res)=>{
+                        console.log(res)
+                        if(res.result) {
+                            //refresh
+                            this.getTree();
+                            this.reloadData();
+                            this.$Message.info('删除成功');
+                            this.$Modal.remove();
+                        }else {
+                            this.$Message.error(res.msg);
+                        }
+                    });
+                }
+            });
+        },
+        showAddDialog() {
+            this.dialog.modal_dialog = true;
+
+            let node = this.$refs["tree"].getSelectedNodes();
+            if(node.length==0) {
+                this.dialog.formItem = {pkParent: -1, parentName: "根目录"};
+            }else {
+                this.dialog.formItem = {pkParent: node[0].id, parentName: node[0].title};
+            }
+            // let configs = Object.assign({okText: "保存", cancelText:"取消", width: "500px"}, config);
+            // this.$Modal.confirm(configs);
+        },
+        showEditDialog(params) {
+            this.dialog.modal_dialog = true;
+            let r = params.row;
+            this.dialog.formItem = {id:r.id,bsCode:r.bsCode, bsName:r.bsName, bsUrl:r.bsUrl, bsLeaf:r.bsLeaf, bsIconCls:r.bsIconCls,bsSortNo:r.bsSortNo, bsComment:r.bsComment,bsEnableState:r.bsEnableState};
+
+            let node = this.$refs["tree"].getSelectedNodes();
+            if(node.length==0) {    
+                Object.assign(this.dialog.formItem, {pkParent: -1, parentName: "根目录"});
+            }else {
+                Object.assign(this.dialog.formItem, {pkParent: node[0].id, parentName: node[0].title});
+            }
+            // let configs = Object.assign({okText: "保存", cancelText:"取消", width: "500px"}, config);
+            // this.$Modal.confirm(configs);
+        },
+        ok () {
+            console.log("this.dialog.formItem====>"+typeof(this.dialog.formItem.id));
+            if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                console.log("编辑1");
+                console.log(JSON.stringify(this.dialog.formItem));
+                // this.$refs["dialog.ruleForm"].validate((valid) => {
+                //     if (valid) {
+                        this.api.resrce.edit(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                //refresh
+                                this.getTree();
+                                this.reloadData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                //     }
+                // })
+            }else {
+                console.log("新增1");
+                // this.$refs["dialog.ruleForm"].validate((valid) => {
+                //     if (valid) {
+                        this.api.resrce.add(this.dialog.formItem).then((res) => {
+                            if(res.result) {
+                                //refresh
+                                this.getTree();
+                                this.reloadData();
+                            }else {
+                                this.$Message.error(res.msg);
+                            }
+                        });
+                //     }
+                // });
+            }
+        },
+        cancel () {
+            
+        },
+        getTree() {
+            this.api.resrce.gettree({}).then((res) => {
+                let data = [{id:-1, expand: true, title: '根目录', children: []}];
+                if(res.result) {
+                    console.log(this.tree.data);
+                    data[0].children = res.data;
+                    this.tree.data = data;
+                }
+            });
+        },
+        selectNode(node) {
+            console.log("selected");
+            this.datagrid.queryParams.pkParent = node[0].id;
+            this.datagrid.data = this.getData();
+        },
+        getSelectedNodes() {
+            this.dialog.formItem.pkParent = node[0].id
+            console.log(JSON.stringify(this.dialog.formItem));
+        },
+        showAllocDialog(params) {
+            this.perms.modal_dialog = true;
+            this.getPerms(params);
+        },
+        getPerms(params) {
+            let r = params.row;
+            this.api.resrceperm.getlist({pkResrce:r.id}).then((res) => {
+                if(res.result) {
+                    this.perms.data = res.data.perms;
+                    let pkPerms = [];
+                    for(let i = 0; i < res.data.alloced.length; i++) {
+                        pkPerms.push(res.data.alloced[i].pkPerm);
+                    }
+                    this.perms.formItem = {pkResrce:r.id, pkPerms:pkPerms};
+                }
+            });
+        },
+        handleCheckAll () {
+            if (this.perms.indeterminate) {
+                this.perms.checkAll = false;
+            } else {
+                this.perms.checkAll = !this.checkAll;
+            }
+            this.perms.indeterminate = false;
+
+            if (this.perms.checkAll) {
+                for(let i = 0; i < this.perms.data.length; i++) {
+                    this.perms.checkAllGroup.push(this.perms.data[i].bsName);
+                }
+                console.log(this.perms.checkAllGroup);
+            } else {
+                this.perms.checkAllGroup = [];
+            }
+        },
+        checkAllGroupChange (data) {
+            if (data.length === this.perms.data.length) {
+                this.perms.indeterminate = false;
+                this.perms.checkAll = true;
+            } else if (data.length > 0) {
+                this.perms.indeterminate = true;
+                this.perms.checkAll = false;
+            } else {
+                this.perms.indeterminate = false;
+                this.perms.checkAll = false;
+            }
+        },
+        perms_ok() {
+            if(this.perms.formItem.pkPerms.length==0) {
+                return;
+            }
+            let pkPerms = this.perms.formItem.pkPerms.join(",").toString();
+            this.api.resrceperm.save({pkResrce:this.perms.formItem.pkResrce, pkPerms: pkPerms}).then((res) => {
+                if(res.result) {
+                    this.$Message.info("操作成功");
+                }else {
+                    this.$Message.error("操作成功");
+                }
+            });
+        },
+        perms_cancle() {
+
+        }
+    }
+}
+</script>

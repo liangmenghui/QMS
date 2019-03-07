@@ -1,0 +1,159 @@
+<template>
+  	<div class="ProductList" v-if="!showRooterView" >
+  		<Row style="margin-bottom: 10px;">
+			<!--搜索框 -->
+            <el-input size="medium" style="width: 200px;display: inline-block;" v-model="formQuery.keyWord" :placeholder="$t('Button.Keyword-search')"></el-input>             
+            <el-date-picker size="medium" style="width:135px;" v-model="formQuery.startDate" type="date" value-format="yyyy-MM-dd"></el-date-picker>
+			<Icon type="shuffle" style="font-size: 16px"></Icon>
+			<el-date-picker size="medium" style="width:135px;" v-model="formQuery.endDate" type="date" value-format="yyyy-MM-dd"></el-date-picker>
+			<el-select size="medium" v-model="formQuery.bsConclusion" style="width:110px;" :placeholder="$t('ApprovedFlow.AuditResults')">
+				<el-option v-for="item in optionConclusion" :key="item.value" :label="item.label" :value="item.value"></el-option>
+			</el-select>
+			<el-button style="padding: 10px 10px;" type="primary"  icon="el-icon-search" @click="getData">{{$t('Button.Inquire')}}</el-button>
+			<el-button style="padding: 10px 10px;" type="success"  icon="el-icon-download" @click="exportExcel()">{{$t('feedback.exportExcel')}}</el-button>
+			<!--
+            <el-button style="padding: 10px 10px;" type="primary"  icon="el-icon-refresh" @click="cleargetData">{{$t('Button.Reset')}}</el-button>
+			-->
+       	</Row>
+  	
+    	<el-table :data="tableData">
+			<!-- 数据表格 -->
+			<el-table-column type="index" :label="$t('product.listNum')" width="50" align="center"></el-table-column>
+			<el-table-column :label="$t('product.code')" prop="bsPrCode" width="100"></el-table-column>
+            <el-table-column :label="$t('product.name')" prop="bsPrName"></el-table-column>
+            <el-table-column :label="$t('product.Type')" prop="bsCateDesc"></el-table-column>
+            <el-table-column :label="$t('product.SuppChieseName')" prop="bsSuppChieseName"></el-table-column>
+            <el-table-column :label="$t('ApprovedFlow.FlowType')" prop="approvedFlowRecordByProduct.flowBy.bsName"></el-table-column>
+			<el-table-column label="SQE" prop="bsSqe" width="80"></el-table-column>
+			<el-table-column :label="$t('supplier.FinishTime')" prop="approvedFlowRecordByProduct.bsModifiedTime" width="150"></el-table-column>
+			<el-table-column :label="$t('ApprovedFlow.AuditResults')">
+              	<template scope="scope">
+    				<span>{{$t("ApprovedFlow.approvedResult["+scope.row.approvedFlowRecordByProduct.bsConclusion+']')}}</span>
+    			</template>
+            </el-table-column>
+			<el-table-column :label="$t('Button.operating')">
+				<template slot-scope="scope">
+					<el-button size="small" @click="pushToProductArrovedFlow('product/approved',scope)">{{$t('Button.Details')}}</el-button>
+				</template>
+			</el-table-column>
+        </el-table>
+
+        <div class="block">   
+                <el-pagination
+                  class="pull-right clearfix"                
+                  @current-change="changePage"
+                  @size-change="SizeChange"
+                  :current="1"
+                  :current-page.sync="queryParams.page"
+                  :page-sizes="pageSizesList"
+                  :page-size="queryParams.rows"
+                  layout="total, sizes, prev, pager, next, jumper"                 
+                  :page-size-opts="pageSizesList"
+                  :total="totalCount">
+                 
+                </el-pagination>
+        </div> 
+        <router-view></router-view>
+  </div>
+  <div v-else-if="showRooterView">
+        <router-view></router-view>
+  </div>
+  
+</template>
+
+<script>
+export default {
+    data() {
+      return {
+      	formQuery:{
+			startDate: new Date().getFullYear()+'-01-01',
+			endDate: new Date(),
+		},
+        tableData: [],
+        expands: [],   // 要展开的行，数值的元素是row的key值
+        filters: {},
+        showRooterView: false,
+        queryParams:{
+                page:1,
+                rows:10,
+                pkParent:-1
+            },      
+        pageSizesList: [10, 20, 30, 40, 50, 100],
+        totalCount: 0,//数据的总条数,
+        optionConclusion: [{
+          value: '0',
+          label: this.$t('approved.placeCoose')
+        }, {
+          value: '4',
+          label: this.$t('ApprovedFlow.approvedResult[4]')
+        }, {
+          value: '5',
+          label: this.$t('ApprovedFlow.approvedResult[5]')
+        }],
+        value1: '',
+        value2: '',
+      }
+    },
+    watch: {
+        '$route' (to, from) {
+            if(to.matched.length == 2) {
+                this.getData();
+            }
+            this.showRooterView = to.matched.length>2;
+        }
+    },
+    created(){
+        this.getData();
+        this.showRooterView = this.$route.matched.length>2;
+    },
+    methods:{
+    	getData(){
+            let filter = Object.assign({},this.formQuery,this.queryParams,this.$route.query);
+    		this.api.productinfo.getProductApproved(filter).then((res) => {
+          		this.tableData = res.data.rows;
+                this.totalCount= res.data.total;
+            });
+    	},
+        /*cleargetData(){
+			this.formQuery.keyWord='';
+			this.formQuery.startDate= new Date().getFullYear()+'-01-01';
+			this.formQuery.endDate= new Date().getFullYear()+'-12-31';
+			this.formQuery.bsConclusion='0';
+		},*/
+        changePage(page){         
+           this.queryParams.page = page;  
+                 
+           this.getData();
+        },
+		SizeChange(page){
+
+        },
+		exportExcel() { 
+			let filter = Object.assign({},this.formQuery,this.queryParams,this.$route.query);
+            this.api.productinfo.getProductApprovedExcel(filter).then((res) => {                
+            })
+        },
+		pushToProductArrovedFlow(url,data) {
+            this.$router.push({path: url,query:{bsFlowRecordId:data.row.bsProductRecordId}});
+        },
+    }
+}
+</script>
+     
+<style lang="less">
+@import "../public.less";
+.mytable.el-table th{
+     background:#f0f0f0 !important;
+           
+  }
+.block{text-align: right;margin-top:10px;}
+
+.block .clearfix {
+     width: 95%; 
+    border:none;
+    margin-left: 5%;
+    padding-top: 10px;
+    padding-bottom: 25px;
+}
+.el-table .cell{padding-left:0;}
+</style>

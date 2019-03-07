@@ -1,0 +1,251 @@
+<template>
+    <div>
+      <div>
+        <Row>
+            <i-col>
+                <Form class="query_area" ref="formQuery" :model="formQuery"   inline>
+                    <Form-item >
+                        <Input v-model="formQuery.bsName" placeholder="请输入柜型代码" style="width:200px"></Input>
+                    </Form-item>
+                    <Form-item >
+                        <Input v-model="formQuery.bsComment" placeholder="请输入柜型描述" style="width:200px"></Input>
+                    </Form-item>
+                    <Form-item >
+                        <Button type="primary" @click="handleSubmit()">查 询</Button>
+                    </Form-item> 
+                    <Form-item v-if="menuData.perms.ADD">
+                        <Button type="primary" @click="showAddContainDialog()">新 增</Button>
+                    </Form-item> 
+                </Form>
+            </i-col>
+        </Row>  
+      </div>
+        <Row>
+            <i-col span="24">
+                <Table :data="datagrid.data.rows" :columns="datagrid.columns"   stripe style="height:auto;"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :total="datagrid.data.total" placement="top" :current="1" @on-change="changePage"  @on-page-size-change="chageSize" :page-size="datagrid.queryParams.rows" :page-size-opts="datagrid.pagination"  show-total show-elevator show-sizer ></Page>
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+        <Modal v-model="dialog.modal_dialog" :mask-closable="false" :closable="false" title="" >
+                <div slot="footer">
+                    <Button type="text" size="large" @click="editDockCancel()">取消</Button>
+                    <Button type="primary" size="large" @click="saveEditDock(dialog.formItem)">确定</Button>
+                </div>
+                <Form :model="dialog.formItem" :rules="dialog.ruleForm" :label-width="100" ref= "dialog.formItem">
+                    <Input v-model="dialog.formItem.id" type="hidden"></Input>
+                    <Form-item label="柜型代码" prop="bsName">
+                        <Input v-model="dialog.formItem.bsName" :disabled="bsNameDisabled" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="柜型描述" prop="bsComment">
+                        <Input v-model="dialog.formItem.bsComment" :disabled="bsCommentDisabled" placeholder="请输入"></Input>
+                    </Form-item>
+                    <Form-item label="长(cm)" prop="bsLength">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsLength" placeholder="请输入"></Input-number>
+                    </Form-item>
+                    <Form-item label="宽(cm)" prop="bsWidth">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsWidth" placeholder="请输入"></Input-number>
+                    </Form-item>
+                    <Form-item label="高(cm)" prop="bsHeight">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsHeight" placeholder="请输入"></Input-number>
+                    </Form-item>
+                    <Form-item label="柜子体积(m³)" prop="bsVolume">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsVolume" placeholder="请输入"></Input-number>
+                    </Form-item>
+                    <Form-item label="柜型毛重(kg)" prop="bsGrossWeight">
+                        <Input-number style="width:100%" v-model="dialog.formItem.bsGrossWeight" placeholder="请输入"></Input-number>
+                    </Form-item>
+                </Form>
+        </Modal>
+   </div>
+</template>
+
+<script>
+import {mapState} from 'vuex';
+export default {
+    created(){
+      this.getData();
+    },
+    computed:{
+        ...mapState({
+            menuData:state=>state.menuData  
+        })
+    },
+    data () {
+        return {
+            bsNameDisabled:false,
+            bsCommentDisabled:false,
+            formQuery:{
+                bsName:'',
+                bsComment:'',
+            },
+            dialog: {
+                ruleForm: {
+                    bsName: [
+                        { required: true, message: '请填写柜型代码', trigger: 'blur' }
+                    ],
+                    bsComment: [
+                        { required: true, message: '请填写柜型描述', trigger: 'blur' }
+                    ]
+                },
+                modal_dialog: false,
+                formItem:{
+                    bsVolume:0,
+                    bsLength:0,
+                    bsWidth:0,
+                    bsHeight:0,
+                    bsGrossWeight:0
+                },
+            },
+            datagrid: {
+                queryParams:{
+                    page:1,
+                    rows:14,
+                },
+                pagination: [14, 50, 100],
+                data: {rows:[],total:0,rows1:[]},
+                columns: [
+                   {
+                        title: '柜型代码',
+                        key: 'bsName'
+                    },
+                    {
+                        title: '柜型描述',
+                        key: 'bsComment'
+                    },
+                    {
+                        title: '长(cm)',
+                        key: 'bsLength'
+                    },
+                    {
+                        title: '宽(cm)',
+                        key: 'bsWidth'
+                    },
+                    {
+                        title: '高(cm)',
+                        key: 'bsHeight'
+                    },
+                    {
+                        title: '柜型体积(m³)',
+                        key: 'bsVolume'
+                    },
+                    {
+                        title: '柜子毛重(kg)',
+                        key: 'bsGrossWeight'
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        render: (h, params) => {
+                            let buttons = [];
+                            if (this.menuData.perms.EDIT) {
+                                buttons.push(h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.showEditDockDialog(params)
+                                        }
+                                    }
+                                }, '编辑'));
+                            }
+                            return h('div', buttons);
+                        }
+                    }
+                ]
+            },
+            }
+    },
+    
+    methods:{
+        //获取列表
+        getData(){
+            Object.assign(this.formQuery, this.datagrid.queryParams);
+            this.api.pmp.getDock(this.formQuery).then((res) =>{
+                if(res.result) {
+                    this.datagrid.data = res.data;
+                }else {
+                    this.$Message.error(res.msg);
+                }
+            });
+        },
+        //查 询
+        handleSubmit(){
+            this.getData();
+        },
+        //换页
+        changePage (page) {
+            this.datagrid.queryParams.page = page;
+            this.getData();
+        },
+        //改变每页显示数据
+        chageSize(pageSize){    
+            this.datagrid.queryParams.rows = pageSize;
+            this.getData();
+        },
+        showEditDockDialog(params){
+            this.dialog.modal_dialog = true;
+            let r = params.row;
+            this.dialog.formItem = {
+                id:r.id,
+                bsName:r.bsName,
+                bsComment:r.bsComment,
+                bsLength:r.bsLength,
+                bsWidth:r.bsWidth,
+                bsHeight:r.bsHeight,
+                bsVolume:r.bsVolume,
+                bsGrossWeight:r.bsGrossWeight
+            }
+        },
+        showAddContainDialog(params){
+            this.dialog.modal_dialog = true;
+            this.bsNameDisabled = false;
+            this.bsCommentDisabled = false;
+            this.dialog.formItem.id = null;
+            this.$refs['dialog.formItem'].resetFields();
+        },
+        editDockCancel(){
+            this.dialog.modal_dialog = false;
+            //清空form规则检查
+            this.$refs['dialog.formItem'].resetFields();
+        },
+        saveEditDock(params){
+            this.$refs['dialog.formItem'].validate((valid) => {
+                if (valid) {
+                     if(typeof(this.dialog.formItem.id)!=undefined && typeof(this.dialog.formItem.id)=="number") {
+                        this.api.pmp.editDock(params).then((res) =>{
+                            if(res.result){
+                                this.dialog.modal_dialog = false;
+                                this.$refs['dialog.formItem'].resetFields();
+                                this.datagrid.data = this.getData();
+                            }else{
+                                this.$Message.info(res.msg);
+                            }
+                        });
+                     }else{
+                        this.api.pmp.addDock(params).then((res) =>{
+                            if(res.result){
+                                this.dialog.modal_dialog = false;
+                                this.$refs['dialog.formItem'].resetFields();
+                                this.datagrid.data = this.getData();
+                            }else{
+                                this.$Message.info(res.msg);
+                            }
+                        });
+                     }
+                } else {
+                    this.$Message.error('表单验证失败!');
+                }
+            })
+        }
+ },
+}
+</script>

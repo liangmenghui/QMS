@@ -1,0 +1,94 @@
+import Vue from 'vue';
+import iView from 'iview';
+import {router} from './router/index';
+import {appRouter} from './router/router';
+import store from './vuex/store';
+import App from './app.vue';
+import 'iview/dist/styles/iview.css';
+import VueI18n from 'vue-i18n';
+import util from './libs/util';
+import directives from './directives/directives';
+
+import ajax from '@/plugins/ajax';
+import loading from '@/plugins/loading';
+import api from '@/api/index';
+
+
+import components from './components'
+
+import ElementUI from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css'
+
+import locales from './locale/locale'
+import cn from './locale/cn-zh'
+import en from './locale/en-us'
+
+import zhLocale from 'iview/src/locale/lang/zh-CN';
+import enLocale from 'iview/src/locale/lang/en-US';
+
+import ellocale from 'element-ui/lib/locale';
+import elen from 'element-ui/src/locale/lang/en';
+import elcn from 'element-ui/src/locale/lang/zh-CN';
+
+Vue.use(require('vue-moment'));
+
+Vue.prototype.api = api
+Vue.use(ajax)
+Vue.use(loading)
+// Vue.user(directives)
+
+Vue.use(ElementUI)
+Vue.use(VueI18n);
+Vue.use(iView);
+// Vue.http.defaults.baseURL = 'http://192.168.21.173:8095/admin'
+// Vue.http.defaults.baseURL = 'http://localhost:8081/admin'
+Vue.http.defaults.baseURL = '/admin'
+
+Object.keys(components).forEach((key) => {
+    Vue.component(key, components[key])
+    // console.log(key);
+    
+    Vue.prototype.$Loading = components['LoadingBar']
+    Vue.prototype.$Message = components['Message']
+    Vue.prototype.$Modal = components['Modal']
+    Vue.prototype.$Notice = components['Notice']
+})
+
+Vue.prototype.$Util = util;
+
+const localizations = {
+    'zh-CN': Object.assign(cn, zhLocale, elcn, locales['zh-CN']), 
+    'en-US': Object.assign(en, enLocale, elen, locales['en-US'])
+}
+const i18n = new VueI18n({
+  locale: 'zh-CN', // set locale
+  messages: localizations, // set locale messages
+})
+
+ellocale.i18n((key, value) => i18n.t(key, value))
+
+new Vue({
+    el: '#app',
+    i18n,
+    router: router,
+    store: store,
+    render: h => h(App),
+    data: {
+        currentPageName: '',
+        menuList:[]
+    },
+    mounted () {
+        this.currentPageName = this.$route.name;
+        // 显示打开的页面的列表
+        this.$store.commit('setOpenedList');
+        this.$store.commit('initCachepage');
+        // 权限菜单过滤相关
+        // this.$store.commit('updateMenulist');
+        // iview-admin检查更新
+        util.checkUpdate(this);
+    },
+    created () {
+    },
+    methods: {
+    }
+});

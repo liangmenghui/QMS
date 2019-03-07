@@ -1,0 +1,225 @@
+<template>
+    <div class="sup-inp">
+		<el-Row style="margin-bottom: 10px;">
+			<el-autocomplete v-model="supplierinfo.bsSuppChieseName" size="medium" style="width:230px;display: inline-block;" 
+				:fetch-suggestions="querySupplier" @select="handleSelectSupplier" :placeholder="$t('risk.selectSupplier')"></el-autocomplete>
+			<!-- <el-button style="padding: 10px 10px;" type="primary" icon="el-icon-search" @click="handleSubmit('formQuery')">
+				{{$t('Button.Inquire')}}
+			</el-button>  -->           		
+		</el-Row>
+		
+		<!--
+    	作者：offline
+    	时间：2018-04-25
+    	描述：供应商风险评分记录
+		-->  
+    	<Row :style="{marginBottom: '20px'}">
+    		<Card>
+				<p slot="title">
+                    <Icon type="social-buffer" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.SupplierRiskScoringRecord')}}
+               	</p>
+               	<div slot="extra" @click="toInstructions('supplier/riskManagement/instructions')">
+                    <Tooltip content="点击进入风险管理说明" placement="bottom-end">                   
+					    <Icon type="information-circled" style="font-size: 25px"></Icon>
+                    </Tooltip>	
+     			</div>
+      	
+      		<div style="background-color: white;">
+      			<el-table :data="supplierriskArr"  style="width: 100%;">
+      				<el-table-column prop="bsRiskLevel" :label="$t('product.RiskLevel')">
+		    		</el-table-column>
+		    		<el-table-column :label="$t('product.EvaluateTime')">
+		    			<template scope="scope">
+							<span>{{scope.row.bsCreatedTime.substring(0,7)}}</span>
+						</template>
+		    		</el-table-column>
+		    		<el-table-column prop="bsFeedbackScore" :label="$t('left-menu.Feedback')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsPpmScore" label="PPM">
+		    		</el-table-column>
+		    		<el-table-column prop="bsDeliveryScore" :label="$t('supplier.DeliveryAchieved')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsInspectScore" :label="$t('product.TheNumberOfUnqualifiedInspection')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsPaymentScore" :label="$t('product.payment')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsCpkScore" :label="$t('product.SPC')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsDangerProScore" :label="$t('supplier.dangerRiskProductsRate')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsApprovedScore" :label="$t('supplier.SystemAudit')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsEhsScore" :label="$t('supplier.EHS')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsBusinessScore" :label="$t('product.BusinessJudgement')">
+		    		</el-table-column>
+		    		<el-table-column prop="bsRiskScore" :label="$t('product.RiskScore')">
+		    		</el-table-column>		    		
+   				</el-table>	
+      		</div>
+      		</Card>
+      	</Row>
+	
+		<Row :gutter="10">
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：体系审核
+        -->
+		<Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.SystemAudit')}}
+					<span v-if="this.supplierinfo.bsSuppRecordId != undefined">
+						({{$t('New-audit.score_percent')}}：{{approvedInfo.rate}}
+						&nbsp;{{$t('New-audit.approvedConclusion')}}：{{approvedInfo.standard}})
+					</span>
+                </p>
+        	
+			<div class="body">
+				<el-select v-model="supplierrisk.bsApproveType" style="width: 300px;margin-left: 130px;">
+    				<el-option v-for="item in optionsApproved" :key="item.value" :label="item.label" :value="item.value">
+    				</el-option>
+  				</el-select>
+			</div>
+			</Card>
+		</Col>
+		
+		<!--
+        	作者：offline
+        	时间：2018-04-08
+        	描述：EHS不符合性
+        -->
+        <Col :md="24" :lg="12" :style="{marginBottom: '20px'}">
+        	<Card>
+				<p slot="title">
+                    <Icon type="edit" style="color: #ff9900;"></Icon>
+                    &nbsp;{{$t('supplier.EHS')}}
+                </p>
+        	
+			<div class="body">
+				<div class="body-text">{{$t('supplier.NotsumNumbers')}}：</div>
+				<div class="body-model">
+					<el-input v-model="supplierrisk.bsEhsValue" style="width: 300px;"></el-input>
+				</div>
+			</div>
+			</Card>
+		</Col>
+		</Row>
+		
+		<div id="bottom">
+			<center>
+            <el-button type="primary" @click="edit()" style="padding: 7px 20px;" v-if="supplierrisk.id != undefined">
+            	<i class="el-icon-news"></i>&nbsp;&nbsp;{{$t('Button.SaveChanges')}}
+            </el-button>
+            </center>
+        </div>
+    </div>
+</template>
+
+<script>
+	export default {
+    data() {
+      return {
+		supplierinfoArr:[],
+		supplierinfo:{},
+		supplierriskArr:[],
+      	supplierrisk:{},
+        optionsApproved: [{
+          value: 1,
+          label: '客户审核通过，金合联审核通过'
+        }, {
+          value: 2,
+          label: '客户审核通过，金合联审核未审核'
+        }, {
+          value: 3,
+          label: '客户审核通过，金合联审核不通过'
+        }, {
+          value: 4,
+          label: '客户审核不通过，金合联审核通过'
+        }, {
+          value: 5,
+          label: '客户审核不通过，金合联审核不通过'
+        }],
+        checkList: [],
+		approvedInfo:{
+			rate:'0%',
+			standard:'通过'
+		},
+      }
+    },
+    created(){
+		//this.supplierrisk = this.$store.getters.getRiskData;
+		//this.getData();
+    },
+    methods:{
+		getData(){
+			this.api.supplierrisk.getlist({bsSuppId:this.supplierinfo.id}).then((res) => {
+				this.supplierriskArr = [];
+				this.supplierriskArr.push(res.data.rows[0]);
+                this.supplierrisk = res.data.rows[0];
+            });
+			//获取体系审核结果
+			if(this.supplierinfo.bsSuppRecordId != undefined){
+				this.api.ApprovedItem.getrecords({bsFlowRecordId:this.supplierinfo.bsSuppRecordId}).then((res) => {
+					var totalScores = 0;
+					var getScores = 0;
+					var percentage = 0;
+					
+					for (var i = 0; i < res.data.rows.length; i++) {
+						var row = res.data.rows[i];
+						
+						if(row.bsScoreNum != undefined){
+							var scores = row.bsScoreNum.split('/');
+							getScores += parseFloat(scores[0]);
+							totalScores += parseFloat(scores[1]);
+						}
+					};
+					
+					if(totalScores>0) {
+						percentage = getScores/totalScores * 100;
+						this.approvedInfo.rate = percentage.toFixed(2) + '%';
+						if(percentage >= 50){
+							this.approvedInfo.standard = '通过';
+						}else{
+							this.approvedInfo.standard = '不通过';
+						}
+					}
+				});
+			}
+		},
+        edit(){
+        	var params = this.$Util.formattedParams(this.supplierrisk);
+			this.api.supplierrisk.edit(params).then((res) => {
+				this.$Message.info("修改完成");
+				this.getData();
+				/*var path = this.$route.matched[this.$route.matched.length-2].path;
+				var route = {path:path,query:{id:params.bsSuppId,refresh:true}};
+				this.$router.replace(route);*/
+			});
+        },
+		querySupplier(queryString, cb) {
+            this.api.supplierinfo.getlist({keyWord:queryString}).then((res) => {
+                this.supplierinfoArr = res.data.rows.map(function (row) {
+                    row.value = row.bsSuppChieseName;
+                    return row;
+                });
+                cb(this.supplierinfoArr);
+            });
+        },
+		handleSelectSupplier(item) {
+			this.supplierinfo = item;
+			this.getData();
+        },
+		toInstructions(url){
+      		this.$router.push({path:url,query:this.$route.query});
+      	},
+    }
+  }
+</script>
+
+<style>
+    @import '~@/styles/supplier.css';
+</style>

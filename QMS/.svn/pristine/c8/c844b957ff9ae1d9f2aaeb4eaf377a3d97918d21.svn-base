@@ -1,0 +1,16 @@
+import elctrolux_dhl_full from "./elctrolux_dhl_full.vue"
+import elctrolux_dhl from "./elctrolux_dhl.vue"
+import whirlpool_dhl from "./whirlpool_dhl.vue"
+import whirlpool_kuehnenagel from "./whirlpool_kuehnenagel.vue"
+
+const contextComponents = {
+    elctrolux_dhl_full,
+}
+
+const templateComponents = {
+    elctrolux_dhl,
+    whirlpool_kuehnenagel
+}
+
+
+export {contextComponents,templateComponents}

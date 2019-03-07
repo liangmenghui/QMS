@@ -1,0 +1,49 @@
+export default {
+ 	"top-menu": {
+ 		"settings": "Settings",
+ 		"messages": "Messages",
+ 		"logout"  : "Logout"
+ 	},
+    "logoutcofirm": "Sure to logout?",
+    "notice":"Notice",
+
+    "New-audit": {
+    	"New-terms": "New audit terms",
+    	"Article-number": "Article number",
+    	"Terms-name": "Terms Name",
+    	"Terms-type": "Terms type",
+    	"Terms-conditions": "Terms and conditions",
+    	"Grading": " Grading",
+    	"Remarks": "Remarks",
+        "Operating":"Operating",
+        "Auditscore":"Audit score",
+        "AuditInstructions":"Audit Instructions"
+    },
+   "Button":{
+        "cancel": "Cancel",
+        "confirm":"Confirm",
+        "Inquire":"Inquire",
+        "Addprocess":"Add process",
+        "Addedterms":"Add terms",
+        "Edit":"Edit",
+        "Delete":"Delete",
+        "View":"View"        
+
+    },
+    "liuceng":{
+        "Process-M":"Process Management",
+        "AuditType":"Audit type",
+        "Principal":"Principal",
+        'Operating':'Operating'
+    },
+    "upcoming":{
+        "SystemMssage":"System Mssage",
+        "SuppliersN":"Number of suppliers",
+        "Suppliers":"Suppliers",
+        "Numbering":"Numbering",
+        "UploadAttachment:":"Upload Attachment"
+        
+    }
+
+
+}
